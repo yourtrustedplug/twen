@@ -422,6 +422,7 @@ export type Database = {
         Args: { p_amount: number; p_phone: string; p_provider: string }
         Returns: string
       }
+      seed_demo_data: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
