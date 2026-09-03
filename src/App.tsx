@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import AudienceGate from "./pages/AudienceGate";
+import CreatorLanding from "./pages/CreatorLanding";
+import BrandLanding from "./pages/BrandLanding";
 import BrandDashboard from "./pages/BrandDashboard";
 import BrandCampaignDetail from "./pages/BrandCampaignDetail";
 import NewCampaign from "./pages/NewCampaign";
@@ -42,7 +44,9 @@ const App = () => (
         <AuthProvider>
           <ScrollToTop />
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<AudienceGate />} />
+            <Route path="/creators" element={<CreatorLanding />} />
+            <Route path="/brands" element={<BrandLanding />} />
 
             {/* App (authenticated) */}
             <Route path="/dashboard" element={<DashboardRouter />} />
