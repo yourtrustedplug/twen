@@ -9,6 +9,11 @@ import heroImage01 from '@/assets/hero-image-01.jpg';
 import heroImage02 from '@/assets/hero-image-02.jpg';
 import heroImage03 from '@/assets/hero-image-03.jpg';
 import heroImage04 from '@/assets/hero-image-04.jpg';
+import campaign01 from '@/assets/campaigns/campaign-01.jpg';
+import campaign02 from '@/assets/campaigns/campaign-02.jpg';
+import campaign03 from '@/assets/campaigns/campaign-03.jpg';
+import campaign04 from '@/assets/campaigns/campaign-04.jpg';
+import { Audience, audienceCopy, audiencePath } from '@/lib/audience';
 
 const heroImages = [
   { src: heroImage01, alt: 'Professional with tablet', bgColor: '#d4d0e8' },
@@ -17,7 +22,20 @@ const heroImages = [
   { src: heroImage04, alt: 'Professional with phone', bgColor: '#c5ddf5' },
 ];
 
-const Hero = () => {
+const brandImages = [
+  { src: campaign01, alt: 'Creator video for a funded campaign', bgColor: '#d4d0e8' },
+  { src: campaign02, alt: 'Creator video for a funded campaign', bgColor: '#f5e9c5' },
+  { src: campaign03, alt: 'Creator video for a funded campaign', bgColor: '#f5c5c5' },
+  { src: campaign04, alt: 'Creator video for a funded campaign', bgColor: '#c5ddf5' },
+];
+
+interface HeroProps {
+  audience?: Audience;
+}
+
+const Hero = ({ audience = 'creator' }: HeroProps) => {
+  const copy = audienceCopy[audience];
+  const images = audience === 'brand' ? brandImages : heroImages;
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { signInAnonymously } = useAuth();
@@ -65,16 +83,16 @@ const Hero = () => {
               {/* Hero Content */}
               <div className="col-span-3 row-start-2 self-center flex flex-col items-center w-full max-w-[60rem] mx-auto max-lg:relative max-lg:-mt-16 max-md:-mt-10 my-[80px] gap-4 pb-10">
                 <span className="text-center text-xs tracking-[1px] uppercase font-semibold">
-                  Paid Per View
+                  {copy.eyebrow}
                 </span>
 
                 <h1 className="text-center text-[5rem] 2xl:text-[5.25rem] max-lg:text-[8vw] max-xs:text-[9vw] leading-[1.2] font-bold font-display">
-                  Get Paid Per View
+                  {copy.headline}
                 </h1>
 
                 <div className="w-full max-w-[30rem] mx-auto">
                   <p className="text-muted-foreground text-center text-lg leading-[1.4] font-normal">
-Post. Get views. Withdraw to MoMo or Airtel.
+                    {copy.sub}
                   </p>
                 </div>
 
@@ -91,18 +109,18 @@ Post. Get views. Withdraw to MoMo or Airtel.
                         Starting Demo...
                       </>
                     ) : (
-                      'Try Demo Mode'
+                      copy.primaryCta
                     )}
                   </Button>
                   <Button variant="invofyOutline" size="invofy" asChild>
-                    <Link to="/pricing">View Pricing</Link>
+                    <Link to={audiencePath(copy.other.audience)}>{copy.other.label}</Link>
                   </Button>
                 </div>
               </div>
 
               {/* Hero Images */}
               <div className="col-span-3 row-start-3 self-end gap-4 xl:gap-6 2xl:gap-8 max-xs:gap-3 w-full translate-y-0 max-lg:translate-y-8 max-md:-translate-y-4 max-xs:-translate-y-6 flex items-end justify-center py-0 pt-2">
-                {heroImages.map((image, index) => (
+                {images.map((image, index) => (
                   <motion.div
                     key={index}
                     style={{ 

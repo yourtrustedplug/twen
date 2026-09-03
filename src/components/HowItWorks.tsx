@@ -3,28 +3,16 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import backgroundImage from '@/assets/background-image-01.webp';
 import foregroundImage from '@/assets/image-05.jpg';
+import brandForegroundImage from '@/assets/image-06.jpg';
+import { Audience, audienceCopy } from '@/lib/audience';
 
-const stepsData = [
-  {
-    number: '01',
-    title: 'Browse Campaigns',
-    description: 'Rate, remaining budget and deadline, all upfront.',
-  },
-  {
-    number: '02',
-    title: 'Post to Your Own TikTok',
-    description: 'Follow the brief, then submit your link.',
-  },
-  {
-    number: '03',
-    title: 'Get Paid to Mobile Money',
-    description: 'Withdraw verified earnings to MoMo or Airtel.',
-  },
-];
 
-interface HowItWorksProps extends React.ComponentProps<'section'> {}
+interface HowItWorksProps extends React.ComponentProps<'section'> {
+  audience?: Audience;
+}
 
-const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
+const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksProps) => {
+  const copy = audienceCopy[audience];
   return (
     <section
       className={cn(
@@ -39,11 +27,11 @@ const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
             How It Works
           </span>
           <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-            Three Steps. That's It.
+            {copy.stepsHeadline}
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-You already make the videos. Here they pay.
+  {copy.sub}
             </p>
           </div>
         </div>
@@ -61,7 +49,7 @@ You already make the videos. Here they pay.
                 className="absolute inset-0 w-full h-full object-cover rounded-[40px]"
               />
               <img
-                src={foregroundImage}
+                src={audience === 'brand' ? brandForegroundImage : foregroundImage}
                 alt="Creator filming a short video on a phone"
                 width={512}
                 height={640}
@@ -75,7 +63,7 @@ You already make the videos. Here they pay.
           <div className="w-full h-full ml-[-100px] relative max-lg:ml-0">
             <div className="flex flex-col justify-between items-end w-full h-full gap-6 2xl:gap-8">
               <div className="flex flex-col justify-center w-full h-full gap-5 2xl:gap-8 max-md:gap-3">
-                {stepsData.map((step, index) => (
+                {copy.steps.map((step, index) => (
                   <div
                     key={index}
                     className="flex flex-col justify-start items-start bg-[#fafafa] border border-[#f1f1f1] rounded-[34px] p-7 xl:p-8 2xl:p-12 max-lg:p-8 max-xs:rounded-[30px] gap-4"
@@ -96,7 +84,7 @@ You already make the videos. Here they pay.
               </div>
 
               <Button variant="invofy" size="invofy" asChild>
-                <Link to="/pricing">How Earnings Work</Link>
+                <Link to={copy.secondaryCta.href}>{copy.secondaryCta.label}</Link>
               </Button>
             </div>
           </div>
