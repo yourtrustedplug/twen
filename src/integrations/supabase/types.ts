@@ -22,16 +22,21 @@ export type Database = {
           brand_id: string
           brand_name: string
           budget: number
+          checklist: Json
           closed_at: string | null
           created_at: string
           deadline: string | null
           disclosure: string
+          extended_days: number
           funded_amount: number
           hashtags: string
           id: string
+          links: Json
           must_include: string
           rate_per_1k: number
+          socials: Json
           spent_amount: number
+          started_at: string | null
           status: string
           title: string
           topic: string
@@ -44,16 +49,21 @@ export type Database = {
           brand_id: string
           brand_name?: string
           budget?: number
+          checklist?: Json
           closed_at?: string | null
           created_at?: string
           deadline?: string | null
           disclosure?: string
+          extended_days?: number
           funded_amount?: number
           hashtags?: string
           id?: string
+          links?: Json
           must_include?: string
           rate_per_1k?: number
+          socials?: Json
           spent_amount?: number
+          started_at?: string | null
           status?: string
           title: string
           topic?: string
@@ -66,16 +76,21 @@ export type Database = {
           brand_id?: string
           brand_name?: string
           budget?: number
+          checklist?: Json
           closed_at?: string | null
           created_at?: string
           deadline?: string | null
           disclosure?: string
+          extended_days?: number
           funded_amount?: number
           hashtags?: string
           id?: string
+          links?: Json
           must_include?: string
           rate_per_1k?: number
+          socials?: Json
           spent_amount?: number
+          started_at?: string | null
           status?: string
           title?: string
           topic?: string
@@ -115,6 +130,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      conversations: {
+        Row: {
+          brand_id: string
+          brand_name: string
+          campaign_id: string | null
+          created_at: string
+          creator_id: string
+          creator_name: string
+          id: string
+          last_message_at: string
+        }
+        Insert: {
+          brand_id: string
+          brand_name?: string
+          campaign_id?: string | null
+          created_at?: string
+          creator_id: string
+          creator_name?: string
+          id?: string
+          last_message_at?: string
+        }
+        Update: {
+          brand_id?: string
+          brand_name?: string
+          campaign_id?: string | null
+          created_at?: string
+          creator_id?: string
+          creator_name?: string
+          id?: string
+          last_message_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       earnings: {
         Row: {
@@ -241,6 +297,38 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payouts: {
         Row: {
           amount: number
@@ -276,40 +364,67 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          avg_views: number
+          bio: string
           company_name: string | null
           created_at: string
+          engagement_rate: number
+          follower_count: number
           full_name: string | null
           id: string
           id_verification_status: string
+          location: string
+          marketplace_visible: boolean
           payout_number: string | null
           payout_provider: string | null
           phone: string | null
+          platforms: Json
+          rate_per_video: number
           role: string
           tiktok_handle: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          avg_views?: number
+          bio?: string
           company_name?: string | null
           created_at?: string
+          engagement_rate?: number
+          follower_count?: number
           full_name?: string | null
           id: string
           id_verification_status?: string
+          location?: string
+          marketplace_visible?: boolean
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
+          platforms?: Json
+          rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          avg_views?: number
+          bio?: string
           company_name?: string | null
           created_at?: string
+          engagement_rate?: number
+          follower_count?: number
           full_name?: string | null
           id?: string
           id_verification_status?: string
+          location?: string
+          marketplace_visible?: boolean
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
+          platforms?: Json
+          rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
@@ -319,13 +434,19 @@ export type Database = {
       submissions: {
         Row: {
           campaign_id: string
+          checklist_results: Json
+          comments: number
           created_at: string
           creator_id: string
           creator_name: string
           earnings: number
+          engagement_rate: number
           id: string
           last_verified_at: string | null
+          likes: number
+          platform: string
           rejection_reason: string | null
+          shares: number
           status: string
           tiktok_handle: string
           tiktok_url: string
@@ -334,13 +455,19 @@ export type Database = {
         }
         Insert: {
           campaign_id: string
+          checklist_results?: Json
+          comments?: number
           created_at?: string
           creator_id: string
           creator_name?: string
           earnings?: number
+          engagement_rate?: number
           id?: string
           last_verified_at?: string | null
+          likes?: number
+          platform?: string
           rejection_reason?: string | null
+          shares?: number
           status?: string
           tiktok_handle?: string
           tiktok_url: string
@@ -349,13 +476,19 @@ export type Database = {
         }
         Update: {
           campaign_id?: string
+          checklist_results?: Json
+          comments?: number
           created_at?: string
           creator_id?: string
           creator_name?: string
           earnings?: number
+          engagement_rate?: number
           id?: string
           last_verified_at?: string | null
+          likes?: number
+          platform?: string
           rejection_reason?: string | null
+          shares?: number
           status?: string
           tiktok_handle?: string
           tiktok_url?: string
@@ -419,7 +552,10 @@ export type Database = {
         Args: { p_new_views: number; p_submission_id: string }
         Returns: number
       }
-      close_campaign: { Args: { p_campaign_id: string }; Returns: undefined }
+      extend_campaign: {
+        Args: { p_campaign_id: string; p_days: number }
+        Returns: string
+      }
       fund_campaign: { Args: { p_campaign_id: string }; Returns: undefined }
       request_payout: {
         Args: { p_amount: number; p_phone: string; p_provider: string }
