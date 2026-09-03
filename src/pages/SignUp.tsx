@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +72,9 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { signUp, signInAnonymously, user, profile, isLoading: authLoading } = useAuth();
 
-  const [role, setRole] = useState<UserRole>('creator');
+  const [searchParams] = useSearchParams();
+  const initialRole: UserRole = searchParams.get('role') === 'brand' ? 'brand' : 'creator';
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [tiktokHandle, setTiktokHandle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [name, setName] = useState('');
