@@ -39,7 +39,7 @@ const Licenses = () => {
           <div className="bg-[#FAFAFA] rounded-[64px] max-xs:rounded-[48px] p-16 max-lg:p-12 max-md:p-10 max-xs:p-8 max-w-[800px] mx-auto">
             <div className="space-y-4 text-muted-foreground text-lg max-xs:text-base leading-[1.6]">
               <p>
-                All fonts and images used in the Invofy template are free to use for both personal
+                All fonts and images used in the Unignored template are free to use for both personal
                 and commercial projects. Images were generated using AI Image FX, and the primary
                 typeface used in this template is Inter Tight, which is licensed for commercial use.
               </p>

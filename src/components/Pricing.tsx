@@ -17,14 +17,14 @@ const Pricing = ({ className, ...props }: PricingProps) => {
       <div className="max-w-[1440px] mx-auto">
         <div className="flex flex-col gap-4 max-w-[48.75rem] mx-auto text-center mb-16 max-md:mb-12 max-md:max-w-full">
           <span className="text-xs tracking-[1px] uppercase font-semibold">
-            Flexible Options
+            The Numbers
           </span>
           <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-            Start free, upgrade anytime
+            How earnings actually work
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              Choose a plan that fits your workflow. Whether you're just getting started or scaling fast, Invofy grows with you.
+              No subscription, no platform fee on creators, no fine print. Brands fund a budget and pay a published rate per 1,000 verified views.
             </p>
           </div>
         </div>
