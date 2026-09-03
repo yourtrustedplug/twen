@@ -26,17 +26,17 @@ const PricingHeader = ({ className, ...props }: PricingHeaderProps) => {
           <div className="flex flex-col items-center text-center pt-48 max-[991px]:pt-40 max-[767px]:pt-36 max-[479px]:pt-32 pb-16 max-[767px]:pb-12 max-[479px]:pb-10">
             {/* Label */}
             <span className="text-foreground text-xs tracking-[1px] uppercase font-semibold mb-4">
-              Straightforward Plans
+              No Subscriptions. No Retainers.
             </span>
-            
+
             {/* Heading */}
             <h1 className="text-foreground text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2.5rem] max-[479px]:text-[2rem] font-bold font-display leading-[1.2] mb-4 max-w-[48rem]">
-              Flexible Plans for Professionals
+              How Earnings Work
             </h1>
-            
+
             {/* Description */}
             <p className="text-muted-foreground text-lg max-[479px]:text-base leading-[1.4] font-normal max-w-[40rem]">
-              Choose a plan that matches your needs and start creating professional invoices with a simple, reliable, and easy-to-use platform.
+              You don't pay Unignored a monthly fee and we don't pay creators per follower. The rate is published per 1,000 views before anyone commits — and it never changes mid-campaign.
             </p>
           </div>
           
