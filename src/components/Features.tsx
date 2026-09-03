@@ -8,38 +8,17 @@ import featureIcon02 from '@/assets/icons/feature-icon-02.png';
 import featureIcon03 from '@/assets/icons/feature-icon-03.png';
 import featureIcon04 from '@/assets/icons/feature-icon-04.png';
 import featureIcon05 from '@/assets/icons/feature-icon-05.png';
+import { Audience, audienceCopy } from '@/lib/audience';
 
-const featuresData = [
-  {
-    icon: featureIcon01,
-    title: 'Escrow-Funded Campaigns',
-    description: 'Budgets funded before campaigns go live.',
-  },
-  {
-    icon: featureIcon02,
-    title: 'Verified Views',
-    description: 'Checked against the platform before they pay.',
-  },
-  {
-    icon: featureIcon03,
-    title: 'Your Own Account',
-    description: 'Your TikTok, your audience. No follower minimum.',
-  },
-  {
-    icon: featureIcon04,
-    title: 'Mobile Money Payouts',
-    description: 'MTN MoMo or Airtel Money. Same day.',
-  },
-  {
-    icon: featureIcon05,
-    title: 'Live Remaining Budget',
-    description: 'See what is left before you film.',
-  },
-];
+const featureIcons = [featureIcon01, featureIcon02, featureIcon03, featureIcon04, featureIcon05];
 
-interface FeaturesProps extends React.ComponentProps<'section'> {}
 
-const Features = ({ className, ...props }: FeaturesProps) => {
+interface FeaturesProps extends React.ComponentProps<'section'> {
+  audience?: Audience;
+}
+
+const Features = ({ className, audience = 'creator', ...props }: FeaturesProps) => {
+  const copy = audienceCopy[audience];
   return (
     <section className={cn('px-5 md:px-10 max-xs:px-5', className)} {...props}>
       <div className="max-w-[100rem] mx-auto">
@@ -58,25 +37,25 @@ const Features = ({ className, ...props }: FeaturesProps) => {
             <div className="flex flex-col gap-8 px-12 max-lg:px-10 max-md:px-8 max-xs:px-4">
               <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center">
                 <span className="text-xs tracking-[1px] uppercase font-semibold">
-                  What Makes It Different
+                  {copy.featuresEyebrow}
                 </span>
                 <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-                  Where Views Turn Into Money
+                  {copy.featuresHeadline}
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-Funded upfront. Verified views. Mobile money.
+                    {copy.sub}
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 max-lg:grid-cols-2 max-xs:grid-cols-1 gap-6">
-                {featuresData.map((feature, index) => (
+                {copy.features.map((feature, index) => (
                   <div
                     key={index}
                     className="bg-white border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6"
                   >
-                    <img src={feature.icon} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" />
+                    <img src={featureIcons[index % featureIcons.length]} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" />
                     <div className="flex flex-col gap-3">
                       <h3 className="text-2xl leading-[1.4] font-bold">{feature.title}</h3>
                       <p className="text-lg leading-[1.4] text-muted-foreground w-[90%] font-normal">
@@ -91,9 +70,9 @@ Funded upfront. Verified views. Mobile money.
                   style={{ backgroundImage: `url(${ctaBackground})` }}
                 >
                   <div className="flex flex-col gap-3">
-                    <h3 className="text-2xl leading-[1.4] font-bold">Start Earning</h3>
+                    <h3 className="text-2xl leading-[1.4] font-bold">{copy.featureCard.title}</h3>
                     <p className="text-lg leading-[1.4] w-[90%] font-normal">
-                      Browse funded campaigns and submit your first video in minutes.
+                      {copy.featureCard.description}
                     </p>
                   </div>
                   <div>
