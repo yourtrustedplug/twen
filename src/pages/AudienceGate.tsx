@@ -1,7 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Audience, rememberAudience } from '@/lib/audience';
+import Navbar from '@/components/Navbar';
 import creatorImage from '@/assets/gate/gate-creator.jpg';
 import brandImage from '@/assets/gate/gate-brand.jpg';
 
@@ -20,11 +21,8 @@ const AudienceGate = () => {
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
-      <header className="px-5 md:px-10 py-6">
-        <Link to="/" className="text-[1.675rem] font-bold font-display text-foreground no-underline">
-          Unignored
-        </Link>
-      </header>
+      <Navbar />
+
 
       <div className="flex-1 flex flex-col justify-center px-5 md:px-10 pb-10">
         <h1 className="text-center text-[3rem] max-md:text-[2rem] leading-[1.15] font-bold font-display mb-8">
