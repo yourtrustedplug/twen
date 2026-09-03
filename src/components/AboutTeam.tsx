@@ -74,10 +74,10 @@ const AboutTeam = () => {
             MAKERS AND THINKERS
           </span>
           <h2 className="text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2rem] leading-[1.2] font-bold font-display">
-            The People Behind Our Platform
+            The People Behind the Platform
           </h2>
           <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-            A group of designers, developers, and problem-solvers focused on creating a simple, reliable, and professional invoicing experience for freelancers and independent businesses.
+            A small team of engineers, operators, and payments people building the payout rails that make same-day mobile money possible across East Africa.
           </p>
         </div>
 
