@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
 import { SocialAuthButtons } from '@/components/base/social-auth-buttons';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -61,7 +61,7 @@ const signInSchema = z.object({
 const SignIn = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signIn, signInAnonymously, user, isLoading: authLoading } = useAuth();
+  const { signIn, signInAnonymously, user, profile, isLoading: authLoading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,9 +72,9 @@ const SignIn = () => {
   // Redirect if already logged in (but allow anonymous users to sign into existing account)
   useEffect(() => {
     if (user && !authLoading && !user.is_anonymous) {
-      navigate('/dashboard');
+      navigate(roleHome(profile?.role as UserRole | undefined));
     }
-  }, [user, authLoading, navigate]);
+  }, [user, profile, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +110,10 @@ const SignIn = () => {
     
     toast({
       title: "Sign in successful!",
-      description: "Welcome back to Invofy.",
+      description: "Welcome back to Unignored.",
     });
-    
-    navigate('/dashboard');
+
+    navigate(roleHome(profile?.role as UserRole | undefined));
   };
 
   const handleDemoMode = async () => {
@@ -133,10 +133,10 @@ const SignIn = () => {
     
     toast({
       title: "Welcome to Demo Mode!",
-      description: "Explore Invofy with sample data.",
+      description: "Explore Unignored with sample data — switch between the creator and brand views in the header.",
     });
-    
-    navigate('/dashboard');
+
+    navigate('/creator');
   };
 
   if (authLoading) {
@@ -154,7 +154,7 @@ const SignIn = () => {
         <Link to="/" className="flex items-center gap-2 no-underline">
           <LogoIcon />
           <span className="text-foreground text-[1.675rem] max-[479px]:text-[1.5rem] font-bold font-display leading-[1.2]">
-            Invofy
+            Unignored
           </span>
         </Link>
       </header>
@@ -304,7 +304,7 @@ const SignIn = () => {
           <Link to="/" className="flex items-center gap-2 no-underline">
             <LogoIcon />
             <span className="text-foreground text-xl max-[479px]:text-lg font-bold font-display leading-[1.2]">
-              Invofy
+              Unignored
             </span>
           </Link>
           
