@@ -28,11 +28,9 @@ const CreatorBrowse = () => {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
-        <div className="max-w-2xl mb-12">
+        <div className="max-w-2xl mb-10">
           <h1 className="font-display text-4xl font-bold mb-2">Browse campaigns</h1>
-          <p className="text-muted-foreground">
-            Every campaign is funded before you see it. Remaining budget is live — you never start a video for a campaign that has already been spent. No follower minimum.
-          </p>
+          <p className="text-muted-foreground">All funded upfront. Budgets shown live.</p>
         </div>
 
         {loading ? (
