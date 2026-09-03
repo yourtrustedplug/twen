@@ -12,28 +12,28 @@ import featureIcon05 from '@/assets/icons/feature-icon-05.png';
 const featuresData = [
   {
     icon: featureIcon01,
-    title: 'Real Preview',
-    description: 'Edit invoice details and see changes instantly reflected in the preview.',
+    title: 'Escrow-Funded Campaigns',
+    description: 'The budget is fully funded before a campaign goes live. The money exists before you make anything.',
   },
   {
     icon: featureIcon02,
-    title: 'PDF Export',
-    description: 'Generate polished invoices ready to download, send, or print.',
+    title: 'Verified Views',
+    description: 'Every view is checked against platform APIs and screened for inauthentic patterns before it pays.',
   },
   {
     icon: featureIcon03,
-    title: 'Custom Templates',
-    description: 'Choose styles, colors, and fonts to match your brand identity.',
+    title: 'Your Own Account',
+    description: 'Post to your own TikTok and keep the audience you build. No follower minimum, ever.',
   },
   {
     icon: featureIcon04,
-    title: 'Smart Calculations',
-    description: 'Totals, taxes, and discounts are calculated automatically for you.',
+    title: 'Mobile Money Payouts',
+    description: 'Withdraw to MTN MoMo or Airtel Money. Not a bank transfer, not crypto, not PayPal.',
   },
   {
     icon: featureIcon05,
-    title: 'Client Details',
-    description: 'Store client information to reuse and speed up future invoices.',
+    title: 'Live Remaining Budget',
+    description: 'Every campaign shows its remaining budget before you commit your time to a video.',
   },
 ];
 
@@ -58,14 +58,14 @@ const Features = ({ className, ...props }: FeaturesProps) => {
             <div className="flex flex-col gap-8 px-12 max-lg:px-10 max-md:px-8 max-xs:px-4">
               <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center">
                 <span className="text-xs tracking-[1px] uppercase font-semibold">
-                  Complete Control
+                  What Makes It Different
                 </span>
                 <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-                  Everything You Need to Invoice
+                  Where Views Turn Into Money
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-                    From custom templates to real-time previews, our invoice tool gives you full control over every detail — so you can focus on getting paid.
+                    Campaigns funded upfront, views verified against the platform, earnings paid straight to mobile money. That's the whole model.
                   </p>
                 </div>
               </div>
@@ -91,14 +91,14 @@ const Features = ({ className, ...props }: FeaturesProps) => {
                   style={{ backgroundImage: `url(${ctaBackground})` }}
                 >
                   <div className="flex flex-col gap-3">
-                    <h3 className="text-2xl leading-[1.4] font-bold">Start Invoicing</h3>
+                    <h3 className="text-2xl leading-[1.4] font-bold">Start Earning</h3>
                     <p className="text-lg leading-[1.4] w-[90%] font-normal">
-                      Create professional invoices in minutes and download them instantly.
+                      Browse funded campaigns and submit your first video in minutes.
                     </p>
                   </div>
                   <div>
                     <Button variant="invofy" size="invofy" asChild>
-                      <Link to="/invoice">Get Started</Link>
+                      <Link to="/signup">Get Started</Link>
                     </Button>
                   </div>
                 </div>

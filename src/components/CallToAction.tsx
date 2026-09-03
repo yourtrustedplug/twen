@@ -114,11 +114,11 @@ const CallToAction = () => {
             </span>
 
             <h2 className="text-[2rem] md:text-[3rem] lg:text-[4rem] leading-[1.2] font-bold font-display mb-6">
-              Simplify Your Invoicing Workflow
+              Your Views Deserve to Pay
             </h2>
 
             <Button variant="invofy" size="invofy" asChild>
-              <Link to="/pricing">Start Now</Link>
+              <Link to="/signup">Get Started</Link>
             </Button>
           </motion.div>
         </div>

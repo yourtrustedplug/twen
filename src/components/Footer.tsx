@@ -113,14 +113,13 @@ const Footer = () => {
                 <a href="#" className="relative z-10 flex items-center gap-2 no-underline">
                   <LogoIcon />
                   <span className="text-foreground text-[1.675rem] max-xs:text-[1.5rem] font-bold font-display leading-[1.2]">
-                    Invofy
+                    Unignored
                   </span>
                 </a>
 
                 <div className="w-full max-w-[25rem] mb-[10px]">
                   <p className="text-[1.125rem] max-xs:text-base leading-[1.5]">
-                    A simple and modern invoicing platform designed to help freelancers and small
-                    businesses work faster and smarter.
+                    A marketplace where brands pay creators for views instead of followers — paid straight to mobile money.
                   </p>
                 </div>
 
@@ -155,7 +154,7 @@ const Footer = () => {
                 ))}
 
                 <Button variant="invofy" size="invofy" asChild>
-                  <Link to="/invoice">Get Started</Link>
+                  <Link to="/signup">Get Started</Link>
                 </Button>
               </div>
             </div>
@@ -165,7 +164,7 @@ const Footer = () => {
             <div className="relative z-[5] grid grid-cols-[1fr_auto] gap-8 w-full max-md:grid-cols-2 max-xs:grid-cols-1">
               <div className="flex gap-6 justify-self-start max-md:col-span-2 max-md:row-start-1 max-xs:col-span-1">
                 <p className="leading-[1.5]">
-                  Invofy® - Created by{' '}
+                  Unignored® - Created by{' '}
                   <a
                     href="https://x.com/templout"
                     target="_blank"
@@ -191,7 +190,7 @@ const Footer = () => {
       </div>
 
       <h2 className="absolute z-[2] bottom-[-10vw] left-0 right-0 text-center text-[28vw] 3xl:text-[30rem] font-bold font-display leading-none m-0">
-        Invofy®
+        Unignored®
       </h2>
     </footer>
   );

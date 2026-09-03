@@ -7,18 +7,18 @@ import foregroundImage from '@/assets/image-05.jpg';
 const stepsData = [
   {
     number: '01',
-    title: 'Create Invoice',
-    description: 'Enter your business, client, and item details using a simple and intuitive editor.',
+    title: 'Browse Campaigns',
+    description: 'Each one shows the brand, the rate per thousand views, the remaining budget, and the deadline.',
   },
   {
     number: '02',
-    title: 'Customize Design',
-    description: 'Choose a template, adjust colors and fonts, and preview changes in real time.',
+    title: 'Post to Your Own TikTok',
+    description: 'Follow the brief — topic, angle, hashtags, disclosure — then submit the link to your video.',
   },
   {
     number: '03',
-    title: 'Download PDF',
-    description: 'Generate a professional, print-ready PDF and send it to your client instantly.',
+    title: 'Get Paid to Mobile Money',
+    description: 'Views verify on a schedule, earnings accrue against the budget, and you withdraw to MoMo or Airtel.',
   },
 ];
 
@@ -39,11 +39,11 @@ const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
             How It Works
           </span>
           <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-            Built to Be Simple
+            Three Steps. That's It.
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              Create, customize, and download professional invoices in just a few simple steps — no setup, no learning curve, and no complexity.
+              You already make the videos. Unignored is simply where those views start paying — no setup, no negotiation, no minimum follower count.
             </p>
           </div>
         </div>
@@ -62,7 +62,7 @@ const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
               />
               <img
                 src={foregroundImage}
-                alt="Professional using tablet"
+                alt="Creator filming a short video on a phone"
                 width={512}
                 height={640}
                 loading="lazy"
@@ -96,7 +96,7 @@ const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
               </div>
 
               <Button variant="invofy" size="invofy" asChild>
-                <Link to="/pricing">View Pricing</Link>
+                <Link to="/pricing">How Earnings Work</Link>
               </Button>
             </div>
           </div>

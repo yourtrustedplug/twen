@@ -65,16 +65,16 @@ const Hero = () => {
               {/* Hero Content */}
               <div className="col-span-3 row-start-2 self-center flex flex-col items-center w-full max-w-[60rem] mx-auto max-lg:relative max-lg:-mt-16 max-md:-mt-10 my-[80px] gap-4 pb-10">
                 <span className="text-center text-xs tracking-[1px] uppercase font-semibold">
-                  INVOICE SIMPLIFIED
+                  Paid Per View
                 </span>
 
                 <h1 className="text-center text-[5rem] 2xl:text-[5.25rem] max-lg:text-[8vw] max-xs:text-[9vw] leading-[1.2] font-bold font-display">
-                  Smart Invoicing for Modern Businesses
+                  Brands Fund Campaigns. Creators Get Paid Per View.
                 </h1>
 
                 <div className="w-full max-w-[30rem] mx-auto">
                   <p className="text-muted-foreground text-center text-lg leading-[1.4] font-normal">
-                    Designed for modern professionals who want a faster, simpler way to handle invoicing and billing.
+                    Post to your own TikTok, keep your own audience, and withdraw to MTN MoMo or Airtel Money. No follower minimum, no agency retainer.
                   </p>
                 </div>
 
