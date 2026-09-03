@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { formatMoney, formatRate } from '@/lib/format';
 
 const NewCampaign = () => {
   const { user, profile } = useAuth();
