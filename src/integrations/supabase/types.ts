@@ -20,6 +20,7 @@ export type Database = {
           asset_urls: Json
           avoid: string
           brand_id: string
+          brand_name: string
           budget: number
           closed_at: string | null
           created_at: string
@@ -41,6 +42,7 @@ export type Database = {
           asset_urls?: Json
           avoid?: string
           brand_id: string
+          brand_name?: string
           budget?: number
           closed_at?: string | null
           created_at?: string
@@ -62,6 +64,7 @@ export type Database = {
           asset_urls?: Json
           avoid?: string
           brand_id?: string
+          brand_name?: string
           budget?: number
           closed_at?: string | null
           created_at?: string
