@@ -2,13 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import InvoiceGenerator from "./pages/InvoiceGenerator";
 import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
+import BrandDashboard from "./pages/BrandDashboard";
+import BrandCampaignDetail from "./pages/BrandCampaignDetail";
+import NewCampaign from "./pages/NewCampaign";
+import CreatorBrowse from "./pages/CreatorBrowse";
+import CreatorCampaignDetail from "./pages/CreatorCampaignDetail";
+import CreatorSubmissions from "./pages/CreatorSubmissions";
+import CreatorEarnings from "./pages/CreatorEarnings";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
@@ -22,6 +27,13 @@ import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
+/** Sends signed-in users to the dashboard for their role. */
+const DashboardRouter = () => {
+  const { profile, isLoading } = useAuth();
+  if (isLoading) return null;
+  return <Navigate to={roleHome(profile?.role)} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -32,21 +44,31 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
-            
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute><Dashboard /></ProtectedRoute>
+
+            {/* App (authenticated) */}
+            <Route path="/dashboard" element={<DashboardRouter />} />
+            <Route path="/brand" element={
+              <ProtectedRoute role="brand"><BrandDashboard /></ProtectedRoute>
             } />
-            <Route path="/clients" element={
-              <ProtectedRoute><Clients /></ProtectedRoute>
+            <Route path="/brand/campaigns/new" element={
+              <ProtectedRoute role="brand"><NewCampaign /></ProtectedRoute>
             } />
-            <Route path="/invoice" element={
-              <ProtectedRoute><InvoiceGenerator /></ProtectedRoute>
+            <Route path="/brand/campaigns/:id" element={
+              <ProtectedRoute role="brand"><BrandCampaignDetail /></ProtectedRoute>
             } />
-            <Route path="/invoice/:id" element={
-              <ProtectedRoute><InvoiceGenerator /></ProtectedRoute>
+            <Route path="/creator" element={
+              <ProtectedRoute role="creator"><CreatorBrowse /></ProtectedRoute>
             } />
-            
+            <Route path="/creator/campaigns/:id" element={
+              <ProtectedRoute role="creator"><CreatorCampaignDetail /></ProtectedRoute>
+            } />
+            <Route path="/creator/submissions" element={
+              <ProtectedRoute role="creator"><CreatorSubmissions /></ProtectedRoute>
+            } />
+            <Route path="/creator/earnings" element={
+              <ProtectedRoute role="creator"><CreatorEarnings /></ProtectedRoute>
+            } />
+
             {/* Public Routes */}
             <Route path="/about" element={<About />} />
             <Route path="/pricing" element={<Pricing />} />
