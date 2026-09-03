@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
 import BrandDashboard from "./pages/BrandDashboard";
 import BrandCampaignDetail from "./pages/BrandCampaignDetail";
 import NewCampaign from "./pages/NewCampaign";
