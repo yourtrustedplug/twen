@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fonts are now loaded via link tags in index.html for non-blocking render */
+
+/* Invofy Design System – custom Tailwind-based design system */
+
+@layer base {
+  :root {
+    /* Brand colors */
+    --invofy-dark: 220 45% 7%;
+    --invofy-gray: 0 0% 25%;
+    --invofy-border: 0 0% 85%;
+    
+    --background: 0 0% 100%;
+    --foreground: 220 45% 7%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 45% 7%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 45% 7%;
+
+    --primary: 220 45% 7%;
+    --primary-foreground: 0 0% 96%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 220 45% 7%;
+
+    --muted: 210 40% 96.1%;
+    /* Improved contrast ratio for accessibility (was 0 0% 25%) */
+    --muted-foreground: 0 0% 35%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 220 45% 7%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 220 45% 7%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 45% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 45% 7%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 45% 7%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 220 45% 7%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Ensure invoice preview respects selected font:
+   - container uses inline style (templateStyles.fontFamily)
+   - children are forced to inherit from the container
+*/
+.invoice-preview * {
+  font-family: inherit !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter Tight', sans-serif;
+  }
+}
