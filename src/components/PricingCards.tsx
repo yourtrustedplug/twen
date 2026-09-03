@@ -6,50 +6,50 @@ import cardIcon from '@/assets/icons/card-icon.png';
 
 export const pricingPlans = [
   {
-    name: 'Starter',
-    description: 'Create professional invoices instantly with no account or setup required.',
+    name: 'Creator',
+    description: 'Sign up free, browse funded campaigns, and earn per verified view.',
     price: '$0',
     period: '/mo',
     features: [
-      'Invoice generator',
-      'Live preview',
-      'Basic templates',
-      'PDF download',
-      'Multi-currency support',
+      'No follower minimum',
+      'Escrow-funded campaigns',
+      'Live remaining budget',
+      'Views verified on a schedule',
+      'Mobile money payouts',
     ],
-    buttonText: 'Get Started',
-    buttonVariant: 'invofyOutline' as const,
-    featured: false,
-  },
-  {
-    name: 'Professional',
-    description: 'More customization and flexibility for freelancers and independent professionals.',
-    price: '$9',
-    period: '/mo',
-    features: [
-      'Everything in Free',
-      'Premium invoice templates',
-      'Custom colors and fonts',
-      'Taxes and discounts',
-      'Priority export quality',
-    ],
-    buttonText: 'Get Started',
+    buttonText: 'Start Earning',
     buttonVariant: 'invofy' as const,
     featured: true,
   },
   {
-    name: 'Business',
-    description: 'Advanced tools designed for growing businesses and frequent invoicing.',
-    price: '$19',
-    period: '/mo',
+    name: 'Brand',
+    description: 'Fund a campaign upfront and pay only for the views that actually happen.',
+    price: 'Budget',
+    period: 'you set',
     features: [
-      'Everything in Pro',
-      'Unlimited invoices',
-      'Custom fields',
-      'Estimate generator',
-      'Receipt generator',
+      'Rate published per 1,000 views',
+      'Full budget escrowed upfront',
+      'Review window on every submission',
+      'Dozens of creators per brief',
+      'Unspent budget refunded',
     ],
-    buttonText: 'Get Started',
+    buttonText: 'Fund a Campaign',
+    buttonVariant: 'invofyOutline' as const,
+    featured: false,
+  },
+  {
+    name: 'Payouts',
+    description: 'Straight to mobile money — not a bank transfer, not crypto, not PayPal.',
+    price: 'Same',
+    period: 'day',
+    features: [
+      'MTN MoMo and Airtel Money',
+      '7-day verification window after close',
+      'Per-view accrual until budget ends',
+      'Withdraw any released balance',
+      'No income guarantees — honest math',
+    ],
+    buttonText: 'See How It Works',
     buttonVariant: 'invofyOutline' as const,
     featured: false,
   },
@@ -88,12 +88,12 @@ const PricingCards = ({ className, showStagger = true }: PricingCardsProps) => {
 
           {/* Card Body */}
           <div className="p-6 max-[479px]:p-5 flex-1 flex flex-col">
-            <Button variant={plan.buttonVariant} size="invofy" className="w-full mb-6">
-              {plan.buttonText}
+            <Button variant={plan.buttonVariant} size="invofy" className="w-full mb-6" asChild>
+              <a href="/signup">{plan.buttonText}</a>
             </Button>
-            
+
             <h4 className="text-sm font-semibold mb-4">What You Get</h4>
-            
+
             <ul className="flex flex-col gap-3">
               {plan.features.map((feature, featureIndex) => (
                 <li key={featureIndex} className="flex items-center gap-3">
@@ -108,7 +108,7 @@ const PricingCards = ({ className, showStagger = true }: PricingCardsProps) => {
           <div className="px-6 pb-6 max-[479px]:px-5 max-[479px]:pb-5">
             <div className="flex items-center gap-2">
               <img src={cardIcon} alt="" width={20} height={20} loading="lazy" decoding="async" className="w-5 h-5" />
-              <span className="text-base text-[#91959e]">Pause or cancel anytime</span>
+              <span className="text-base text-[#91959e]">No monthly lock-in</span>
             </div>
           </div>
         </div>

@@ -1,47 +1,43 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { pricingPlans } from '@/components/PricingCards';
 import checkIcon from '@/assets/icons/check-icon.png';
 
-interface ComparisonFeature {
+interface ComparisonRow {
   name: string;
-  starter: boolean | string;
-  professional: boolean | string;
-  business: boolean | string;
+  unignored: boolean | string;
+  ads: boolean | string;
+  deals: boolean | string;
 }
 
-interface FeatureCategory {
-  category: string;
-  features: ComparisonFeature[];
-}
+const columns = [
+  { name: 'Unignored', price: 'Per verified view', period: 'escrow-funded', featured: true },
+  { name: 'Ad platforms', price: 'Cheaper CPM', period: 'paid placements', featured: false },
+  { name: 'Traditional influencer deals', price: 'Per post', period: 'negotiated', featured: false },
+];
 
-const comparisonData: FeatureCategory[] = [
+const comparisonData: { category: string; features: ComparisonRow[] }[] = [
   {
-    category: 'Invoice Features',
+    category: 'What you pay for',
     features: [
-      { name: 'Invoice generator', starter: true, professional: true, business: true },
-      { name: 'Live preview', starter: true, professional: true, business: true },
-      { name: 'Basic templates', starter: true, professional: true, business: true },
-      { name: 'Premium templates', starter: false, professional: true, business: true },
-      { name: 'Estimate generator', starter: false, professional: false, business: true },
-      { name: 'Receipt generator', starter: false, professional: false, business: true },
+      { name: 'Verified views only', unignored: true, ads: false, deals: false },
+      { name: 'Inauthentic views screened out', unignored: true, ads: '—', deals: false },
+      { name: 'Unspent budget refunded', unignored: true, ads: '—', deals: false },
     ],
   },
   {
-    category: 'Customization',
+    category: 'What the money buys',
     features: [
-      { name: 'Multi-currency support', starter: true, professional: true, business: true },
-      { name: 'Taxes and discounts', starter: false, professional: true, business: true },
-      { name: 'Custom colors and fonts', starter: false, professional: true, business: true },
-      { name: 'Custom fields', starter: false, professional: false, business: true },
+      { name: 'Real people your customers recognise', unignored: true, ads: false, deals: true },
+      { name: 'Local creators, languages, formats', unignored: true, ads: false, deals: 'Some' },
+      { name: 'Dozens of videos from one brief', unignored: true, ads: false, deals: false },
     ],
   },
   {
-    category: 'Export & Output',
+    category: 'Creator terms',
     features: [
-      { name: 'PDF download', starter: true, professional: true, business: true },
-      { name: 'Priority export quality', starter: false, professional: true, business: true },
-      { name: 'Unlimited invoices', starter: false, professional: false, business: true },
+      { name: 'No follower minimum', unignored: true, ads: '—', deals: false },
+      { name: 'Budget visible before you commit', unignored: true, ads: '—', deals: false },
+      { name: 'Mobile money payouts', unignored: true, ads: '—', deals: false },
     ],
   },
 ];
@@ -57,34 +53,34 @@ const FeatureCell = ({ value }: { value: boolean | string }) => {
 };
 
 // Mobile/Tablet Card Component
-const MobileComparisonCard = ({ 
-  plan, 
-  planKey 
-}: { 
-  plan: typeof pricingPlans[0]; 
-  planKey: 'starter' | 'professional' | 'business';
+const MobileComparisonCard = ({
+  column,
+  columnKey,
+}: {
+  column: (typeof columns)[0];
+  columnKey: 'unignored' | 'ads' | 'deals';
 }) => {
   return (
     <div className={cn(
       'bg-white rounded-[30px] border border-[#f1f1f1] shadow-[0_4px_20px_rgba(0,0,0,0.06)] overflow-hidden',
-      planKey === 'professional' && 'ring-2 ring-primary'
+      columnKey === 'unignored' && 'ring-2 ring-primary'
     )}>
       {/* Card Header */}
       <div className={cn(
         'p-6 border-b border-[#f1f1f1]',
-        planKey === 'professional' && 'bg-primary/5'
+        columnKey === 'unignored' && 'bg-primary/5'
       )}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-lg font-bold">{plan.name}</span>
-          {planKey === 'professional' && (
+          <span className="text-lg font-bold">{column.name}</span>
+          {columnKey === 'unignored' && (
             <span className="text-xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-2 py-1 rounded-full">
-              Popular
+              This is us
             </span>
           )}
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-bold text-primary">{plan.price}</span>
-          <span className="text-sm text-muted-foreground">{plan.period}</span>
+          <span className="text-xl font-bold text-primary">{column.price}</span>
+          <span className="text-sm text-muted-foreground">{column.period}</span>
         </div>
       </div>
 
@@ -97,7 +93,7 @@ const MobileComparisonCard = ({
             </h4>
             <ul className="space-y-2">
               {category.features.map((feature, featureIndex) => {
-                const value = feature[planKey];
+                const value = feature[columnKey];
                 const isIncluded = value === true || typeof value === 'string';
                 return (
                   <li key={featureIndex} className="flex items-center gap-3">
@@ -123,12 +119,8 @@ const MobileComparisonCard = ({
 
       {/* CTA Button */}
       <div className="px-6 pb-6">
-        <Button
-          variant={plan.buttonVariant}
-          size="invofy"
-          className="w-full"
-        >
-          {plan.buttonText}
+        <Button variant="invofy" size="invofy" className="w-full" asChild>
+          <a href="/signup">{columnKey === 'unignored' ? 'Get Started' : ''}</a>
         </Button>
       </div>
     </div>
@@ -140,7 +132,7 @@ interface PricingComparisonProps {
 }
 
 const PricingComparison = ({ className }: PricingComparisonProps) => {
-  const planKeys: ('starter' | 'professional' | 'business')[] = ['starter', 'professional', 'business'];
+  const columnKeys: ('unignored' | 'ads' | 'deals')[] = ['unignored', 'ads', 'deals'];
 
   return (
     <section className={cn('px-5 md:px-10 max-[479px]:px-5', className)}>
@@ -153,24 +145,24 @@ const PricingComparison = ({ className }: PricingComparisonProps) => {
               {/* Header */}
               <div className="text-center mb-16 max-[767px]:mb-12">
                 <span className="inline-block text-xs tracking-[1px] uppercase font-semibold text-muted-foreground mb-4">
-                  DETAILED BREAKDOWN
+                  THE HONEST COMPARISON
                 </span>
                 <h2 className="text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2rem] font-bold leading-[1.1] mb-6">
-                  Compare Plans Side by Side
+                  How Unignored Compares
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-[40rem] mx-auto">
-                  See exactly what's included in each plan. Whether you're just starting out or managing a growing business, find the features that match your needs.
+                  Ad platforms are cheaper per thousand. What the difference in price buys is a real person your customers recognise, speaking in their own words.
                 </p>
               </div>
 
               {/* Mobile/Tablet Card Layout - hidden on desktop */}
               <div className="hidden max-[991px]:block">
                 <div className="flex flex-col gap-6">
-                  {pricingPlans.map((plan, index) => (
-                    <MobileComparisonCard 
-                      key={plan.name} 
-                      plan={plan} 
-                      planKey={planKeys[index]} 
+                  {columns.map((column, index) => (
+                    <MobileComparisonCard
+                      key={column.name}
+                      column={column}
+                      columnKey={columnKeys[index]}
                     />
                   ))}
                 </div>
@@ -186,21 +178,21 @@ const PricingComparison = ({ className }: PricingComparisonProps) => {
                         <tr className="border-b border-[#f1f1f1]">
                           <th className="text-left p-6 w-[40%]">
                             <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                              Features
+                              Comparison
                             </span>
                           </th>
-                          {pricingPlans.map((plan, index) => (
+                          {columns.map((column, index) => (
                             <th
-                              key={plan.name}
+                              key={column.name}
                               className={cn(
                                 'text-center p-6 w-[20%]',
-                                index === 1 && 'bg-primary/5'
+                                index === 0 && 'bg-primary/5'
                               )}
                             >
                               <div className="flex flex-col items-center gap-1">
-                                <span className="text-lg font-bold">{plan.name}</span>
-                                <span className="text-2xl font-bold text-primary">{plan.price}</span>
-                                <span className="text-sm text-muted-foreground">{plan.period}</span>
+                                <span className="text-lg font-bold">{column.name}</span>
+                                <span className="text-base font-semibold text-primary">{column.price}</span>
+                                <span className="text-sm text-muted-foreground">{column.period}</span>
                               </div>
                             </th>
                           ))}
@@ -228,14 +220,14 @@ const PricingComparison = ({ className }: PricingComparisonProps) => {
                                 <td className="p-4 text-base text-foreground">
                                   {feature.name}
                                 </td>
-                                <td className="p-4 text-center">
-                                  <FeatureCell value={feature.starter} />
-                                </td>
                                 <td className="p-4 text-center bg-primary/5">
-                                  <FeatureCell value={feature.professional} />
+                                  <FeatureCell value={feature.unignored} />
                                 </td>
                                 <td className="p-4 text-center">
-                                  <FeatureCell value={feature.business} />
+                                  <FeatureCell value={feature.ads} />
+                                </td>
+                                <td className="p-4 text-center">
+                                  <FeatureCell value={feature.deals} />
                                 </td>
                               </tr>
                             ))}
@@ -245,23 +237,13 @@ const PricingComparison = ({ className }: PricingComparisonProps) => {
                         {/* CTA Row */}
                         <tr className="border-t border-[#f1f1f1]">
                           <td className="p-6"></td>
-                          {pricingPlans.map((plan, index) => (
-                            <td
-                              key={`cta-${plan.name}`}
-                              className={cn(
-                                'p-6 text-center',
-                                index === 1 && 'bg-primary/5'
-                              )}
-                            >
-                              <Button
-                                variant={plan.buttonVariant}
-                                size="invofy"
-                                className="w-full max-w-[160px]"
-                              >
-                                {plan.buttonText}
-                              </Button>
-                            </td>
-                          ))}
+                          <td className="p-6 text-center bg-primary/5">
+                            <Button variant="invofy" size="invofy" className="w-full max-w-[160px]" asChild>
+                              <a href="/signup">Get Started</a>
+                            </Button>
+                          </td>
+                          <td className="p-6"></td>
+                          <td className="p-6"></td>
                         </tr>
                       </tbody>
                     </table>

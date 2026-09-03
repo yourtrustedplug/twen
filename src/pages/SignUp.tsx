@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
 import { SocialAuthButtons } from '@/components/base/social-auth-buttons';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -70,8 +70,11 @@ const signUpSchema = z.object({
 const SignUp = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUp, signInAnonymously, user, isLoading: authLoading } = useAuth();
-  
+  const { signUp, signInAnonymously, user, profile, isLoading: authLoading } = useAuth();
+
+  const [role, setRole] = useState<UserRole>('creator');
+  const [tiktokHandle, setTiktokHandle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,7 +86,7 @@ const SignUp = () => {
   // Redirect if already logged in (but allow anonymous users to upgrade)
   useEffect(() => {
     if (user && !authLoading && !user.is_anonymous) {
-      navigate('/dashboard');
+      navigate(roleHome(profile?.role as UserRole | undefined));
     }
   }, [user, authLoading, navigate]);
 
@@ -105,7 +108,10 @@ const SignUp = () => {
 
     setIsSubmitting(true);
     
-    const { error } = await signUp(email, password, name);
+    const { error } = await signUp(email, password, name, role, {
+      tiktok_handle: role === 'creator' ? tiktokHandle.trim() || undefined : undefined,
+      company_name: role === 'brand' ? companyName.trim() || undefined : undefined,
+    });
     
     if (error) {
       let message = error.message;
@@ -146,10 +152,10 @@ const SignUp = () => {
     
     toast({
       title: "Welcome to Demo Mode!",
-      description: "Explore Invofy with sample data.",
+      description: "Explore Unignored with sample data — switch between the creator and brand views in the header.",
     });
-    
-    navigate('/dashboard');
+
+    navigate('/creator');
   };
 
   if (authLoading) {
@@ -166,9 +172,9 @@ const SignUp = () => {
       <header className="pt-8 max-[479px]:pt-6 flex justify-center">
         <Link to="/" className="flex items-center gap-2 no-underline">
           <LogoIcon />
-          <span className="text-foreground text-[1.675rem] max-[479px]:text-[1.5rem] font-bold font-display leading-[1.2]">
-            Invofy
-          </span>
+            <span className="text-foreground text-[1.675rem] max-[479px]:text-[1.5rem] font-bold font-display leading-[1.2]">
+              Unignored
+            </span>
         </Link>
       </header>
       
@@ -189,7 +195,7 @@ const SignUp = () => {
                   Create an account
                 </h1>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Get started with Invofy today
+                  Get paid per view — straight to mobile money
                 </p>
               </div>
               
@@ -207,6 +213,38 @@ const SignUp = () => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
+                  <Label className="text-foreground font-medium">I'm joining as</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRole('creator')}
+                      className={`h-12 rounded-full text-sm font-semibold border transition-colors ${
+                        role === 'creator'
+                          ? 'bg-primary text-primary-foreground border-transparent'
+                          : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Creator
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('brand')}
+                      className={`h-12 rounded-full text-sm font-semibold border transition-colors ${
+                        role === 'brand'
+                          ? 'bg-primary text-primary-foreground border-transparent'
+                          : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Brand
+                    </button>
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {role === 'creator'
+                      ? 'Post videos to your own TikTok and earn per verified view.'
+                      : 'Fund a campaign upfront and pay only for verified views.'}
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="name" className="text-foreground font-medium">
                     Full Name
                   </Label>
@@ -222,6 +260,37 @@ const SignUp = () => {
                     <p className="text-destructive text-sm">{errors.name}</p>
                   )}
                 </div>
+
+                {role === 'creator' ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="tiktok" className="text-foreground font-medium">
+                      TikTok handle <span className="text-muted-foreground font-normal">(optional)</span>
+                    </Label>
+                    <Input
+                      id="tiktok"
+                      type="text"
+                      placeholder="@yourhandle"
+                      value={tiktokHandle}
+                      onChange={(e) => setTiktokHandle(e.target.value)}
+                      className="h-14 rounded-full border-border bg-background px-6"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="company" className="text-foreground font-medium">
+                      Company name <span className="text-muted-foreground font-normal">(optional)</span>
+                    </Label>
+                    <Input
+                      id="company"
+                      type="text"
+                      placeholder="Acme Ltd"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="h-14 rounded-full border-border bg-background px-6"
+                    />
+                  </div>
+                )}
+
                 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-foreground font-medium">
@@ -345,7 +414,7 @@ const SignUp = () => {
           <Link to="/" className="flex items-center gap-2 no-underline">
             <LogoIcon />
             <span className="text-foreground text-xl max-[479px]:text-lg font-bold font-display leading-[1.2]">
-              Invofy
+              Unignored
             </span>
           </Link>
           

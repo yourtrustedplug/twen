@@ -12,26 +12,26 @@ const valuesData = [
   {
     icon: valueIcon01,
     number: 1,
-    title: 'Simplicity First',
-    description: 'We design tools that are easy to understand and effortless to use, removing complexity so users can focus on their work instead of learning software.',
+    title: 'Honest Math',
+    description: 'Most videos earn small amounts, some earn nothing, a few do well. We say that up front — and we never pay for followers, likes, or engagement, only views.',
   },
   {
     icon: valueIcon02,
     number: 2,
-    title: 'Practical Innovation',
-    description: 'We build features that solve real problems for freelancers and entrepreneurs, prioritizing usefulness over unnecessary complexity.',
+    title: 'Money Before Work',
+    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits time, and unspent money goes back to the brand.',
   },
   {
     icon: valueIcon03,
     number: 3,
-    title: 'Consistent Experience',
-    description: 'Every detail follows a clear visual and functional standard, ensuring a smooth and reliable experience across the entire platform.',
+    title: 'Same Terms for Everyone',
+    description: 'No follower minimum, no negotiation, no agency in the middle. The rate is published per 1,000 views before anyone commits.',
   },
   {
     icon: valueIcon04,
     number: 4,
-    title: 'User Empowerment',
-    description: 'Our goal is to give users full control over their documents, helping them create professional results without needing technical skills.',
+    title: 'Built for This Region',
+    description: 'Payout lands on mobile money — MTN MoMo or Airtel Money. Local creators, local languages, local formats.',
   },
 ];
 
@@ -132,7 +132,7 @@ const AboutValues = () => {
               {/* CTA Button */}
               <div className="flex justify-center">
                 <Button variant="invofy" size="invofy" asChild>
-                  <Link to="/invoice">Get Started</Link>
+                  <Link to="/signup">Get Started</Link>
                 </Button>
               </div>
             </div>

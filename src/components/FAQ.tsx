@@ -9,20 +9,28 @@ import foregroundImage from '@/assets/image-06.jpg';
 
 const faqData = [
   {
-    question: 'Can I customize the invoice design?',
-    answer: 'Yes, you can fully customize colors, fonts, layouts, and add your own logo to match your brand identity.',
+    question: 'When do I actually get paid?',
+    answer: 'Earnings accrue as views verify. After a campaign closes, funds are held for a 7-day verification window, then released straight to your mobile money — MTN MoMo or Airtel Money.',
   },
   {
-    question: 'Is the invoice generated as a PDF?',
-    answer: 'Yes, all invoices are exported as high-quality, print-ready PDF files that you can download instantly.',
+    question: 'Is there a follower minimum?',
+    answer: 'No. A new account earns on the same terms as a large one. The rate is published before anyone commits, and neither side negotiates.',
   },
   {
-    question: 'Can I export anytime?',
-    answer: 'Absolutely. You can export your invoice as a PDF at any point during the creation process.',
+    question: 'What happens if my video goes viral?',
+    answer: 'Earnings accrue against the campaign\'s remaining budget until it is exhausted. You can earn well, but the budget is the ceiling — and every campaign shows that budget live before you start.',
   },
   {
-    question: 'Can I use different currencies?',
-    answer: 'Yes, the platform supports multiple currencies, allowing you to invoice clients worldwide.',
+    question: 'Do I post on my own account?',
+    answer: 'Yes. You keep the audience you build. You follow the brief — topic, angle, hashtags, disclosure — and submit the link. The brand reviews every submission before it earns.',
+  },
+  {
+    question: 'What does Unignored not do?',
+    answer: 'We don\'t pay for followers, likes, or engagement — only views. We don\'t guarantee any creator an income. We don\'t let brands pick accounts on bounty campaigns. And we don\'t pay out on views we can\'t verify against the platform.',
+  },
+  {
+    question: 'How do brands know views are real?',
+    answer: 'Every view is checked against the platform\'s data and screened for inauthentic patterns before it becomes billable. Brands pay only for verified views, and unspent budget is refunded.',
   },
 ];
 

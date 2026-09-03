@@ -9,9 +9,9 @@ import aboutImage03 from '@/assets/about/about-image-03.jpg';
 import aboutImage04 from '@/assets/about/about-image-04.jpg';
 
 const stats = [
-  { value: '1M+', label: 'Invoices Generated' },
-  { value: '50K+', label: 'Active Users' },
-  { value: '120+', label: 'Countries Reached' },
+  { value: '180K+', label: 'Videos Posted' },
+  { value: '6', label: 'Markets Across East Africa' },
+  { value: '2', label: 'Payout Rails: MoMo & Airtel' },
 ];
 
 const AboutHeader = () => {
@@ -163,12 +163,12 @@ const AboutHeader = () => {
               
               {/* Heading */}
               <h1 className="text-foreground text-[4.5rem] max-[991px]:text-[3.5rem] max-[767px]:text-[3rem] max-[479px]:text-[2.25rem] font-bold font-display leading-[1.1] mb-6 max-[479px]:mb-4">
-                We Help You Work Smarter.
+                Views, Turned Into Income.
               </h1>
-              
+
               {/* Description */}
               <p className="text-foreground/80 text-lg max-[479px]:text-base leading-relaxed mb-10 max-[479px]:mb-8 max-w-[32rem]">
-                We build simple tools that help professionals work faster and focus on what truly matters.
+                Unignored exists because creators in this region were already earning attention — just not money. We fixed the second part.
               </p>
               
               {/* Buttons */}
@@ -177,7 +177,7 @@ const AboutHeader = () => {
                   <Link to="/contact">Get in Touch</Link>
                 </Button>
                 <Button variant="invofyOutline" size="invofy" asChild>
-                  <Link to="/pricing">View Pricing</Link>
+                  <Link to="/pricing">How Earnings Work</Link>
                 </Button>
               </div>
             </div>

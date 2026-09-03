@@ -1,16 +1,43 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+
+export type UserRole = 'creator' | 'brand';
+
+export interface Profile {
+  id: string;
+  role: UserRole;
+  full_name: string | null;
+  phone: string | null;
+  tiktok_handle: string | null;
+  payout_provider: 'mtn_momo' | 'airtel_money' | null;
+  payout_number: string | null;
+  id_verification_status: string;
+  company_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SignUpExtras {
+  tiktok_handle?: string;
+  payout_provider?: string;
+  payout_number?: string;
+  company_name?: string;
+}
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isAnonymous: boolean;
+  profile: Profile | null;
+  refreshProfile: () => Promise<void>;
+  updateProfile: (patch: Partial<Profile>) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, role: UserRole, extras?: SignUpExtras) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   signInAnonymously: () => Promise<{ error: Error | null }>;
+  switchDemoRole: (role: UserRole) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,184 +45,106 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAnonymous = user?.is_anonymous ?? false;
 
+  const refreshProfile = useCallback(async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      setProfile(null);
+      return;
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+    setProfile((data as Profile) ?? null);
+  }, []);
+
+  // Create the profile on first sign-in if missing, using metadata captured
+  // at signup. Demo (anonymous) accounts are seeded with sample data.
+  const ensureProfile = useCallback(async (currentUser: User) => {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .maybeSingle();
+
+    if (!existing) {
+      const meta = currentUser.user_metadata ?? {};
+      const { data: created, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: currentUser.id,
+          role: meta.role === 'brand' ? 'brand' : 'creator',
+          full_name: meta.full_name ?? null,
+          tiktok_handle: meta.tiktok_handle ?? null,
+          payout_provider: meta.payout_provider ?? null,
+          payout_number: meta.payout_number ?? null,
+          company_name: meta.company_name ?? null,
+        })
+        .select()
+        .maybeSingle();
+      if (!error && created) setProfile(created as Profile);
+    } else {
+      setProfile(existing as Profile);
+    }
+
+    if (currentUser.is_anonymous) {
+      await supabase.rpc('seed_demo_data', { p_user_id: currentUser.id });
+      await refreshProfile();
+    }
+  }, [refreshProfile]);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         setIsLoading(false);
 
-        // Seed demo data for new anonymous users
-        if (event === 'SIGNED_IN' && session?.user?.is_anonymous) {
+        if (event === 'SIGNED_IN' && newSession?.user) {
           setTimeout(() => {
-            seedDemoData(session.user.id);
+            ensureProfile(newSession.user);
           }, 0);
+        }
+        if (event === 'SIGNED_OUT') {
+          setProfile(null);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       setIsLoading(false);
+      if (existingSession?.user) {
+        setTimeout(() => {
+          ensureProfile(existingSession.user);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const seedDemoData = async (userId: string) => {
-    try {
-      // Check if user already has data to prevent duplicate seeding
-      const { data: existingClients } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', userId)
-        .limit(1);
-
-      if (existingClients && existingClients.length > 0) {
-        return; // User already has data
-      }
-
-      // Insert demo clients
-      const { data: clients, error: clientsError } = await supabase
-        .from('clients')
-        .insert([
-          {
-            user_id: userId,
-            name: 'John Smith',
-            company: 'Acme Corporation',
-            email: 'john@acmecorp.com',
-            address: '123 Tech Park, San Francisco, CA 94107',
-          },
-          {
-            user_id: userId,
-            name: 'Sarah Johnson',
-            company: 'Summit Studios',
-            email: 'sarah@summitstudios.com',
-            address: '456 Creative Ave, Los Angeles, CA 90028',
-          },
-        ])
-        .select();
-
-      if (clientsError || !clients) {
-        console.error('Error seeding clients:', clientsError);
-        return;
-      }
-
-      // Insert demo invoices
-      const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const fifteenDaysAgo = new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000);
-      const inFifteenDays = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
-
-      await supabase.from('invoices').insert([
-        {
-          user_id: userId,
-          client_id: clients[0].id,
-          status: 'paid',
-          invoice_number: 'INV-001',
-          issue_date: thirtyDaysAgo.toISOString().split('T')[0],
-          due_date: fifteenDaysAgo.toISOString().split('T')[0],
-          currency: 'USD',
-          total_amount: 3200,
-          subtotal: 3000,
-          tax_rate: 10,
-          discount_rate: 5,
-          items: [
-            { id: '1', description: 'Website Design', quantity: 1, rate: 2000 },
-            { id: '2', description: 'Logo Design', quantity: 1, rate: 1000 },
-          ],
-          business_details: {
-            name: 'Your Business',
-            email: 'contact@yourbusiness.com',
-            phone: '+1 (555) 123-4567',
-            address: '789 Main St, New York, NY 10001',
-          },
-          client_details: {
-            name: 'John Smith',
-            company: 'Acme Corporation',
-            email: 'john@acmecorp.com',
-            address: '123 Tech Park, San Francisco, CA 94107',
-          },
-          payment_terms: 'Payment is due within 30 days of invoice date.',
-        },
-        {
-          user_id: userId,
-          client_id: clients[1].id,
-          status: 'pending',
-          invoice_number: 'INV-002',
-          issue_date: fifteenDaysAgo.toISOString().split('T')[0],
-          due_date: inFifteenDays.toISOString().split('T')[0],
-          currency: 'USD',
-          total_amount: 2800,
-          subtotal: 2800,
-          tax_rate: 0,
-          discount_rate: 0,
-          items: [
-            { id: '1', description: 'Brand Strategy Consultation', quantity: 4, rate: 500 },
-            { id: '2', description: 'Market Research Report', quantity: 1, rate: 800 },
-          ],
-          business_details: {
-            name: 'Your Business',
-            email: 'contact@yourbusiness.com',
-            phone: '+1 (555) 123-4567',
-            address: '789 Main St, New York, NY 10001',
-          },
-          client_details: {
-            name: 'Sarah Johnson',
-            company: 'Summit Studios',
-            email: 'sarah@summitstudios.com',
-            address: '456 Creative Ave, Los Angeles, CA 90028',
-          },
-          payment_terms: 'Payment is due within 30 days of invoice date.',
-        },
-        {
-          user_id: userId,
-          client_id: clients[0].id,
-          status: 'draft',
-          invoice_number: 'INV-003',
-          issue_date: today.toISOString().split('T')[0],
-          due_date: inFifteenDays.toISOString().split('T')[0],
-          currency: 'USD',
-          total_amount: 1500,
-          subtotal: 1500,
-          tax_rate: 0,
-          discount_rate: 0,
-          items: [
-            { id: '1', description: 'Mobile App UI Design', quantity: 1, rate: 1500 },
-          ],
-          business_details: {
-            name: 'Your Business',
-            email: 'contact@yourbusiness.com',
-            phone: '+1 (555) 123-4567',
-            address: '789 Main St, New York, NY 10001',
-          },
-          client_details: {
-            name: 'John Smith',
-            company: 'Acme Corporation',
-            email: 'john@acmecorp.com',
-            address: '123 Tech Park, San Francisco, CA 94107',
-          },
-          payment_terms: 'Payment is due within 30 days of invoice date.',
-        },
-      ]);
-    } catch (error) {
-      console.error('Error seeding demo data:', error);
-    }
-  };
+  }, [ensureProfile]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    role: UserRole,
+    extras?: SignUpExtras
+  ) => {
     // The confirmation link must land on /auth/callback, which turns the code in the
     // URL into a session and THEN forwards to the app. Pointing it straight at a
     // protected route races ProtectedRoute and bounces the user back to /signin.
@@ -205,7 +154,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { full_name: name },
+        data: {
+          full_name: name,
+          role,
+          tiktok_handle: extras?.tiktok_handle,
+          payout_provider: extras?.payout_provider,
+          payout_number: extras?.payout_number,
+          company_name: extras?.company_name,
+        },
       },
     });
     return { error: error as Error | null };
@@ -216,13 +172,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInAnonymously = async () => {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    
-    // Wait for seeding to complete BEFORE returning, ensuring dashboard has data
-    if (!error && data.user?.is_anonymous) {
-      await seedDemoData(data.user.id);
+    const { error } = await supabase.auth.signInAnonymously();
+    return { error: error as Error | null };
+  };
+
+  const switchDemoRole = async (role: UserRole) => {
+    if (!user) return { error: new Error('Not signed in') };
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', user.id);
+    if (!error) {
+      setProfile((prev) => (prev ? { ...prev, role } : prev));
     }
-    
+    return { error: error as Error | null };
+  };
+
+  const updateProfile = async (patch: Partial<Profile>) => {
+    if (!user) return { error: new Error('Not signed in') };
+    const { error } = await supabase
+      .from('profiles')
+      .update(patch)
+      .eq('id', user.id);
+    if (!error) await refreshProfile();
     return { error: error as Error | null };
   };
 
@@ -233,10 +205,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         isLoading,
         isAnonymous,
+        profile,
+        refreshProfile,
+        updateProfile,
         signIn,
         signUp,
         signOut,
         signInAnonymously,
+        switchDemoRole,
       }}
     >
       {children}
@@ -251,3 +227,6 @@ export function useAuth() {
   }
   return context;
 }
+
+export const roleHome = (role: UserRole | null | undefined) =>
+  role === 'brand' ? '/brand' : '/creator';

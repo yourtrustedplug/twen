@@ -37,8 +37,6 @@ const accountLinks = [
 
 const authenticatedLinks = [
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Clients', href: '/clients' },
-  { label: 'New Invoice', href: '/invoice' },
 ];
 
 const prefetchAbout = () => {
@@ -80,10 +78,10 @@ const Navbar = () => {
               <div className="relative h-8 overflow-hidden">
                 <div className="flex flex-col">
                   <span className="text-foreground text-[1.675rem] font-bold font-display leading-8 max-xs:text-[1.5rem] transition-transform duration-300 group-hover:-translate-y-8">
-                    Invofy
+                    Unignored
                   </span>
                   <span className="text-foreground text-[1.675rem] font-bold font-display leading-8 max-xs:text-[1.5rem] transition-transform duration-300 group-hover:-translate-y-8">
-                    Invofy
+                    Unignored
                   </span>
                 </div>
               </div>
@@ -183,7 +181,7 @@ const Navbar = () => {
 
               {/* Get Started Button */}
               <Button variant="invofy" size="invofy" asChild>
-                <Link to={user ? '/dashboard' : '/invoice'}>
+                <Link to={user ? '/dashboard' : '/signup'}>
                   {user ? 'Dashboard' : 'Get Started'}
                 </Link>
               </Button>
@@ -334,7 +332,7 @@ const Navbar = () => {
                 transition={{ duration: 0.3, delay: 0.35 + 0.05 }}
               >
                 <Button variant="invofy" size="invofy" asChild onClick={() => setIsMenuOpen(false)}>
-                  <Link to={user ? '/dashboard' : '/invoice'}>
+                  <Link to={user ? '/dashboard' : '/signup'}>
                     {user ? 'Dashboard' : 'Get Started'}
                   </Link>
                 </Button>

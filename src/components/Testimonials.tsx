@@ -11,39 +11,39 @@ import client06 from '@/assets/testimonials/client-06.jpg';
 const testimonialsData = [
   {
     avatar: client01,
-    name: 'Emily Watson',
-    role: 'Content Strategist',
-    quote: 'This platform completely simplified how I handle invoices. The interface is clean, the live preview is incredibly helpful, and I can generate professional PDFs in just a few minutes.',
+    name: 'Amina K.',
+    role: 'Creator · Nairobi',
+    quote: 'I stopped waiting for brand deals that were never coming. I post to my own account like always, and now the views actually pay. Withdrawn to MoMo three times already.',
   },
   {
     avatar: client02,
-    name: 'James Carter',
-    role: 'Freelance Designer',
-    quote: "I've tried several invoicing tools before, but this one feels much more intuitive. Customizing the design and seeing changes instantly makes a huge difference in my workflow.",
+    name: 'Brian O.',
+    role: 'Creator · Kampala',
+    quote: "What sold me was seeing the budget before I made anything. Every campaign shows what's left, so I know the money is real before I spend an afternoon filming.",
   },
   {
     avatar: client03,
-    name: 'Olivia Turner',
-    role: 'Photographer',
-    quote: "As a freelancer, I don't want to deal with complicated software. This tool lets me create invoices quickly without any setup or learning curve, which saves me a lot of time.",
+    name: 'Grace M.',
+    role: 'Creator · Dar es Salaam',
+    quote: "My account is three months old. On Unignored that doesn't matter — the rate is the same for everyone. That's why I tell every creator I know about it.",
   },
   {
     avatar: client04,
-    name: 'Sophia Martinez',
-    role: 'Marketing Consultant',
-    quote: "I used to dread invoicing, but now it's actually enjoyable. The templates look professional, and the automatic calculations save me so much time every month.",
+    name: 'Joseph T.',
+    role: 'Brand · Beverages',
+    quote: "One brief, thirty videos, four different languages. We paid per verified view and got the unspent half of the budget back automatically. Nothing else works like that.",
   },
   {
     avatar: client05,
-    name: 'Liam Anderson',
-    role: 'Copywriter',
-    quote: "What I love most is the flexibility. I can customize everything to match my brand, and the PDF exports look polished enough to impress any client.",
+    name: 'Naomi A.',
+    role: 'Brand · E-commerce',
+    quote: 'Ad platforms are cheaper per thousand, but nobody on a feed is a person your customers recognise. This bought us reach that actually felt local.',
   },
   {
     avatar: client06,
-    name: 'Marcus Thompson',
-    role: 'Web Developer',
-    quote: "This tool has become an essential part of my business workflow. Clean design, fast exports, and no unnecessary features — just what I need.",
+    name: 'Samuel W.',
+    role: 'Creator · Mombasa',
+    quote: 'Honest warning: most videos earn small amounts. But it rewards consistency, and the payout lands on my phone the same day the hold lifts.',
   },
 ];
 
@@ -157,14 +157,14 @@ const Testimonials = ({ className, ...props }: TestimonialsProps) => {
             <div className="flex flex-col gap-12 max-md:gap-8">
               <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center px-12 max-lg:px-10 max-md:px-8 max-xs:px-4">
                 <span className="text-xs tracking-[1px] uppercase font-semibold">
-                  Testimonials
+                  Creators & Brands
                 </span>
                 <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-                  Real User Feedback
+                  What Both Sides Say
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-sans font-normal">
-                    See how freelancers and small business owners use the platform to simplify their workflow and work with confidence.
+                    Creators across East Africa turning views into payouts — and the brands funding the campaigns they post on.
                   </p>
                 </div>
               </div>

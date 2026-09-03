@@ -48,14 +48,14 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
         {/* Header */}
         <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center mb-16 max-[767px]:mb-12">
           <span className="text-xs tracking-[1px] uppercase font-semibold">
-            Our Locations
+            Where We Are
           </span>
           <h2 className="text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2rem] leading-[1.2] font-bold font-display">
-            Find Us Near You
+            Find Us on the Ground
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              Whether you prefer to visit in person or connect online, we're here to help. Reach out anytime — we'd love to hear from you.
+              Creators and brands can always reach us online — or come find the team where the campaigns are made.
             </p>
           </div>
         </div>
@@ -68,10 +68,10 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
               <div className="w-1/2 max-[991px]:w-full flex flex-col justify-between">
                 <div>
                   <h3 className="text-4xl max-[991px]:text-3xl max-[767px]:text-2xl font-bold mb-4">
-                    San Francisco, CA
+                    Kampala, Uganda
                   </h3>
                   <p className="text-muted-foreground text-base leading-[1.6] mb-8 max-[767px]:mb-6 w-[80%] max-[991px]:w-full">
-                    Visit our main office or get in touch online. We're always happy to hear from you and ready to assist with any questions.
+                    Our team on the ground works directly with creators, brands, and the mobile money rails that power payouts.
                   </p>
                 </div>
 
@@ -84,7 +84,7 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm text-muted-foreground">Email</span>
-                      <SlideUpLink label="hello@invofy.io" href="mailto:hello@invofy.io" />
+                      <SlideUpLink label="hello@unignored.app" href="mailto:hello@unignored.app" />
                     </div>
                   </div>
 
@@ -120,8 +120,8 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs text-muted-foreground">Location</span>
-                  <SlideUpLink 
-                      label="100 Market Street, Suite 300" 
+                  <SlideUpLink
+                      label="Plot 14, Kampala Road"
                       href="https://www.google.com/maps"
                       external
                       className="text-sm font-semibold max-[479px]:text-xs"

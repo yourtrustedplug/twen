@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaigns: {
+        Row: {
+          angle: string
+          asset_urls: Json
+          avoid: string
+          brand_id: string
+          brand_name: string
+          budget: number
+          closed_at: string | null
+          created_at: string
+          deadline: string | null
+          disclosure: string
+          funded_amount: number
+          hashtags: string
+          id: string
+          must_include: string
+          rate_per_1k: number
+          spent_amount: number
+          status: string
+          title: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          angle?: string
+          asset_urls?: Json
+          avoid?: string
+          brand_id: string
+          brand_name?: string
+          budget?: number
+          closed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          disclosure?: string
+          funded_amount?: number
+          hashtags?: string
+          id?: string
+          must_include?: string
+          rate_per_1k?: number
+          spent_amount?: number
+          status?: string
+          title: string
+          topic?: string
+          updated_at?: string
+        }
+        Update: {
+          angle?: string
+          asset_urls?: Json
+          avoid?: string
+          brand_id?: string
+          brand_name?: string
+          budget?: number
+          closed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          disclosure?: string
+          funded_amount?: number
+          hashtags?: string
+          id?: string
+          must_include?: string
+          rate_per_1k?: number
+          spent_amount?: number
+          status?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -46,6 +115,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      earnings: {
+        Row: {
+          amount: number
+          campaign_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          submission_id: string
+          views_delta: number
+        }
+        Insert: {
+          amount?: number
+          campaign_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          submission_id: string
+          views_delta?: number
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          submission_id?: string
+          views_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
@@ -127,12 +241,191 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          creator_id: string
+          id: string
+          phone: string
+          provider: string
+          release_at: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          creator_id: string
+          id?: string
+          phone: string
+          provider: string
+          release_at?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          creator_id?: string
+          id?: string
+          phone?: string
+          provider?: string
+          release_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          id_verification_status: string
+          payout_number: string | null
+          payout_provider: string | null
+          phone: string | null
+          role: string
+          tiktok_handle: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          id_verification_status?: string
+          payout_number?: string | null
+          payout_provider?: string | null
+          phone?: string | null
+          role?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          id_verification_status?: string
+          payout_number?: string | null
+          payout_provider?: string | null
+          phone?: string | null
+          role?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          creator_id: string
+          creator_name: string
+          earnings: number
+          id: string
+          last_verified_at: string | null
+          rejection_reason: string | null
+          status: string
+          tiktok_handle: string
+          tiktok_url: string
+          updated_at: string
+          verified_views: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          creator_id: string
+          creator_name?: string
+          earnings?: number
+          id?: string
+          last_verified_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          tiktok_handle?: string
+          tiktok_url: string
+          updated_at?: string
+          verified_views?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          creator_id?: string
+          creator_name?: string
+          earnings?: number
+          id?: string
+          last_verified_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          tiktok_handle?: string
+          tiktok_url?: string
+          updated_at?: string
+          verified_views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          campaign_id: string | null
+          created_at: string
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          campaign_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          campaign_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accrue_views: {
+        Args: { p_new_views: number; p_submission_id: string }
+        Returns: number
+      }
+      close_campaign: { Args: { p_campaign_id: string }; Returns: undefined }
+      fund_campaign: { Args: { p_campaign_id: string }; Returns: undefined }
+      request_payout: {
+        Args: { p_amount: number; p_phone: string; p_provider: string }
+        Returns: string
+      }
+      seed_demo_data: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -1,15 +1,15 @@
 const missionBlocks = [
   {
-    title: 'Simplify Financial Tasks',
-    description: 'We aim to remove the complexity from invoicing and document creation, making essential financial tasks faster and easier for everyone.',
+    title: 'Pay for What Happens',
+    description: 'We believe attention should be measured, not guessed. Creators earn on verified views — never on follower counts or promises.',
   },
   {
-    title: 'Enable Solo Entrepreneurs',
-    description: 'Our platform is built to empower freelancers and small business owners with tools that improve organization, clarity, and professionalism.',
+    title: 'Money Before Work',
+    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits their time, and unspent money goes back.',
   },
   {
-    title: 'Deliver Practical Solutions',
-    description: 'We focus on building features that solve real-world needs, helping users save time and stay focused on growing their work.',
+    title: 'Built for This Region',
+    description: 'Mobile money payouts, local creators, local languages, local formats. Payout is MTN MoMo or Airtel Money — not PayPal, not crypto.',
   },
 ];
 
@@ -23,7 +23,7 @@ const AboutMission = () => {
             Our Mission
           </span>
           <h2 className="text-[2.5rem] max-[991px]:text-[2rem] max-[479px]:text-2xl font-bold leading-[1.2] max-w-[50rem]">
-            Invofy was built to simplify everyday work by creating intuitive tools that help freelancers and small businesses focus on what matters most.
+            You already make the videos. You already get the views. Unignored is where those views turn into money.
           </h2>
         </div>
 
