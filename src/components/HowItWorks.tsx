@@ -8,17 +8,17 @@ const stepsData = [
   {
     number: '01',
     title: 'Browse Campaigns',
-    description: 'Each one shows the brand, the rate per thousand views, the remaining budget, and the deadline.',
+    description: 'Rate, remaining budget and deadline, all upfront.',
   },
   {
     number: '02',
     title: 'Post to Your Own TikTok',
-    description: 'Follow the brief — topic, angle, hashtags, disclosure — then submit the link to your video.',
+    description: 'Follow the brief, then submit your link.',
   },
   {
     number: '03',
     title: 'Get Paid to Mobile Money',
-    description: 'Views verify on a schedule, earnings accrue against the budget, and you withdraw to MoMo or Airtel.',
+    description: 'Withdraw verified earnings to MoMo or Airtel.',
   },
 ];
 
@@ -43,7 +43,7 @@ const HowItWorks = ({ className, ...props }: HowItWorksProps) => {
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              You already make the videos. Unignored is simply where those views start paying — no setup, no negotiation, no minimum follower count.
+You already make the videos. Here they pay.
             </p>
           </div>
         </div>

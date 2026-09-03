@@ -13,37 +13,37 @@ const testimonialsData = [
     avatar: client01,
     name: 'Amina K.',
     role: 'Creator · Nairobi',
-    quote: 'I stopped waiting for brand deals that were never coming. I post to my own account like always, and now the views actually pay. Withdrawn to MoMo three times already.',
+    quote: 'I post like always. Now the views pay. Three MoMo withdrawals already.',
   },
   {
     avatar: client02,
     name: 'Brian O.',
     role: 'Creator · Kampala',
-    quote: "What sold me was seeing the budget before I made anything. Every campaign shows what's left, so I know the money is real before I spend an afternoon filming.",
+    quote: "I see the budget before I film. The money is already there.",
   },
   {
     avatar: client03,
     name: 'Grace M.',
     role: 'Creator · Dar es Salaam',
-    quote: "My account is three months old. On Unignored that doesn't matter — the rate is the same for everyone. That's why I tell every creator I know about it.",
+    quote: "My account is three months old. Same rate as everyone.",
   },
   {
     avatar: client04,
     name: 'Joseph T.',
     role: 'Brand · Beverages',
-    quote: "One brief, thirty videos, four different languages. We paid per verified view and got the unspent half of the budget back automatically. Nothing else works like that.",
+    quote: "One brief, thirty videos. Unspent budget came straight back.",
   },
   {
     avatar: client05,
     name: 'Naomi A.',
     role: 'Brand · E-commerce',
-    quote: 'Ad platforms are cheaper per thousand, but nobody on a feed is a person your customers recognise. This bought us reach that actually felt local.',
+    quote: 'Reach that actually felt local.',
   },
   {
     avatar: client06,
     name: 'Samuel W.',
     role: 'Creator · Mombasa',
-    quote: 'Honest warning: most videos earn small amounts. But it rewards consistency, and the payout lands on my phone the same day the hold lifts.',
+    quote: 'Most videos earn small. Consistency is what pays.',
   },
 ];
 
@@ -164,7 +164,7 @@ const Testimonials = ({ className, ...props }: TestimonialsProps) => {
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-sans font-normal">
-                    Creators across East Africa turning views into payouts — and the brands funding the campaigns they post on.
+Creators and brands across East Africa.
                   </p>
                 </div>
               </div>

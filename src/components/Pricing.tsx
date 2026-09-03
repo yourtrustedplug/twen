@@ -24,7 +24,7 @@ const Pricing = ({ className, ...props }: PricingProps) => {
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              No subscription, no platform fee on creators, no fine print. Brands fund a budget and pay a published rate per 1,000 verified views.
+A published rate per 1,000 verified views. Nothing else.
             </p>
           </div>
         </div>

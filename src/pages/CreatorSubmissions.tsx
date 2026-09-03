@@ -6,6 +6,7 @@ import AppHeader from '@/components/AppHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { Submission } from '@/types/unignored';
 import { formatMoney, formatDate, formatViews } from '@/lib/format';
+import { campaignImage } from '@/lib/campaign-image';
 import { Loader2 } from 'lucide-react';
 
 interface SubmissionRow extends Submission {
@@ -38,9 +39,7 @@ const CreatorSubmissions = () => {
       <AppHeader />
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
         <h1 className="font-display text-4xl font-bold mb-2">My submissions</h1>
-        <p className="text-muted-foreground mb-10">
-          View counts refresh on a fixed schedule against TikTok's data. Earnings accrue against the campaign budget until it's exhausted.
-        </p>
+        <p className="text-muted-foreground mb-10">Views refresh on a schedule.</p>
 
         <div className="grid grid-cols-2 gap-4 mb-12">
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-7">
@@ -69,6 +68,15 @@ const CreatorSubmissions = () => {
           <div className="flex flex-col gap-4">
             {rows.map((r) => (
               <div key={r.id} className="bg-white border border-[#f1f1f1] rounded-[30px] p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
+                <img
+                  src={campaignImage(r.campaign_id)}
+                  alt=""
+                  width={768}
+                  height={576}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full md:w-28 h-40 md:h-20 rounded-[20px] object-cover shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <p className="font-semibold truncate">{r.campaigns?.title ?? 'Campaign'}</p>

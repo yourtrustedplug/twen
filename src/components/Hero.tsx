@@ -69,12 +69,12 @@ const Hero = () => {
                 </span>
 
                 <h1 className="text-center text-[5rem] 2xl:text-[5.25rem] max-lg:text-[8vw] max-xs:text-[9vw] leading-[1.2] font-bold font-display">
-                  Brands Fund Campaigns. Creators Get Paid Per View.
+                  Get Paid Per View
                 </h1>
 
                 <div className="w-full max-w-[30rem] mx-auto">
                   <p className="text-muted-foreground text-center text-lg leading-[1.4] font-normal">
-                    Post to your own TikTok, keep your own audience, and withdraw to MTN MoMo or Airtel Money. No follower minimum, no agency retainer.
+Post. Get views. Withdraw to MoMo or Airtel.
                   </p>
                 </div>
 

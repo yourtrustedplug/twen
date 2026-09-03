@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, Submission } from '@/types/unignored';
 import { formatMoney, formatDate, formatRate, formatViews } from '@/lib/format';
+import { campaignImage } from '@/lib/campaign-image';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
 const CreatorCampaignDetail = () => {
@@ -99,11 +100,25 @@ const CreatorCampaignDetail = () => {
           <ArrowLeft className="h-4 w-4" /> Back to browse
         </Link>
 
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <h1 className="font-display text-4xl font-bold">{campaign.title}</h1>
-          <StatusBadge status={campaign.status} />
+        <div className="relative rounded-[34px] overflow-hidden mb-8 aspect-[16/9]">
+          <img
+            src={campaignImage(campaign.id)}
+            alt={`${campaign.brand_name} campaign`}
+            width={768}
+            height={576}
+            decoding="async"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-5 right-5">
+            <StatusBadge status={campaign.status} />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 p-8 max-md:p-6 bg-gradient-to-t from-black/75 to-transparent">
+            <p className="text-xs uppercase tracking-[1px] font-semibold text-white/80 mb-1">
+              {campaign.brand_name} · {formatDate(campaign.deadline)}
+            </p>
+            <h1 className="font-display text-4xl max-md:text-2xl font-bold text-white">{campaign.title}</h1>
+          </div>
         </div>
-        <p className="text-muted-foreground mb-8">{campaign.brand_name} · Deadline {formatDate(campaign.deadline)}</p>
 
         <div className="grid grid-cols-2 gap-4 mb-10">
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-6">
@@ -111,7 +126,7 @@ const CreatorCampaignDetail = () => {
             <p className="font-display text-2xl font-bold">{formatRate(campaign.rate_per_1k)}</p>
           </div>
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-6">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Remaining budget</p>
+            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Remaining</p>
             <p className="font-display text-2xl font-bold">{formatMoney(remaining)}</p>
           </div>
         </div>
@@ -159,12 +174,7 @@ const CreatorCampaignDetail = () => {
           </div>
         ) : (
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-5">
-            <h2 className="font-display text-2xl font-bold">Post to your own account, then submit the link</h2>
-            <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
-              <li>Make the video following the brief.</li>
-              <li>Post it to your own TikTok with the required hashtags and {campaign.disclosure || '#ad'}.</li>
-              <li>Paste the video link here.</li>
-            </ol>
+            <h2 className="font-display text-2xl font-bold">Post it, then drop the link</h2>
             <div className="flex flex-col gap-2">
               <Label htmlFor="tiktok-url">TikTok video link</Label>
               <Input
