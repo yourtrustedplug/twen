@@ -15,7 +15,7 @@ const AudienceGate = () => {
 
   const choose = (audience: Audience) => {
     rememberAudience(audience);
-    navigate(audiencePath(audience));
+    navigate(`/signup?role=${audience}`);
   };
 
   return (
