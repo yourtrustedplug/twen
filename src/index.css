@@ -4,7 +4,7 @@
 
 /* Fonts are now loaded via link tags in index.html for non-blocking render */
 
-/* Invofy Design System – custom Tailwind-based design system */
+/* Unignored Design System – custom Tailwind-based design system */
 
 @layer base {
   :root {

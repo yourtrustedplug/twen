@@ -163,7 +163,7 @@ const newPasswordSchema = z.object({
          <Link to="/" className="flex items-center gap-2 no-underline">
            <LogoIcon />
            <span className="text-foreground text-[1.675rem] max-[479px]:text-[1.5rem] font-bold font-display leading-[1.2]">
-             Invofy
+             Unignored
            </span>
          </Link>
        </header>
@@ -316,7 +316,7 @@ const newPasswordSchema = z.object({
            <Link to="/" className="flex items-center gap-2 no-underline">
              <LogoIcon />
              <span className="text-foreground text-xl max-[479px]:text-lg font-bold font-display leading-[1.2]">
-               Invofy
+               Unignored
              </span>
            </Link>
            
