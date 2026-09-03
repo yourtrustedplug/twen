@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { Audience, audiencePath, rememberAudience } from '@/lib/audience';
+import { Audience, rememberAudience } from '@/lib/audience';
 import creatorImage from '@/assets/gate/gate-creator.jpg';
 import brandImage from '@/assets/gate/gate-brand.jpg';
 

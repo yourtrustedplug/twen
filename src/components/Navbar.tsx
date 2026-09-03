@@ -23,9 +23,10 @@ const LogoIcon = () => (
 );
 
 const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
+  { label: 'Why Creators', href: '/creators' },
+  { label: 'Why Brands', href: '/brands' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
 
