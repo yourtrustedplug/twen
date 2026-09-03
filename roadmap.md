@@ -10,5 +10,5 @@
 - [x] Secondary pages: About, Pricing→How earnings work, Contact, 404, index.html metadata
 - [x] Cleanup: remove invoice/client pages, components, hooks
 - [x] Edge function: verify-views (scheduled, simulated until TikTok credentials added)
-- [ ] Playwright verification pass
+- [x] Playwright verification pass
 - [ ] NardoPay: waiting on API keys (add as secrets; wire into funding + payouts, no schema change needed)
