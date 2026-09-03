@@ -5,6 +5,7 @@ import AppHeader from '@/components/AppHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { Campaign } from '@/types/unignored';
 import { formatMoney, formatDate, formatRate } from '@/lib/format';
+import { campaignImage } from '@/lib/campaign-image';
 import { Loader2 } from 'lucide-react';
 
 const CreatorBrowse = () => {
