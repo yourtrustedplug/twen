@@ -36,7 +36,7 @@ const PricingHeader = ({ className, ...props }: PricingHeaderProps) => {
 
             {/* Description */}
             <p className="text-muted-foreground text-lg max-[479px]:text-base leading-[1.4] font-normal max-w-[40rem]">
-              You don't pay Unignored a monthly fee and we don't pay creators per follower. The rate is published per 1,000 views before anyone commits — and it never changes mid-campaign.
+One published rate per 1,000 views. It never changes mid-campaign.
             </p>
           </div>
           

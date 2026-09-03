@@ -13,27 +13,27 @@ const featuresData = [
   {
     icon: featureIcon01,
     title: 'Escrow-Funded Campaigns',
-    description: 'The budget is fully funded before a campaign goes live. The money exists before you make anything.',
+    description: 'Budgets funded before campaigns go live.',
   },
   {
     icon: featureIcon02,
     title: 'Verified Views',
-    description: 'Every view is checked against platform APIs and screened for inauthentic patterns before it pays.',
+    description: 'Checked against the platform before they pay.',
   },
   {
     icon: featureIcon03,
     title: 'Your Own Account',
-    description: 'Post to your own TikTok and keep the audience you build. No follower minimum, ever.',
+    description: 'Your TikTok, your audience. No follower minimum.',
   },
   {
     icon: featureIcon04,
     title: 'Mobile Money Payouts',
-    description: 'Withdraw to MTN MoMo or Airtel Money. Not a bank transfer, not crypto, not PayPal.',
+    description: 'MTN MoMo or Airtel Money. Same day.',
   },
   {
     icon: featureIcon05,
     title: 'Live Remaining Budget',
-    description: 'Every campaign shows its remaining budget before you commit your time to a video.',
+    description: 'See what is left before you film.',
   },
 ];
 
@@ -65,7 +65,7 @@ const Features = ({ className, ...props }: FeaturesProps) => {
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-                    Campaigns funded upfront, views verified against the platform, earnings paid straight to mobile money. That's the whole model.
+Funded upfront. Verified views. Mobile money.
                   </p>
                 </div>
               </div>

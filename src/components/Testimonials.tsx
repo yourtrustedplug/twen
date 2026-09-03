@@ -164,7 +164,7 @@ const Testimonials = ({ className, ...props }: TestimonialsProps) => {
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-sans font-normal">
-                    Creators across East Africa turning views into payouts — and the brands funding the campaigns they post on.
+Creators and brands across East Africa.
                   </p>
                 </div>
               </div>
