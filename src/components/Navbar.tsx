@@ -69,10 +69,10 @@ const Navbar = () => {
   const currentAccountLinks = user ? authenticatedLinks : accountLinks;
 
   return (
-    <nav className="absolute inset-x-0 top-0 z-50 bg-transparent">
+    <nav className="fixed inset-x-0 top-0 z-50 bg-transparent pt-3 max-xs:pt-2">
       <div className="w-full h-full px-5 md:px-10">
-        <div className="w-full max-w-[100rem] h-full mx-auto">
-          <div className="flex flex-row justify-between items-center py-4">
+        <div className="w-full max-w-[90rem] h-full mx-auto rounded-full border border-border/60 bg-background/70 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-5 md:px-6 max-lg:bg-transparent max-lg:border-none max-lg:shadow-none max-lg:px-0">
+          <div className="flex flex-row justify-between items-center py-2 max-lg:py-4">
             {/* Logo */}
             <Link to="/" className="relative z-10 flex items-center gap-2 no-underline group">
               <LogoIcon />
