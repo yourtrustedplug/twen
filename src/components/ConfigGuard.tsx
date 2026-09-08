@@ -41,16 +41,16 @@ export function ConfigGuard({ children }: { children: React.ReactNode }) {
 
   if (status === 'missing') {
     const missing = [
-      !hasSupabaseConfig && 'VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY',
-      !hasPrivyConfig && 'VITE_PRIVY_APP_ID',
+      !hasSupabaseConfig && 'SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY',
+      !hasPrivyConfig && 'PRIVY_APP_ID',
     ].filter(Boolean);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center bg-background text-foreground">
         <h1 className="text-xl font-semibold">Missing deploy environment</h1>
         <p className="text-sm text-muted-foreground max-w-lg">
-          This build is missing <code className="font-mono">{missing.join(', ')}</code>. Set them in
-          Vercel → Settings → Environment Variables (Production), then{' '}
-          <strong>redeploy</strong> — Vite bakes these in at build time.
+          This build is missing <code className="font-mono">{missing.join(', ')}</code>. Add those
+          names in Vercel → Settings → Environment Variables (no <code className="font-mono">VITE_</code>{' '}
+          prefix — use Secret), then <strong>redeploy</strong>.
         </p>
       </div>
     );
