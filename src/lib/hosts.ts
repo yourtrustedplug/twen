@@ -123,22 +123,51 @@ export function roleAppHref(role: string | null | undefined, path: string): stri
   return `${origin}${normalized}`;
 }
 
-/** Navigate within the SPA, or hard-assign when the role subdomain differs. */
-export function goToAppPath(
+/** Navigate within the SPA, or hard-assign when the role subdomain differs.
+ * Cross-host jumps attach the Supabase session in the hash so the destination
+ * can restore it (Privy localStorage does not cross subdomains).
+ */
+export async function goToAppPath(
   role: string | null | undefined,
   path: string,
   navigate?: (to: string, opts?: { replace?: boolean }) => void,
   replace = true,
-): void {
+): Promise<void> {
   const href = roleAppHref(role, path);
   if (href.startsWith('http')) {
-    if (replace) window.location.replace(href);
-    else window.location.assign(href);
+    let target = href;
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      if (session?.access_token && session?.refresh_token) {
+        const url = new URL(href);
+        url.hash = new URLSearchParams({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          type: 'handoff',
+        }).toString();
+        target = url.toString();
+      }
+    } catch {
+      /* proceed without handoff */
+    }
+    if (replace) window.location.replace(target);
+    else window.location.assign(target);
     return;
   }
   if (navigate) navigate(href, { replace });
   else if (replace) window.location.replace(href);
   else window.location.assign(href);
+}
+
+/** Where to open Privy for a role so login and app share one origin. */
+export function authStartHref(role: 'creator' | 'brand'): string | null {
+  if (typeof window === 'undefined') return null;
+  const host = getHostname();
+  if (isLocalApex(host)) return null;
+  if (getAppTenant() === role) return null;
+  return `${tenantOrigin(role)}/signin?role=${role}`;
 }
 
 /**

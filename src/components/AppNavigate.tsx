@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { goToAppPath, roleAppHref } from '@/lib/hosts';
 import { Loader2 } from 'lucide-react';
 
-/** Same-origin Navigate, or hard redirect to the role subdomain. */
+/** Same-origin Navigate, or hard redirect to the role subdomain (with session handoff). */
 export function AppNavigate({
   role,
   path,
@@ -14,9 +14,12 @@ export function AppNavigate({
   replace?: boolean;
 }) {
   const href = roleAppHref(role, path);
+  const started = useRef(false);
 
   useEffect(() => {
-    if (href.startsWith('http')) goToAppPath(role, path, undefined, replace);
+    if (!href.startsWith('http') || started.current) return;
+    started.current = true;
+    void goToAppPath(role, path, undefined, replace);
   }, [href, role, path, replace]);
 
   if (href.startsWith('http')) {

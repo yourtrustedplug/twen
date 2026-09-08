@@ -72,6 +72,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authSyncError, setAuthSyncError] = useState<string | null>(null);
   const syncing = useRef(false);
   const lastPrivyId = useRef<string | null>(null);
+  /** True after Privy has been authenticated on this origin (so we can clear Supabase on logout). */
+  const privySeenAuthed = useRef(false);
+
+  // Restore Supabase session when arriving from another subdomain (hash handoff).
+  useEffect(() => {
+    const raw = window.location.hash.replace(/^#/, '');
+    if (!raw) return;
+    const params = new URLSearchParams(raw);
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (!access_token || !refresh_token) return;
+
+    void supabase.auth
+      .setSession({ access_token, refresh_token })
+      .finally(() => {
+        const clean = `${window.location.pathname}${window.location.search}`;
+        window.history.replaceState(null, '', clean);
+      });
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -196,8 +215,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!authenticated || !privyUser) {
       lastPrivyId.current = null;
-      // If Privy signed out but Supabase still has a session, clear it
-      if (!authenticated) {
+      // Only clear Supabase when Privy logged out on this origin.
+      // Do not wipe a handoff session on creator./brand. when Privy localStorage is empty.
+      if (!authenticated && privySeenAuthed.current) {
+        privySeenAuthed.current = false;
         void supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (s) void supabase.auth.signOut();
         });
@@ -205,6 +226,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
+
+    privySeenAuthed.current = true;
 
     if (lastPrivyId.current === privyUser.id) {
       setIsLoading(false);
@@ -258,6 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     lastPrivyId.current = null;
+    privySeenAuthed.current = false;
     try {
       await privyLogout();
     } catch {
