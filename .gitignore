@@ -11,6 +11,8 @@ lerna-debug.log*
 .env
 .env.*
 !.env.example
+# Public browser config only (anon key + Privy app id). Never put secrets here.
+!.env.production
 
 node_modules
 dist
