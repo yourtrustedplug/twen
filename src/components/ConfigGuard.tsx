@@ -6,8 +6,8 @@ type Status = 'checking' | 'ok' | 'bad' | 'missing';
 const hasPrivyConfig = Boolean((import.meta.env.VITE_PRIVY_APP_ID as string | undefined)?.trim());
 
 /**
- * Blocks boot when VITE_ env is missing (common Vercel misconfig → white screen).
- * Otherwise warns when publishable keys are rejected by the project.
+ * Blocks boot when client env is missing.
+ * Only flags keys as invalid on HTTP 401/403 — network blips must not scare users.
  */
 export function ConfigGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>(() =>
@@ -24,13 +24,16 @@ export function ConfigGuard({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        // Prefer REST — auth/v1/health can be misleading with opaque keys.
         const res = await fetch(`${url}/rest/v1/profiles?select=id&limit=1`, {
           headers: { apikey: key, Authorization: `Bearer ${key}` },
         });
-        if (!cancelled) setStatus(res.ok || res.status === 206 ? 'ok' : 'bad');
+        if (cancelled) return;
+        // 401/403 = wrong key. Anything else (200, RLS empty, 5xx, CORS) is not "invalid keys".
+        if (res.status === 401 || res.status === 403) setStatus('bad');
+        else setStatus('ok');
       } catch {
-        if (!cancelled) setStatus('bad');
+        // Offline / adblock / transient — don't show the scary banner.
+        if (!cancelled) setStatus('ok');
       }
     })();
 
@@ -60,9 +63,9 @@ export function ConfigGuard({ children }: { children: React.ReactNode }) {
     <>
       {status === 'bad' && !dismissed ? (
         <div className="sticky top-0 z-[100] bg-rose-700 text-white px-4 py-3 text-sm text-center">
-          Supabase API keys in <code className="font-mono">.env</code> are invalid for this project.
-          Refresh publishable + secret from the Dashboard, paste <code className="font-mono">supabase/LAUNCH.sql</code>,
-          then deploy edge functions.{' '}
+          Supabase rejected this app&apos;s publishable key (HTTP 401/403). Update{' '}
+          <code className="font-mono">SUPABASE_PUBLISHABLE_KEY</code> in{' '}
+          <code className="font-mono">.env.production</code> from the Dashboard, then redeploy.{' '}
           <button type="button" className="underline ml-2" onClick={() => setDismissed(true)}>
             Dismiss
           </button>
