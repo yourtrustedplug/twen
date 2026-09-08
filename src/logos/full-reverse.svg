@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none" role="img" aria-label="Twen">
+  <defs>
+    <linearGradient id="twenGradFullRev" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFDFD2"/>
+      <stop offset="1" stop-color="#FFB0B6"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="14" fill="#F5F5F5"/>
+  <circle cx="29.5" cy="18" r="9.25" fill="url(#twenGradFullRev)"/>
+  <circle cx="14.5" cy="21.5" r="4.5" fill="url(#twenGradFullRev)"/>
+  <path
+    d="M11 31.5 C14 40.5 34 41.5 38 29.5"
+    stroke="url(#twenGradFullRev)"
+    stroke-width="6.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <text
+    x="60"
+    y="33"
+    fill="#F5F5F5"
+    font-family="Inter Tight, Inter, Helvetica Neue, Arial, sans-serif"
+    font-size="32"
+    font-weight="700"
+    letter-spacing="-0.04em"
+  >Twen</text>
+</svg>

@@ -1,20 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import CreatorCard from '@/components/CreatorCard';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import type { ProfileRow } from '@/types/unignored';
 import { PLATFORMS, PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { isPro } from '@/lib/plan';
+import { Loader2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
 
 const BrandCreatorMarketplace = () => {
+  const { profile } = useAuth();
+  const pro = isPro(profile);
+
   const [creators, setCreators] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [platform, setPlatform] = useState<string>('all');
+  const [platform, setPlatform] = useState('all');
 
   useEffect(() => {
+    if (!pro) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from('profiles')
       .select('*')
@@ -25,28 +36,59 @@ const BrandCreatorMarketplace = () => {
         setCreators((data as ProfileRow[]) ?? []);
         setLoading(false);
       });
-  }, []);
+  }, [pro]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return creators.filter((c) => {
       const platforms = parseStringArray(c.platforms);
-      const matchesPlatform = platform === 'all' || platforms.includes(platform);
-      const matchesQuery =
-        !q ||
+      if (platform !== 'all' && !platforms.includes(platform)) return false;
+      if (!q) return true;
+      return (
         (c.full_name ?? '').toLowerCase().includes(q) ||
         (c.tiktok_handle ?? '').toLowerCase().includes(q) ||
-        (c.location ?? '').toLowerCase().includes(q);
-      return matchesPlatform && matchesQuery;
+        (c.instagram_handle ?? '').toLowerCase().includes(q) ||
+        (c.city ?? '').toLowerCase().includes(q) ||
+        (c.country ?? '').toLowerCase().includes(q) ||
+        (c.location ?? '').toLowerCase().includes(q) ||
+        (c.bio ?? '').toLowerCase().includes(q)
+      );
     });
   }, [creators, query, platform]);
+
+  if (!pro) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <main className="max-w-2xl mx-auto px-5 md:px-10 py-20 text-center">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12">
+            <Lock className="h-8 w-8 mx-auto mb-5 text-muted-foreground" />
+            <h1 className="font-display text-3xl font-bold mb-3">Browse creators is Twen Plus</h1>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              Free brands run open bounty campaigns. Twen Plus lets you search creators, filter by niche and platform, and hire directly.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button variant="invofy" size="invofy" asChild>
+                <Link to="/pricing">See Twen Plus</Link>
+              </Button>
+              <Button variant="invofyOutline" size="invofy" asChild>
+                <Link to="/brand">Back to campaigns</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
-        <h1 className="font-display text-4xl font-bold mb-2">Creators</h1>
-        <p className="text-muted-foreground mb-8">Rate cards, reach, engagement. Message or hire directly.</p>
+      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-10">
+        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Find creators</h1>
+        <p className="text-muted-foreground mb-8">
+          Real people to distribute your content. Message or hire.
+        </p>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <Input
@@ -79,7 +121,7 @@ const BrandCreatorMarketplace = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12 text-center text-muted-foreground">
-            No creators match that yet.
+            No creators match those filters.
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

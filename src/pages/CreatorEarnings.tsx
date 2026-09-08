@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Payout, Submission, WalletTransaction } from '@/types/unignored';
 import { formatMoney, formatDate } from '@/lib/format';
+import { isPro } from '@/lib/plan';
+import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import { Loader2, Wallet } from 'lucide-react';
 
 const HOLD_DAYS = 7;
@@ -29,6 +31,7 @@ const CreatorEarnings = () => {
   const [provider, setProvider] = useState<'mtn_momo' | 'airtel_money'>('mtn_momo');
   const [phone, setPhone] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const creatorIsPro = isPro(profile);
 
   useEffect(() => {
     if (!user) return;
@@ -57,6 +60,8 @@ const CreatorEarnings = () => {
       const closedAt = r.campaigns?.closed_at ? new Date(r.campaigns.closed_at) : null;
       if (!closedAt) {
         accruing += amt;
+      } else if (creatorIsPro) {
+        available += amt;
       } else {
         const releaseAt = new Date(closedAt.getTime() + HOLD_DAYS * 24 * 60 * 60 * 1000);
         if (releaseAt.getTime() <= Date.now()) available += amt;
@@ -67,7 +72,7 @@ const CreatorEarnings = () => {
       .filter((p) => p.status !== 'failed')
       .reduce((sum, p) => sum + Number(p.amount), 0);
     return { available: Math.max(available - withdrawn, 0), held, accruing, withdrawn };
-  }, [rows, payouts]);
+  }, [rows, payouts, creatorIsPro]);
 
   const withdraw = async () => {
     const value = Number(amount);
@@ -80,14 +85,16 @@ const CreatorEarnings = () => {
       return;
     }
     setWithdrawing(true);
-    const { error } = await supabase.rpc('request_payout', {
-      p_amount: value,
-      p_provider: provider,
-      p_phone: phone.trim(),
+    const { data, error } = await supabase.functions.invoke('request-creator-payout', {
+      body: { amount: value, provider, phone: phone.trim() },
     });
     setWithdrawing(false);
-    if (error) {
-      toast({ title: 'Withdrawal failed', description: error.message, variant: 'destructive' });
+    if (error || data?.error) {
+      toast({
+        title: 'Withdrawal failed',
+        description: edgeFunctionErrorMessage(error, data, 'Could not queue payout'),
+        variant: 'destructive',
+      });
       return;
     }
     if (profile && (profile.payout_provider !== provider || profile.payout_number !== phone.trim())) {
@@ -98,8 +105,8 @@ const CreatorEarnings = () => {
       refreshProfile();
     }
     toast({
-      title: 'Withdrawal requested',
-      description: `Funds release to ${provider === 'mtn_momo' ? 'MTN MoMo' : 'Airtel Money'} after the ${HOLD_DAYS}-day verification window.`,
+      title: 'Withdrawal queued',
+      description: data?.message || `We will send ${provider === 'mtn_momo' ? 'MTN MoMo' : 'Airtel Money'} within 1–2 business days.`,
     });
     setAmount('');
     const { data: p } = await supabase
@@ -116,7 +123,9 @@ const CreatorEarnings = () => {
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
         <h1 className="font-display text-4xl font-bold mb-2">Earnings & payouts</h1>
         <p className="text-muted-foreground mb-10">
-          Earnings are held for a {HOLD_DAYS}-day verification window after a campaign closes, then released to mobile money.
+          {creatorIsPro
+            ? 'Creator Pro: earnings are withdrawable as soon as a campaign closes (ops still sends MoMo within 1–2 business days).'
+            : `Earnings are held for a ${HOLD_DAYS}-day verification window after a campaign closes. Withdrawals queue for mobile money (usually 1–2 business days).`}
         </p>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">

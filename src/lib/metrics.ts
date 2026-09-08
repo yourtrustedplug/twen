@@ -70,8 +70,15 @@ export const daysRemaining = (deadline: string | null) => {
   return Math.max(0, Math.ceil(ms / 86_400_000));
 };
 
-export const MIN_CAMPAIGN_DAYS = 10;
+export const MIN_CAMPAIGN_DAYS = 15;
+
+/** Creators cannot apply when fewer than this many days remain. */
+export const MIN_APPLY_DAYS = 5;
 
 /** Earliest allowed deadline (yyyy-mm-dd) for a new campaign. */
 export const minDeadlineInput = () =>
   new Date(Date.now() + MIN_CAMPAIGN_DAYS * 86_400_000).toISOString().slice(0, 10);
+
+/** True when a creator is still allowed to apply. */
+export const canApplyToCampaign = (deadline: string | null) =>
+  daysRemaining(deadline) >= MIN_APPLY_DAYS;

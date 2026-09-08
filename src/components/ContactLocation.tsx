@@ -84,7 +84,7 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm text-muted-foreground">Email</span>
-                      <SlideUpLink label="hello@unignored.app" href="mailto:hello@unignored.app" />
+                      <SlideUpLink label="hello@twen.app" href="mailto:hello@twen.app" />
                     </div>
                   </div>
 

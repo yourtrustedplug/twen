@@ -20,7 +20,7 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
   return (
     <section
       className={cn(
-        'pt-[240px] pb-32 max-lg:pt-[280px] max-lg:pb-20 max-md:pt-16 max-md:pb-16 bg-background',
+        'relative z-10 bg-background pt-16 pb-32 max-lg:pt-16 max-lg:pb-20 max-md:pt-16 max-md:pb-16',
         className
       )}
       {...props}

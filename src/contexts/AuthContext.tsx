@@ -1,19 +1,37 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { usePrivy } from '@privy-io/react-auth';
 import { supabase } from '@/integrations/supabase/client';
+import { peekPendingSignup, takePendingSignup } from '@/lib/pending-signup';
+import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 
-export type UserRole = 'creator' | 'brand';
+export type UserRole = 'creator' | 'brand' | 'moderator' | 'admin';
 
 export interface Profile {
   id: string;
   role: UserRole;
   full_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   phone: string | null;
   tiktok_handle: string | null;
+  instagram_handle?: string | null;
+  tiktok_connected_at?: string | null;
+  instagram_connected_at?: string | null;
   payout_provider: 'mtn_momo' | 'airtel_money' | null;
   payout_number: string | null;
   id_verification_status: string;
   company_name: string | null;
+  city?: string | null;
+  country?: string | null;
+  continent?: string | null;
+  avatar_url?: string | null;
+  logo_dark_url?: string | null;
+  website?: string | null;
+  brand_primary_color?: string | null;
+  brand_secondary_color?: string | null;
+  brand_socials?: Record<string, string> | null;
+  plan?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,26 +47,31 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  isAnonymous: boolean;
   profile: Profile | null;
   refreshProfile: () => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => Promise<{ error: Error | null }>;
+  /** Legacy email/password — prefer Privy login. Kept for existing accounts. */
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string, role: UserRole, extras?: SignUpExtras) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  signInAnonymously: () => Promise<{ error: Error | null }>;
-  switchDemoRole: (role: UserRole) => Promise<{ error: Error | null }>;
+  /** Exchange current Privy session for a Supabase session. */
+  syncPrivyToSupabase: () => Promise<{ error: Error | null }>;
+  /** Last Privy → Supabase exchange failure (e.g. undeployed privy-exchange). */
+  authSyncError: string | null;
+  clearAuthSyncError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { ready, authenticated, user: privyUser, getAccessToken, logout: privyLogout } = usePrivy();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const isAnonymous = user?.is_anonymous ?? false;
+  const [authSyncError, setAuthSyncError] = useState<string | null>(null);
+  const syncing = useRef(false);
+  const lastPrivyId = useRef<string | null>(null);
 
   const refreshProfile = useCallback(async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -64,8 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((data as Profile) ?? null);
   }, []);
 
-  // Create the profile on first sign-in if missing, using metadata captured
-  // at signup. Demo (anonymous) accounts are seeded with sample data.
   const ensureProfile = useCallback(async (currentUser: User) => {
     const { data: existing } = await supabase
       .from('profiles')
@@ -75,16 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!existing) {
       const meta = currentUser.user_metadata ?? {};
+      const pending = peekPendingSignup();
       const { data: created, error } = await supabase
         .from('profiles')
         .insert({
           id: currentUser.id,
-          role: meta.role === 'brand' ? 'brand' : 'creator',
-          full_name: meta.full_name ?? null,
-          tiktok_handle: meta.tiktok_handle ?? null,
-          payout_provider: meta.payout_provider ?? null,
-          payout_number: meta.payout_number ?? null,
-          company_name: meta.company_name ?? null,
+          role: pending?.role === 'brand' || meta.role === 'brand' ? 'brand' : 'creator',
+          full_name: pending?.fullName ?? meta.full_name ?? null,
+          tiktok_handle: pending?.tiktokHandle ?? meta.tiktok_handle ?? null,
+          company_name: pending?.companyName ?? meta.company_name ?? null,
         })
         .select()
         .maybeSingle();
@@ -92,46 +112,118 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setProfile(existing as Profile);
     }
+  }, []);
 
-    if (currentUser.is_anonymous) {
-      await supabase.rpc('seed_demo_data', { p_user_id: currentUser.id });
-      await refreshProfile();
+  const syncPrivyToSupabase = useCallback(async () => {
+    if (syncing.current) return { error: null };
+    syncing.current = true;
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        return { error: new Error('No Privy access token') };
+      }
+
+      const pending = peekPendingSignup();
+      const { data, error } = await supabase.functions.invoke('privy-exchange', {
+        body: {
+          accessToken,
+          role: pending?.role,
+          fullName: pending?.fullName,
+          tiktokHandle: pending?.tiktokHandle,
+          companyName: pending?.companyName,
+        },
+      });
+
+      if (error) {
+        return { error: new Error(edgeFunctionErrorMessage(error, data)) };
+      }
+      if (data?.error) {
+        return { error: new Error(String(data.error)) };
+      }
+      if (!data?.access_token || !data?.refresh_token) {
+        return { error: new Error('Invalid exchange response') };
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+      if (sessionError) return { error: sessionError as Error };
+
+      takePendingSignup();
+      return { error: null };
+    } catch (e) {
+      return { error: e as Error };
+    } finally {
+      syncing.current = false;
     }
-  }, [refreshProfile]);
+  }, [getAccessToken]);
 
+  // Supabase session listener
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        setIsLoading(false);
 
         if (event === 'SIGNED_IN' && newSession?.user) {
           setTimeout(() => {
-            ensureProfile(newSession.user);
+            void ensureProfile(newSession.user);
           }, 0);
         }
         if (event === 'SIGNED_OUT') {
           setProfile(null);
         }
-      }
+      },
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+    void supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
-      setIsLoading(false);
       if (existingSession?.user) {
         setTimeout(() => {
-          ensureProfile(existingSession.user);
+          void ensureProfile(existingSession.user);
         }, 0);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [ensureProfile]);
+
+  // When Privy authenticates, exchange for Supabase session
+  useEffect(() => {
+    if (!ready) return;
+
+    if (!authenticated || !privyUser) {
+      lastPrivyId.current = null;
+      // If Privy signed out but Supabase still has a session, clear it
+      if (!authenticated) {
+        void supabase.auth.getSession().then(({ data: { session: s } }) => {
+          if (s) void supabase.auth.signOut();
+        });
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    if (lastPrivyId.current === privyUser.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    lastPrivyId.current = privyUser.id;
+    setIsLoading(true);
+    setAuthSyncError(null);
+    void syncPrivyToSupabase().then(({ error }) => {
+      if (error) {
+        setAuthSyncError(error.message);
+        // Allow retry on next effect / manual sync
+        lastPrivyId.current = null;
+      } else {
+        setAuthSyncError(null);
+      }
+    }).finally(() => setIsLoading(false));
+  }, [ready, authenticated, privyUser, syncPrivyToSupabase]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -143,11 +235,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     name: string,
     role: UserRole,
-    extras?: SignUpExtras
+    extras?: SignUpExtras,
   ) => {
-    // The confirmation link must land on /auth/callback, which turns the code in the
-    // URL into a session and THEN forwards to the app. Pointing it straight at a
-    // protected route races ProtectedRoute and bounces the user back to /signin.
     const redirectUrl = `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signUp({
       email,
@@ -168,51 +257,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const signInAnonymously = async () => {
-    const { error } = await supabase.auth.signInAnonymously();
-    return { error: error as Error | null };
-  };
-
-  const switchDemoRole = async (role: UserRole) => {
-    if (!user) return { error: new Error('Not signed in') };
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('id', user.id);
-    if (!error) {
-      setProfile((prev) => (prev ? { ...prev, role } : prev));
+    lastPrivyId.current = null;
+    try {
+      await privyLogout();
+    } catch {
+      // ignore
     }
-    return { error: error as Error | null };
+    await supabase.auth.signOut();
+    setProfile(null);
   };
 
   const updateProfile = async (patch: Partial<Profile>) => {
     if (!user) return { error: new Error('Not signed in') };
+    // Never allow client to escalate role/plan — DB trigger also blocks this
+    const { role: _r, plan: _p, id: _id, ...safe } = patch as Partial<Profile> & {
+      plan?: string;
+    };
     const { error } = await supabase
       .from('profiles')
-      .update(patch)
+      .update(safe)
       .eq('id', user.id);
     if (!error) await refreshProfile();
     return { error: error as Error | null };
   };
+
+  // Still loading until Privy is ready AND (not authenticated OR supabase user present)
+  const loading =
+    isLoading ||
+    !ready ||
+    (authenticated && !user && syncing.current);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
-        isLoading,
-        isAnonymous,
+        isLoading: loading,
         profile,
         refreshProfile,
         updateProfile,
         signIn,
         signUp,
         signOut,
-        signInAnonymously,
-        switchDemoRole,
+        syncPrivyToSupabase,
+        authSyncError,
+        clearAuthSyncError: () => setAuthSyncError(null),
       }}
     >
       {children}
@@ -228,5 +317,8 @@ export function useAuth() {
   return context;
 }
 
-export const roleHome = (role: UserRole | null | undefined) =>
-  role === 'brand' ? '/brand' : '/creator';
+export const roleHome = (role: UserRole | null | undefined) => {
+  if (role === 'brand') return '/brand';
+  if (role === 'moderator' || role === 'admin') return '/admin';
+  return '/creator';
+};

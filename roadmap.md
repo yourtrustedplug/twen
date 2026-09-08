@@ -1,14 +1,24 @@
-# Unignored rebuild — task list
-
-- [x] Database: profiles, campaigns, submissions, earnings, payouts, wallet_transactions + escrow functions (fund/close/accrue/payout) + demo seeder
-- [x] Security: RLS + GRANTs, authenticated-only policies
-- [x] Auth: profiles with role, ensure-profile on sign-in, demo mode seeding + role switch
+- [x] Database: profiles, campaigns, submissions, earnings, payouts, wallet_transactions + escrow functions
+- [x] Security: RLS + GRANTs; production hardening triggers (role/plan lock, money fields, payout hold)
+- [x] Auth: Privy (Google + email) → `privy-exchange` → Supabase session; demo mode removed
 - [x] App shell: routes, role router, app header, ProtectedRoute roles
-- [x] Brand side: dashboard, create campaign wizard, fund (escrow), review submissions, close/refund
-- [x] Creator side: browse campaigns, brief + submit, my submissions, earnings + withdraw
-- [x] Landing rewrite: Hero, Features, HowItWorks, earnings section, What-we-don't-do, Testimonials, FAQ, CTA, Navbar, Footer
-- [x] Secondary pages: About, Pricing→How earnings work, Contact, 404, index.html metadata
-- [x] Cleanup: remove invoice/client pages, components, hooks
-- [x] Edge function: verify-views (scheduled, simulated until TikTok credentials added)
-- [x] Playwright verification pass
-- [ ] NardoPay: waiting on API keys (add as secrets; wire into funding + payouts, no schema change needed)
+- [x] Brand / creator / moderator product surfaces
+- [x] Landing + secondary pages; Terms + Privacy
+- [x] Contact form → Resend edge function
+- [x] Edge: verify-views (fail-closed without TikTok token)
+- [x] Edge: verify-submission (TikTok/Meta ownership + date + views at submit)
+- [x] NardoPay: campaign checkout + webhook + Pro plan checkout (code; webhook secret fail-closed; payment-ref idempotency)
+- [x] Creator payouts: queue + ops email + Admin mark paid (manual MoMo)
+- [x] LAUNCH.sql one-paste + Creator Pro instant payout
+- [x] CI + GitHub Actions deploy-functions workflow
+- [x] Ops: Supabase project `utzkityhzxpzipvmdmxz` — REST keys + LAUNCH RPCs live — tracked in [#1](https://github.com/takurandoro/novus-a1cd668e/issues/1)
+- [x] Ops: edge functions deployed (incl. connect-social, social-oauth-callback, verify-id)
+- [ ] Ops: paste `supabase/PASTE_NEXT.sql` (PROFILE_ABOUT + ONBOARDING — oauth + ID docs + gates)
+- [ ] Ops: paste `supabase/VERIFY_SUBMISSION.sql` + deploy `verify-submission`
+- [ ] Ops: host Vite on `https://twen.app` (DNS OK; still Namecheap parking) + `PUBLIC_APP_URL` + Privy prod domain
+- [ ] Ops: schedule verify-views via `supabase/CRON_VERIFY_VIEWS.sql` + `CRON_SECRET` (`./scripts/paste-cron-sql.sh`)
+- [x] Privy: localhost domains allowlisted; Google OAuth intentionally off (email login OK)
+- [ ] Ops: Instagram Connect — `INSTAGRAM_APP_ID` + `INSTAGRAM_APP_SECRET`
+- [ ] Resend: verify Twen sending domain (FROM onboarding@resend.dev OK for smoke)
+- [x] Secrets: `NARDOPAY_WEBHOOK_SECRET` + `CRON_SECRET` + TikTok client key/secret on edge (`PUBLIC_APP_URL` still localhost until host)
+- [x] TikTok: client key/secret + creator Connect path (global `TIKTOK_ACCESS_TOKEN` optional fallback)

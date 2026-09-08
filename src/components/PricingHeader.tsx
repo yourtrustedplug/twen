@@ -1,48 +1,49 @@
+import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 import PricingCards from '@/components/PricingCards';
+import PricingAudienceSwitch from '@/components/PricingAudienceSwitch';
 import pricingHeaderBg from '@/assets/pricing/pricing-header-bg.jpg';
+import type { Audience } from '@/lib/audience';
 
-interface PricingHeaderProps extends React.ComponentProps<'section'> {}
+interface PricingHeaderProps extends ComponentProps<'section'> {
+  audience: Audience;
+  onAudienceChange: (audience: Audience) => void;
+}
 
-const PricingHeader = ({ className, ...props }: PricingHeaderProps) => {
+const PricingHeader = ({ className, audience, onAudienceChange, ...props }: PricingHeaderProps) => {
   return (
-    <section 
+    <section
       className={cn(
         'relative min-h-[120vh] max-[991px]:min-h-fit',
         className
-      )} 
+      )}
       {...props}
     >
-      {/* Background - covers top 60% */}
-      <div 
+      <div
         className="absolute top-0 left-0 right-0 h-[60%] max-[991px]:h-[50%] bg-cover bg-center bg-no-repeat rounded-b-[4rem] max-[767px]:rounded-b-[48px]"
         style={{ backgroundImage: `url(${pricingHeaderBg})` }}
       />
-      
-      {/* Content Container */}
+
       <div className="relative z-10 w-full px-10 max-[767px]:px-6 max-[479px]:px-5">
         <div className="w-full max-w-[1440px] mx-auto">
-          {/* Text Content */}
           <div className="flex flex-col items-center text-center pt-48 max-[991px]:pt-40 max-[767px]:pt-36 max-[479px]:pt-32 pb-16 max-[767px]:pb-12 max-[479px]:pb-10">
-            {/* Label */}
             <span className="text-foreground text-xs tracking-[1px] uppercase font-semibold mb-4">
-              No Subscriptions. No Retainers.
+              Pricing
             </span>
 
-            {/* Heading */}
-            <h1 className="text-foreground text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2.5rem] max-[479px]:text-[2rem] font-bold font-display leading-[1.2] mb-4 max-w-[48rem]">
-              How Earnings Work
+            <h1 className="text-foreground text-[4.5rem] max-[991px]:text-[3rem] max-[767px]:text-[2.5rem] max-[479px]:text-[2rem] font-bold font-display leading-[1.2] mb-4 max-w-[52rem]">
+              Twen is free forever.
             </h1>
 
-            {/* Description */}
-            <p className="text-muted-foreground text-lg max-[479px]:text-base leading-[1.4] font-normal max-w-[40rem]">
-One published rate per 1,000 views. It never changes mid-campaign.
+            <p className="text-muted-foreground text-lg max-[479px]:text-base leading-[1.4] font-normal max-w-[40rem] mb-8">
+              Start free. Upgrade if you need it.
             </p>
+
+            <PricingAudienceSwitch audience={audience} onAudienceChange={onAudienceChange} />
           </div>
-          
-          {/* Pricing Cards */}
+
           <div className="pb-32 max-[991px]:pb-24 max-[767px]:pb-20 max-[479px]:pb-16">
-            <PricingCards />
+            <PricingCards audience={audience} />
           </div>
         </div>
       </div>

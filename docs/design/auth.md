@@ -1,72 +1,65 @@
-# Auth
+# Auth (Privy + Supabase)
 
-> **⚠️ Two rules that are shipped code, not suggestions:**
+> **Rules:**
 >
-> - **SSO buttons:** render `<SocialAuthButtons>` from
->   `@/components/base/social-auth-buttons` (brand-compliant Google mark). Never
->   hand-roll "Continue with Google/Apple" and never restyle it with the theme color.
-> - **Redirect:** always `${window.location.origin}/auth/callback` — never a bare origin
->   (which strands the user on the marketing landing) and never a protected route (which
->   races `ProtectedRoute` and bounces the user back to `/signin`). The same goes for
->   `emailRedirectTo`. Post-auth lands on `DEFAULT_AUTHED_ROUTE`
->   (`src/lib/auth-routes.ts`).
+> - **SSO / email login:** render `<SocialAuthButtons>` from
+>   `@/components/base/social-auth-buttons` (Privy Google + email). Do not call
+>   Lovable OAuth or `supabase.auth.signInWithOAuth`.
+> - **Session:** Privy authenticates the human; `privy-exchange` edge function mints a
+>   Supabase session so RLS (`auth.uid()`) keeps working.
+> - **Post-auth land:** `DEFAULT_AUTHED_ROUTE` (`/dashboard` → role home).
 
-## The pieces
+## Flow
+
+1. Home: pick creator or brand → Privy modal opens on the same page
+   (or land directly on `creators.twen.app` / `brands.twen.app`).
+2. `AuthProvider` sees Privy `authenticated`, calls `supabase.functions.invoke('privy-exchange')`.
+3. Edge function verifies the Privy JWT, ensures a Supabase auth user, returns access + refresh tokens.
+4. Client `supabase.auth.setSession(...)`; profile is ensured in `profiles`.
+5. `AuthRedirect` sends them to their role home.
+
+Subdomains (same SPA deploy):
+
+| Host | Surface |
+|---|---|
+| `twen.app` | Audience gate |
+| `creators.twen.app` | Creator marketing + `/creator` app |
+| `brands.twen.app` | Brand marketing + `/brand` app |
+| `admin.twen.app` | Staff `/admin` |
+
+Allowlist all four origins in Privy. Edge CORS allows sibling subdomains of `PUBLIC_APP_URL`.
+
+Get Started / Sign Up elsewhere also opens the Privy modal (`useStartAuth`).
+`/signin` is only a fallback for protected routes (opens the same modal).
+`/signup` redirects to `/`.
+
+## Files
 
 | File | Job |
 |---|---|
-| `src/components/base/social-auth-buttons.tsx` | The one SSO button set. Shared across templates — copy it, don't fork it. |
-| `src/pages/AuthCallback.tsx` | `/auth/callback`. Turns whatever the broker returned (fragment tokens **or** a PKCE `code`) into a session, then forwards to `DEFAULT_AUTHED_ROUTE`. |
-| `src/lib/auth-routes.ts` | `DEFAULT_AUTHED_ROUTE` (`/dashboard`) — the first authenticated screen, where every successful sign-in lands. `SIGNED_OUT_ROUTE` (`/signin`) — where we send someone with no session. |
-| `src/contexts/AuthContext.tsx` | Session state, email sign-in/sign-up, anonymous demo sign-in. |
-| `src/components/ProtectedRoute.tsx` | Sends signed-out visitors to `/signin`. |
-| `src/integrations/lovable/index.ts` | Generated Lovable OAuth broker. **Never edit.** |
+| `src/providers/PrivyProvider.tsx` | `PrivyProvider` with app id + login methods |
+| `src/hooks/use-start-auth.ts` | Opens the Privy modal; stashes role for first profile |
+| `src/components/AuthRedirect.tsx` | After login from marketing, land on role home |
+| `src/components/base/social-auth-buttons.tsx` | Optional Google + email buttons (not the home path) |
+| `src/contexts/AuthContext.tsx` | Sync Privy → Supabase, profile, signOut |
+| `supabase/functions/privy-exchange` | Verify Privy token → Supabase session |
+| `src/lib/auth-routes.ts` | `DEFAULT_AUTHED_ROUTE` / `SIGNED_OUT_ROUTE` |
 
-## OAuth
+## Env
 
-Google SSO is the only configured provider, so both auth pages pass
-`providers={['google']}`. Do not render a button for a provider the project has not
-configured — it can only ever error.
+Frontend: `VITE_PRIVY_APP_ID`, `VITE_SUPABASE_*`, optional `VITE_PRIVY_GOOGLE_ENABLED=true`  
+Edge secrets: `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`
 
-```tsx
-<SocialAuthButtons mode="signin" providers={['google']} className="mb-6" />
-```
+Google login is gated by `VITE_PRIVY_GOOGLE_ENABLED` so the UI does not offer Google while the
+Privy app still has `google_oauth=false`.
 
-The component does the broker call itself. Pages must not add their own OAuth handler
-alongside it — two ways to start OAuth is exactly how the bare-origin redirect bug got
-re-introduced last time.
+## Signup role
 
-```typescript
-// ❌ bypasses the broker — throws "missing OAuth secret"
-supabase.auth.signInWithOAuth({ provider: 'google' });
+There is no separate signup. Privy login creates the account if it does not exist.
 
-// ❌ bare origin — user lands on the marketing landing, not in the app
-lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
+Home (`/`) is where new users pick creator or brand. That choice is stored
+(`pending-signup` + remembered audience) and applied on the **first** profile insert
+during `privy-exchange`. Existing accounts keep the role they already have.
 
-// ❌ protected route — races ProtectedRoute before the session exists
-supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/dashboard` } });
-```
-
-## Password reset is the one exception
-
-`resetPasswordForEmail` sends the user to `${window.location.origin}/reset-password`, not
-`/auth/callback`. That is deliberate: `/auth/callback` signs the user straight in and
-forwards them, giving them no chance to choose a new password. `ResetPassword.tsx`
-listens for the `PASSWORD_RECOVERY` event (and the `type=recovery` hash) and shows the
-new-password form.
-
-## Route table
-
-| Route | Access | Behavior |
-|---|---|---|
-| `/` | public | Marketing landing |
-| `/signin`, `/signup` | public | Redirect to `/dashboard` if already signed in (anonymous demo users may still sign in) |
-| `/reset-password` | public | Request a reset link, or set a new password when arriving from one |
-| `/auth/callback` | public | Establishes the session from an OAuth or email-confirmation link, then forwards to `DEFAULT_AUTHED_ROUTE` |
-| `/dashboard`, `/clients`, `/invoice`, `/invoice/:id` | **protected** | `ProtectedRoute` → `/signin` when signed out |
-
-## Demo mode
-
-"Try Demo Mode" on both auth pages calls `signInAnonymously()`, seeds sample clients and
-invoices, and drops the visitor on `/dashboard`. It is a real anonymous Supabase session,
-not a `/demo/*` route — so the account menu's leave affordance stays "Sign out".
+Privy is a popup on that pick — there is no signup form. Profile extras
+(name, TikTok, company, payout) live on the in-app profile screens after login.

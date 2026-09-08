@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { getRememberedAudience } from '@/lib/audience';
+import { useStartAuth } from '@/hooks/use-start-auth';
 import waveBg from '@/assets/about/wave-bg-values.png';
 import valuesBg from '@/assets/about/values-bg.jpg';
 import valuesImage from '@/assets/about/values-image.jpg';
@@ -57,6 +58,7 @@ const ValueCard = ({ icon, number, title, description }: ValueCardProps) => (
 );
 
 const AboutValues = () => {
+  const startAuth = useStartAuth();
   return (
     <section className="px-10 max-[767px]:px-6 max-[479px]:px-5 pb-32 max-[991px]:pb-24 max-[479px]:pb-20">
       <div className="max-w-[100rem] mx-auto">
@@ -131,8 +133,8 @@ const AboutValues = () => {
 
               {/* CTA Button */}
               <div className="flex justify-center">
-                <Button variant="invofy" size="invofy" asChild>
-                  <Link to="/signup">Get Started</Link>
+                <Button variant="invofy" size="invofy" onClick={() => startAuth(getRememberedAudience())}>
+                  Get Started
                 </Button>
               </div>
             </div>

@@ -15,7 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md",
         ghost: "hover:bg-accent hover:text-accent-foreground rounded-md",
         link: "text-primary underline-offset-4 hover:underline",
-        // Invofy design system buttons
+        // Twen design system buttons
         invofy: "bg-primary text-primary-foreground border border-primary rounded-full font-semibold transition-all duration-[480ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:text-primary hover:bg-transparent hover:border-primary hover:-rotate-[5deg] hover:scale-105 hover:shadow-[0_5px_5px_rgba(10,16,29,0.25)]",
         invofyOutline: "text-foreground bg-transparent border border-invofy-border rounded-full font-semibold transition-all duration-[480ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:text-primary-foreground hover:bg-primary hover:border-primary hover:-rotate-[5deg] hover:scale-105 hover:shadow-[0_5px_5px_rgba(10,16,29,0.25)]",
       },

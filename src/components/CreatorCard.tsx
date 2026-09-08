@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { ProfileRow } from '@/types/unignored';
 import { PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
+import { formatPlace } from '@/lib/geo';
 import { formatPercent } from '@/lib/metrics';
 import { campaignImage } from '@/lib/campaign-image';
 import SignedImage from '@/components/SignedImage';
@@ -35,7 +36,10 @@ const CreatorCard = ({ creator }: { creator: ProfileRow }) => {
             {creator.full_name ?? 'Creator'}
           </h3>
           <p className="text-sm text-white/80">
-            {creator.tiktok_handle ?? ''} {creator.location ? `· ${creator.location}` : ''}
+            {[creator.tiktok_handle, creator.instagram_handle].filter(Boolean).join(' · ')}
+            {formatPlace(creator.city, creator.country, creator.location)
+              ? ` · ${formatPlace(creator.city, creator.country, creator.location)}`
+              : ''}
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const ASSET_BUCKET = 'campaign-assets';
+export const ID_BUCKET = 'id-documents';
 
 /** Uploads a file into the signed-in user's folder and returns its storage path. */
 export const uploadAsset = async (file: File, userId: string, folder = 'campaigns') => {
@@ -12,9 +13,9 @@ export const uploadAsset = async (file: File, userId: string, folder = 'campaign
 };
 
 /** Resolves a storage path to a temporary URL. Absolute URLs pass through. */
-export const signedUrl = async (path: string, expiresIn = 3600) => {
+export const signedUrl = async (path: string, expiresIn = 3600, bucket = ASSET_BUCKET) => {
   if (/^https?:\/\//.test(path)) return path;
-  const { data } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, expiresIn);
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
   return data?.signedUrl ?? '';
 };
 

@@ -1,1 +1,34 @@
-project_id = "bfrrfcjwryjfdluoreyu"
+project_id = "utzkityhzxpzipvmdmxz"
+
+[functions.send-contact-email]
+verify_jwt = false
+
+[functions.privy-exchange]
+verify_jwt = false
+
+[functions.nardopay-webhook]
+verify_jwt = false
+
+[functions.create-campaign-checkout]
+verify_jwt = true
+
+[functions.create-plan-checkout]
+verify_jwt = true
+
+[functions.request-creator-payout]
+verify_jwt = true
+
+[functions.verify-views]
+verify_jwt = false
+
+[functions.connect-social]
+verify_jwt = true
+
+[functions.social-oauth-callback]
+verify_jwt = false
+
+[functions.verify-id]
+verify_jwt = true
+
+[functions.verify-submission]
+verify_jwt = true

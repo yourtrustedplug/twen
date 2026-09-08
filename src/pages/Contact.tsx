@@ -4,7 +4,6 @@ import ContactHeader from '@/components/ContactHeader';
 
 // Lazy load below-the-fold sections
 const ContactLocation = lazy(() => import('@/components/ContactLocation'));
-const FAQ = lazy(() => import('@/components/FAQ'));
 const Footer = lazy(() => import('@/components/Footer'));
 
 const Contact = () => {
@@ -14,7 +13,6 @@ const Contact = () => {
       <ContactHeader />
       <Suspense fallback={<div className="h-48" />}>
         <ContactLocation />
-        <FAQ />
         <Footer />
       </Suspense>
     </div>

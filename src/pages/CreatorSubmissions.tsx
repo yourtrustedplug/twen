@@ -6,12 +6,33 @@ import AppHeader from '@/components/AppHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { Submission } from '@/types/unignored';
 import { formatMoney, formatDate, formatViews } from '@/lib/format';
-import { campaignImage } from '@/lib/campaign-image';
+import { useCampaignCover } from '@/lib/campaign-image';
 import { Loader2 } from 'lucide-react';
 
 interface SubmissionRow extends Submission {
-  campaigns: { title: string; status: string } | null;
+  campaigns: { title: string; status: string; cover_image: string | null } | null;
 }
+
+const SubmissionThumb = ({
+  campaignId,
+  coverImage,
+}: {
+  campaignId: string;
+  coverImage?: string | null;
+}) => {
+  const src = useCampaignCover(campaignId, coverImage);
+  return (
+    <img
+      src={src}
+      alt=""
+      width={768}
+      height={576}
+      loading="lazy"
+      decoding="async"
+      className="w-full md:w-28 h-40 md:h-20 rounded-[20px] object-cover shrink-0"
+    />
+  );
+};
 
 const CreatorSubmissions = () => {
   const { user } = useAuth();
@@ -22,7 +43,7 @@ const CreatorSubmissions = () => {
     if (!user) return;
     supabase
       .from('submissions')
-      .select('*, campaigns(title, status)')
+      .select('*, campaigns(title, status, cover_image)')
       .eq('creator_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -38,8 +59,8 @@ const CreatorSubmissions = () => {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
-        <h1 className="font-display text-4xl font-bold mb-2">My submissions</h1>
-        <p className="text-muted-foreground mb-10">Views refresh on a schedule.</p>
+        <h1 className="font-display text-4xl font-bold mb-2">My campaigns</h1>
+        <p className="text-muted-foreground mb-10">Campaigns you've posted for. Views refresh on a schedule.</p>
 
         <div className="grid grid-cols-2 gap-4 mb-12">
           <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-7">
@@ -68,15 +89,7 @@ const CreatorSubmissions = () => {
           <div className="flex flex-col gap-4">
             {rows.map((r) => (
               <div key={r.id} className="bg-white border border-[#f1f1f1] rounded-[30px] p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-                <img
-                  src={campaignImage(r.campaign_id)}
-                  alt=""
-                  width={768}
-                  height={576}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full md:w-28 h-40 md:h-20 rounded-[20px] object-cover shrink-0"
-                />
+                <SubmissionThumb campaignId={r.campaign_id} coverImage={r.campaigns?.cover_image} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <p className="font-semibold truncate">{r.campaigns?.title ?? 'Campaign'}</p>
@@ -89,7 +102,7 @@ const CreatorSubmissions = () => {
                     <p className="text-sm text-rose-600 mt-2">Rejected: {r.rejection_reason}</p>
                   )}
                   {r.status === 'submitted' && (
-                    <p className="text-sm text-muted-foreground mt-2">Waiting for brand review.</p>
+                    <p className="text-sm text-muted-foreground mt-2">Waiting for moderator review.</p>
                   )}
                 </div>
                 <div className="flex items-center gap-8 shrink-0">

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import contactHeaderBg from '@/assets/contact/contact-header-bg.jpg';
 import contactImage01 from '@/assets/contact/contact-image-01.jpg';
 import contactImage02 from '@/assets/contact/contact-image-02.jpg';
@@ -128,24 +130,43 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
       return;
     }
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
-    
-    // Reset form
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
-    setErrors({});
-    setIsSubmitting(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: result.data,
+      });
+
+      if (error || (data && typeof data === 'object' && 'error' in data && data.error)) {
+        throw new Error(
+          edgeFunctionErrorMessage(
+            error,
+            data as { error?: string },
+            'Please try again or email hello@twen.app.',
+          ),
+        );
+      }
+
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
+
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+      setErrors({});
+    } catch (e) {
+      toast({
+        title: "Couldn't send message",
+        description: e instanceof Error ? e.message : "Please try again or email hello@twen.app.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -165,11 +186,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
         style={{ backgroundImage: `url(${contactHeaderBg})` }}
       />
       
-      {/* Positioned Images - Desktop Only */}
-      <div className="max-[991px]:hidden">
+      {/* Side images — wide screens only, behind the copy */}
+      <div className="hidden min-[1440px]:block pointer-events-none">
         {/* Left Image - Woman in yellow sweater */}
         <motion.div 
-          className="absolute left-[5%] top-[18%] w-[12rem] min-[1440px]:w-[14rem] min-[1920px]:w-[16rem] z-20"
+          className="absolute left-[5%] top-[18%] w-[12rem] min-[1440px]:w-[14rem] min-[1920px]:w-[16rem] z-0"
           style={{ x: leftX, y: leftY }}
         >
           <div className="relative overflow-hidden rounded-3xl aspect-square">
@@ -187,7 +208,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
         
         {/* Right Image - Man in blue polo */}
         <motion.div 
-          className="absolute right-[5%] top-[16%] w-[12rem] min-[1440px]:w-[14rem] min-[1920px]:w-[16rem] z-20"
+          className="absolute right-[5%] top-[16%] w-[12rem] min-[1440px]:w-[14rem] min-[1920px]:w-[16rem] z-0"
           style={{ x: rightX, y: rightY }}
         >
           <div className="relative overflow-hidden rounded-3xl aspect-square">

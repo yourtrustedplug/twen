@@ -33,8 +33,14 @@ export type Database = {
           id: string
           links: Json
           must_include: string
+          niche: string
+          platforms: Json
+          cover_image: string | null
+          nardopay_link_code: string | null
+          nardopay_payment_ref: string | null
           rate_per_1k: number
           socials: Json
+          brand_kit: Json
           spent_amount: number
           started_at: string | null
           status: string
@@ -60,8 +66,14 @@ export type Database = {
           id?: string
           links?: Json
           must_include?: string
+          niche?: string
+          platforms?: Json
+          cover_image?: string | null
+          nardopay_link_code?: string | null
+          nardopay_payment_ref?: string | null
           rate_per_1k?: number
           socials?: Json
+          brand_kit?: Json
           spent_amount?: number
           started_at?: string | null
           status?: string
@@ -87,8 +99,14 @@ export type Database = {
           id?: string
           links?: Json
           must_include?: string
+          niche?: string
+          platforms?: Json
+          cover_image?: string | null
+          nardopay_link_code?: string | null
+          nardopay_payment_ref?: string | null
           rate_per_1k?: number
           socials?: Json
+          brand_kit?: Json
           spent_amount?: number
           started_at?: string | null
           status?: string
@@ -367,67 +385,124 @@ export type Database = {
           avatar_url: string | null
           avg_views: number
           bio: string
+          brand_primary_color: string
+          brand_secondary_color: string
+          brand_socials: Json
           company_name: string | null
           created_at: string
           engagement_rate: number
+          city: string
+          continent: string
+          country: string
+          first_name: string | null
           follower_count: number
           full_name: string | null
           id: string
+          id_document_back_path: string | null
+          id_document_path: string | null
+          id_document_type: string | null
           id_verification_status: string
+          instagram_connected_at: string | null
+          instagram_handle: string | null
+          last_name: string | null
           location: string
+          logo_dark_url: string | null
           marketplace_visible: boolean
+          rate_overridden: boolean
+          rate_suggested: number
+          tiktok_connected_at: string | null
           payout_number: string | null
           payout_provider: string | null
           phone: string | null
           platforms: Json
+          plan: string
           rate_per_video: number
           role: string
           tiktok_handle: string | null
           updated_at: string
+          website: string
         }
         Insert: {
           avatar_url?: string | null
           avg_views?: number
           bio?: string
+          brand_primary_color?: string
+          brand_secondary_color?: string
+          brand_socials?: Json
           company_name?: string | null
           created_at?: string
           engagement_rate?: number
+          city?: string
+          continent?: string
+          country?: string
+          first_name?: string | null
           follower_count?: number
           full_name?: string | null
           id: string
+          id_document_back_path?: string | null
+          id_document_path?: string | null
+          id_document_type?: string | null
           id_verification_status?: string
+          instagram_connected_at?: string | null
+          instagram_handle?: string | null
+          last_name?: string | null
           location?: string
+          logo_dark_url?: string | null
           marketplace_visible?: boolean
+          rate_overridden?: boolean
+          rate_suggested?: number
+          tiktok_connected_at?: string | null
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
+          plan?: string
           rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
+          website?: string
         }
         Update: {
           avatar_url?: string | null
           avg_views?: number
           bio?: string
+          brand_primary_color?: string
+          brand_secondary_color?: string
+          brand_socials?: Json
           company_name?: string | null
           created_at?: string
           engagement_rate?: number
+          city?: string
+          continent?: string
+          country?: string
+          first_name?: string | null
           follower_count?: number
           full_name?: string | null
           id?: string
+          id_document_back_path?: string | null
+          id_document_path?: string | null
+          id_document_type?: string | null
           id_verification_status?: string
+          instagram_connected_at?: string | null
+          instagram_handle?: string | null
+          last_name?: string | null
           location?: string
+          logo_dark_url?: string | null
           marketplace_visible?: boolean
+          rate_overridden?: boolean
+          rate_suggested?: number
+          tiktok_connected_at?: string | null
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
+          plan?: string
           rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
+          website?: string
         }
         Relationships: []
       }
@@ -444,7 +519,10 @@ export type Database = {
           id: string
           last_verified_at: string | null
           likes: number
+          link_verified_at: string | null
           platform: string
+          platform_media_id: string | null
+          posted_at: string | null
           rejection_reason: string | null
           shares: number
           status: string
@@ -465,7 +543,10 @@ export type Database = {
           id?: string
           last_verified_at?: string | null
           likes?: number
+          link_verified_at?: string | null
           platform?: string
+          platform_media_id?: string | null
+          posted_at?: string | null
           rejection_reason?: string | null
           shares?: number
           status?: string
@@ -486,7 +567,10 @@ export type Database = {
           id?: string
           last_verified_at?: string | null
           likes?: number
+          link_verified_at?: string | null
           platform?: string
+          platform_media_id?: string | null
+          posted_at?: string | null
           rejection_reason?: string | null
           shares?: number
           status?: string
@@ -560,6 +644,10 @@ export type Database = {
       request_payout: {
         Args: { p_amount: number; p_phone: string; p_provider: string }
         Returns: string
+      }
+      resolve_payout: {
+        Args: { p_payout_id: string; p_status: string; p_note?: string | null }
+        Returns: undefined
       }
       seed_demo_data: { Args: { p_user_id: string }; Returns: undefined }
     }

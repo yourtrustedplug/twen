@@ -1,0 +1,114 @@
+/**
+ * Subdomain tenants for Twen.
+ *
+ *   creators.twen.app  — creator marketing + app
+ *   brands.twen.app    — brand marketing + app
+ *   admin.twen.app     — staff panel
+ *   twen.app           — audience gate (pick creator / brand)
+ *
+ * Local: creators.localhost:8080 (etc.) works the same way.
+ */
+
+export type AppTenant = 'creators' | 'brands' | 'admin' | 'apex';
+
+const TENANTS = ['creators', 'brands', 'admin'] as const;
+
+export function normalizeHostname(hostname: string): string {
+  return hostname.replace(/^www\./i, '').toLowerCase();
+}
+
+/** Parse tenant from a hostname (no port). */
+export function parseTenant(hostname: string): AppTenant {
+  const host = normalizeHostname(hostname);
+  const parts = host.split('.').filter(Boolean);
+  if (parts.length < 2) return 'apex';
+  const label = parts[0];
+  if ((TENANTS as readonly string[]).includes(label)) return label as AppTenant;
+  return 'apex';
+}
+
+/** Registrable / apex host: twen.app, localhost, … */
+export function apexHostFrom(hostname: string): string {
+  const host = normalizeHostname(hostname);
+  const tenant = parseTenant(host);
+  if (tenant === 'apex') return host;
+  return host.split('.').slice(1).join('.');
+}
+
+export function getHostname(): string {
+  if (typeof window === 'undefined') return 'twen.app';
+  return normalizeHostname(window.location.hostname);
+}
+
+export function getAppTenant(): AppTenant {
+  return parseTenant(getHostname());
+}
+
+export function isLocalApex(host: string): boolean {
+  const h = normalizeHostname(host);
+  return h === 'localhost' || h === '127.0.0.1';
+}
+
+function shouldKeepPort(apex: string, port: string): boolean {
+  if (!port) return false;
+  return isLocalApex(apex) || apex === 'localhost' || apex.endsWith('.localhost') || apex === 'localhost';
+}
+
+/** Origin for a tenant on the current apex (preserves protocol + port in local). */
+export function tenantOrigin(
+  tenant: AppTenant,
+  opts?: { hostname?: string; protocol?: string; port?: string },
+): string {
+  const hostname =
+    opts?.hostname ?? (typeof window !== 'undefined' ? window.location.hostname : 'twen.app');
+  const protocol =
+    opts?.protocol ?? (typeof window !== 'undefined' ? window.location.protocol : 'https:');
+  const port = opts?.port ?? (typeof window !== 'undefined' ? window.location.port : '');
+  const apex = apexHostFrom(hostname);
+  const host = tenant === 'apex' ? apex : `${tenant}.${apex}`;
+  const suffix = shouldKeepPort(apex, port) ? `:${port}` : '';
+  return `${protocol}//${host}${suffix}`;
+}
+
+/** Absolute href for creator/brand marketing home (subdomain `/` in prod). */
+export function audienceHref(audience: 'creator' | 'brand'): string {
+  const tenant: AppTenant = audience === 'brand' ? 'brands' : 'creators';
+  if (typeof window === 'undefined') {
+    return audience === 'brand' ? 'https://brands.twen.app/' : 'https://creators.twen.app/';
+  }
+  const host = getHostname();
+  if (isLocalApex(host)) {
+    return audience === 'brand' ? '/brands' : '/creators';
+  }
+  const origin = tenantOrigin(tenant);
+  if (window.location.origin === origin) return '/';
+  return `${origin}/`;
+}
+
+export function adminHref(): string {
+  if (typeof window === 'undefined') return 'https://admin.twen.app/admin';
+  const host = getHostname();
+  if (isLocalApex(host)) return '/admin';
+  if (getAppTenant() === 'admin') return '/admin';
+  return `${tenantOrigin('admin')}/admin`;
+}
+
+/**
+ * Build a role-scoped app origin from PUBLIC_APP_URL (edge / server).
+ * https://twen.app + brand → https://brands.twen.app
+ */
+export function roleScopedAppUrl(appUrl: string, role: 'brand' | 'creator' | 'staff'): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(appUrl);
+  } catch {
+    return appUrl.replace(/\/$/, '');
+  }
+  const host = normalizeHostname(parsed.hostname);
+  const tenant = parseTenant(host);
+  if (tenant !== 'apex') return parsed.origin;
+  if (isLocalApex(host)) return parsed.origin;
+  const sub = role === 'brand' ? 'brands' : role === 'staff' ? 'admin' : 'creators';
+  parsed.hostname = `${sub}.${host}`;
+  return parsed.origin;
+}

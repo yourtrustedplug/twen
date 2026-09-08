@@ -26,68 +26,77 @@ export const getRememberedAudience = (): Audience | null => {
 export const audiencePath = (audience: Audience) =>
   audience === 'brand' ? '/brands' : '/creators';
 
+/** Prefer subdomain homes in prod; path-based on plain localhost. */
+export { audienceHref } from '@/lib/hosts';
+
 interface AudienceCopy {
-  eyebrow: string;
+  eyebrow?: string;
   headline: string;
   sub: string;
   primaryCta: string;
-  secondaryCta: { label: string; href: string };
   featuresEyebrow: string;
   featuresHeadline: string;
+  featuresSub: string;
   features: { title: string; description: string }[];
   featureCard: { title: string; description: string };
   stepsHeadline: string;
+  stepsSub: string;
   steps: { number: string; title: string; description: string }[];
-  other: { label: string; audience: Audience };
+  ctaEyebrow: string;
+  ctaHeadline: string;
 }
 
 export const audienceCopy: Record<Audience, AudienceCopy> = {
   creator: {
-    eyebrow: 'For Creators',
-    headline: 'Get Paid Per View',
-    sub: 'Post to your own TikTok. Withdraw to MoMo or Airtel.',
+    eyebrow: "Let's go",
+    headline: 'The easiest way\nto earn online',
+    sub: 'Post a video. Get paid. That’s it.',
     primaryCta: 'Start Earning',
-    secondaryCta: { label: 'See Campaigns', href: '/pricing' },
-    featuresEyebrow: 'Why Creators Stay',
-    featuresHeadline: 'Views, Not Followers',
+    featuresEyebrow: 'Why Creators',
+    featuresHeadline: 'Post. Get paid. Cash out.',
+    featuresSub: 'You keep what you earn. The campaign is funded before you shoot.',
     features: [
-      { title: 'Money Already There', description: 'Campaigns are funded before you see them.' },
-      { title: 'No Follower Minimum', description: 'A new account earns the same rate.' },
-      { title: 'Your Own Account', description: 'Your TikTok, your audience.' },
-      { title: 'Mobile Money', description: 'MoMo or Airtel. Same day.' },
-      { title: 'Live Budget', description: 'See what is left before you film.' },
+      { title: 'Paid for views, not followers', description: 'You earn on verified views. A new account gets the same rate as a big one.' },
+      { title: 'Post where you already are', description: 'Reels and TikToks on your own accounts. Follow the brief, submit the link, done.' },
+      { title: 'See the money before you film', description: 'Every campaign is funded in escrow. Rate, remaining budget, and deadline are shown upfront.' },
+      { title: 'Cash out to your phone', description: 'Withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa — not a bank that takes weeks.' },
+      { title: 'No gate. No agency.', description: 'No follower cutoff. No pitching brands one by one. Pick a live campaign and post.' },
     ],
-    featureCard: { title: 'Start Earning', description: 'Pick a funded campaign and post today.' },
-    stepsHeadline: "Three Steps. That's It.",
+    featureCard: { title: 'Start earning today', description: 'Create a free account, pick a funded campaign, and get paid for posting.' },
+    stepsHeadline: "Three steps. That's it.",
+    stepsSub: 'From first post to mobile-money withdrawal — nobody in the middle.',
     steps: [
-      { number: '01', title: 'Pick a Campaign', description: 'Rate, budget and deadline upfront.' },
-      { number: '02', title: 'Post to Your TikTok', description: 'Follow the brief, submit the link.' },
-      { number: '03', title: 'Withdraw', description: 'Verified views to mobile money.' },
+      { number: '01', title: 'Pick a campaign', description: 'Rate, budget, and deadline shown before you accept.' },
+      { number: '02', title: 'Post on IG or TikTok', description: 'Follow the brief, publish, submit your link.' },
+      { number: '03', title: 'Withdraw to mobile money', description: 'Verified views pay out to your wallet.' },
     ],
-    other: { label: "I'm a brand", audience: 'brand' },
+    ctaEyebrow: "Let's go",
+    ctaHeadline: 'It really is that easy',
   },
   brand: {
-    eyebrow: 'For Brands',
-    headline: 'Pay Per Real View',
-    sub: 'Dozens of local creators. One brief. Escrowed budget.',
+    eyebrow: 'The largest content distribution network in Africa',
+    headline: 'Flood social media\nwith your content',
+    sub: 'Real people distribute your content on Instagram and TikTok',
     primaryCta: 'Fund a Campaign',
-    secondaryCta: { label: 'See Rates', href: '/pricing' },
-    featuresEyebrow: 'Why Brands Fund Here',
-    featuresHeadline: 'Reach You Can Verify',
+    featuresEyebrow: 'Why Brands',
+    featuresHeadline: 'Distribution at scale',
+    featuresSub: 'One brief. Dozens of creators. Pay only for verified views.',
     features: [
-      { title: 'Verified Views Only', description: 'Checked against the platform before billing.' },
-      { title: 'Escrow, Not Invoices', description: 'You never spend past what you funded.' },
-      { title: 'One Brief, Many Videos', description: 'Dozens of creators, many audiences.' },
-      { title: 'Approve or Reject', description: 'Off-brief work never earns.' },
-      { title: 'Unspent Comes Back', description: 'Refunded when a campaign closes.' },
+      { title: 'Real people, real posts', description: 'Creators post your product on their own accounts. Their audience sees a person they trust, not a banner.' },
+      { title: 'Flood the feed', description: 'One brief. Dozens of creators. Your app or product shows up across Instagram and TikTok at once.' },
+      { title: 'Distribution you can buy', description: 'Set a budget and a rate per thousand views. Creators compete to spread your content.' },
+      { title: 'Pay only for what lands', description: 'Verified views only. Escrowed budget. Unspent money comes back.' },
+      { title: 'You keep control', description: 'Write the brief. Platform moderators approve posts before they earn.' },
     ],
-    featureCard: { title: 'Launch a Campaign', description: 'Set a budget and rate in minutes.' },
-    stepsHeadline: 'Brief. Fund. Track.',
+    featureCard: { title: 'Launch distribution', description: 'Fund a campaign and watch creators push your content live.' },
+    stepsHeadline: 'Brief. Fund. Flood.',
+    stepsSub: 'Fund once. Creators post. Unspent budget comes back.',
     steps: [
-      { number: '01', title: 'Write the Brief', description: 'Budget, rate per 1k views, deadline.' },
-      { number: '02', title: 'Fund Escrow', description: 'Campaign goes live to creators.' },
-      { number: '03', title: 'Pay for Views', description: 'Approve work, refund the rest.' },
+      { number: '01', title: 'Write the brief', description: 'What to say, what to show, what to avoid.' },
+      { number: '02', title: 'Fund the campaign', description: 'Creators see it and start posting.' },
+      { number: '03', title: 'Watch it spread', description: 'Pay for verified views. Refund the rest.' },
     ],
-    other: { label: "I'm a creator", audience: 'creator' },
+    ctaEyebrow: "Let's go",
+    ctaHeadline: 'Flood the feed. Pay for views.',
   },
 };

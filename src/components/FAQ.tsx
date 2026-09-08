@@ -6,31 +6,47 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import backgroundImage from '@/assets/faq-bg.jpg';
 import foregroundImage from '@/assets/image-06.jpg';
+import type { Audience } from '@/lib/audience';
 
-const faqData = [
+const faqData: { question: string; answer: string; audience?: Audience }[] = [
   {
-    question: 'When do I actually get paid?',
-    answer: 'Earnings accrue as views verify. After a campaign closes, funds are held for a 7-day verification window, then released straight to your mobile money — MTN MoMo or Airtel Money.',
+    question: 'Is Free actually free?',
+    answer: 'Yes. We make money from the $49 paid plan, not from taking a cut of campaigns or earnings.',
   },
   {
-    question: 'Is there a follower minimum?',
-    answer: 'No. A new account earns on the same terms as a large one. The rate is published before anyone commits, and neither side negotiates.',
+    question: 'What can I do without paying?',
+    audience: 'creator',
+    answer: 'Join open campaigns, post, and withdraw to mobile money after a 7-day check. You keep every dollar you earn.',
   },
   {
-    question: 'What happens if my video goes viral?',
-    answer: 'Earnings accrue against the campaign\'s remaining budget until it is exhausted. You can earn well, but the budget is the ceiling — and every campaign shows that budget live before you start.',
+    question: 'What can I do without paying?',
+    audience: 'brand',
+    answer: 'Fund a campaign and pay per 1,000 verified views. Unused budget comes back.',
   },
   {
-    question: 'Do I post on my own account?',
-    answer: 'Yes. You keep the audience you build. You follow the brief — topic, angle, hashtags, disclosure — and submit the link. The brand reviews every submission before it earns.',
+    question: 'Why would a brand pay $49?',
+    audience: 'brand',
+    answer: 'If you want to choose who posts, message them, or pay for clicks and sales instead of only views.',
   },
   {
-    question: 'What does Unignored not do?',
-    answer: 'We don\'t pay for followers, likes, or engagement — only views. We don\'t guarantee any creator an income. We don\'t let brands pick accounts on bounty campaigns. And we don\'t pay out on views we can\'t verify against the platform.',
+    question: 'Why would a creator pay $49?',
+    audience: 'creator',
+    answer: 'If you want brands to find you, take bookings, use more than one account, and withdraw as soon as a campaign ends instead of waiting 7 days.',
   },
   {
-    question: 'How do brands know views are real?',
-    answer: 'Every view is checked against the platform\'s data and screened for inauthentic patterns before it becomes billable. Brands pay only for verified views, and unspent budget is refunded.',
+    question: 'Do paying creators get campaigns first?',
+    audience: 'creator',
+    answer: 'No. Open campaigns are open to everyone. Creator Pro helps brands find you — it does not hide open campaigns from free creators.',
+  },
+  {
+    question: 'Why not just pay on WhatsApp?',
+    audience: 'creator',
+    answer: 'On Twen the budget is held until views are checked. Creator Pro can withdraw as soon as the campaign closes.',
+  },
+  {
+    question: 'Why not just pay on WhatsApp?',
+    audience: 'brand',
+    answer: 'On Twen the budget is held until views are checked, and unused money comes back.',
   },
 ];
 
@@ -65,9 +81,12 @@ const FAQItem = ({ question, answer, value }: FAQItemProps) => (
   </AccordionPrimitive.Item>
 );
 
-interface FAQProps extends React.ComponentProps<'section'> {}
+interface FAQProps extends React.ComponentProps<'section'> {
+  audience?: Audience;
+}
 
-const FAQ = ({ className, ...props }: FAQProps) => {
+const FAQ = ({ className, audience = 'creator', ...props }: FAQProps) => {
+  const items = faqData.filter((item) => !item.audience || item.audience === audience);
   return (
     <section
       className={cn(
@@ -82,11 +101,11 @@ const FAQ = ({ className, ...props }: FAQProps) => {
             Frequently Asked Questions
           </span>
           <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
-            Questions & Answers
+            Common questions
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-              Find clear answers to the most common questions about how the platform works, what features are included, and how to get started.
+              Short answers. If you need more, contact us.
             </p>
           </div>
         </div>
@@ -118,13 +137,14 @@ const FAQ = ({ className, ...props }: FAQProps) => {
           <div className="w-1/2 max-lg:w-full flex flex-col">
             <div className="flex flex-col justify-between flex-1 gap-6 2xl:gap-8">
               <AccordionPrimitive.Root
+                key={audience}
                 type="single"
                 collapsible
                 className="flex flex-col w-full gap-4 2xl:gap-5"
               >
-                {faqData.map((item, index) => (
+                {items.map((item, index) => (
                   <FAQItem
-                    key={index}
+                    key={item.question}
                     value={`item-${index}`}
                     question={item.question}
                     answer={item.answer}

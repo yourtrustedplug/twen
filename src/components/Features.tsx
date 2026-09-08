@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import waveBg from '@/assets/wave-bg.png';
@@ -9,6 +8,7 @@ import featureIcon03 from '@/assets/icons/feature-icon-03.png';
 import featureIcon04 from '@/assets/icons/feature-icon-04.png';
 import featureIcon05 from '@/assets/icons/feature-icon-05.png';
 import { Audience, audienceCopy } from '@/lib/audience';
+import { useStartAuth } from '@/hooks/use-start-auth';
 
 const featureIcons = [featureIcon01, featureIcon02, featureIcon03, featureIcon04, featureIcon05];
 
@@ -19,8 +19,9 @@ interface FeaturesProps extends React.ComponentProps<'section'> {
 
 const Features = ({ className, audience = 'creator', ...props }: FeaturesProps) => {
   const copy = audienceCopy[audience];
+  const startAuth = useStartAuth();
   return (
-    <section className={cn('px-5 md:px-10 max-xs:px-5', className)} {...props}>
+    <section className={cn('relative z-10 bg-background px-5 md:px-10 max-xs:px-5', className)} {...props}>
       <div className="max-w-[100rem] mx-auto">
         <div className="relative bg-[#fafafa] rounded-[4rem] max-xs:rounded-[3rem] overflow-hidden">
           <img
@@ -44,7 +45,7 @@ const Features = ({ className, audience = 'creator', ...props }: FeaturesProps) 
                 </h2>
                 <div className="w-full">
                   <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-                    {copy.sub}
+                    {copy.featuresSub}
                   </p>
                 </div>
               </div>
@@ -76,8 +77,8 @@ const Features = ({ className, audience = 'creator', ...props }: FeaturesProps) 
                     </p>
                   </div>
                   <div>
-                    <Button variant="invofy" size="invofy" asChild>
-                      <Link to="/signup">Get Started</Link>
+                    <Button variant="invofy" size="invofy" onClick={() => startAuth(audience)}>
+                      {copy.primaryCta}
                     </Button>
                   </div>
                 </div>

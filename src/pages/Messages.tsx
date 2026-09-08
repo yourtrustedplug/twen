@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Conversation, Message } from '@/types/unignored';
+import { isPro } from '@/lib/plan';
 import { cn } from '@/lib/utils';
-import { Loader2, Send, MessageSquare } from 'lucide-react';
+import { Loader2, Send, MessageSquare, Lock } from 'lucide-react';
 
 const Messages = () => {
   const { user, profile } = useAuth();
@@ -20,9 +21,13 @@ const Messages = () => {
   const bottom = useRef<HTMLDivElement>(null);
   const activeId = params.get('c');
   const isBrand = profile?.role === 'brand';
+  const brandNeedsPro = isBrand && !isPro(profile);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || brandNeedsPro) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from('conversations')
       .select('*')
@@ -33,17 +38,17 @@ const Messages = () => {
         setLoading(false);
         if (!activeId && rows[0]) setParams({ c: rows[0].id }, { replace: true });
       });
-  }, [user, activeId, setParams]);
+  }, [user, activeId, setParams, brandNeedsPro]);
 
   const loadMessages = useCallback(async () => {
-    if (!activeId) return;
+    if (!activeId || brandNeedsPro) return;
     const { data } = await supabase
       .from('messages')
       .select('*')
       .eq('conversation_id', activeId)
       .order('created_at', { ascending: true });
     setMessages((data as Message[]) ?? []);
-  }, [activeId]);
+  }, [activeId, brandNeedsPro]);
 
   useEffect(() => {
     loadMessages();
@@ -82,6 +87,31 @@ const Messages = () => {
   };
 
   const active = conversations.find((c) => c.id === activeId);
+
+  if (brandNeedsPro) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <main className="max-w-2xl mx-auto px-5 md:px-10 py-20 text-center">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12">
+            <Lock className="h-8 w-8 mx-auto mb-5 text-muted-foreground" />
+            <h1 className="font-display text-3xl font-bold mb-3">Messaging is Twen Plus</h1>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              Message creators from Browse creators after you upgrade. Free brands run open bounty campaigns only.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button variant="invofy" size="invofy" asChild>
+                <Link to="/pricing">See Twen Plus</Link>
+              </Button>
+              <Button variant="invofyOutline" size="invofy" asChild>
+                <Link to="/brand">Back to campaigns</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

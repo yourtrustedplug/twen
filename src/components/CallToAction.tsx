@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import ctaBg from '@/assets/cta-bg.png';
@@ -10,6 +9,8 @@ import ctaImage03 from '@/assets/cta/cta-image-03.jpg';
 import ctaImage04 from '@/assets/cta/cta-image-04.jpg';
 import ctaImage05 from '@/assets/cta/cta-image-05.jpg';
 import ctaImage06 from '@/assets/cta/cta-image-06.jpg';
+import { Audience, audienceCopy, getRememberedAudience } from '@/lib/audience';
+import { useStartAuth } from '@/hooks/use-start-auth';
 
 const ctaImages = [
   { src: ctaImage01, alt: 'Professional man', bgColor: '#d4c4e8', endX: '-30vw', endY: '-28vh', endScale: 0.8 },
@@ -20,7 +21,10 @@ const ctaImages = [
   { src: ctaImage06, alt: 'Man smiling', bgColor: '#f5e8c4', endX: '0vw', endY: '35vh', endScale: 0.75 },
 ];
 
-const CallToAction = () => {
+const CallToAction = ({ audience }: { audience?: Audience }) => {
+  const role = audience ?? getRememberedAudience() ?? 'creator';
+  const copy = audienceCopy[role];
+  const startAuth = useStartAuth();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
@@ -110,15 +114,15 @@ const CallToAction = () => {
             className="relative z-10 flex flex-col items-center text-center px-5 max-w-[40rem]"
           >
             <span className="text-xs tracking-[1px] uppercase font-semibold mb-4">
-              Get Started Now
+              {copy.ctaEyebrow}
             </span>
 
             <h2 className="text-[2rem] md:text-[3rem] lg:text-[4rem] leading-[1.2] font-bold font-display mb-6">
-              Your Views Deserve to Pay
+              {copy.ctaHeadline}
             </h2>
 
-            <Button variant="invofy" size="invofy" asChild>
-              <Link to="/signup">Get Started</Link>
+            <Button variant="invofy" size="invofy" onClick={() => startAuth(role)}>
+              {copy.primaryCta}
             </Button>
           </motion.div>
         </div>

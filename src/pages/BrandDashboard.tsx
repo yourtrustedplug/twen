@@ -3,12 +3,28 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
+import { OnboardingBanner } from '@/components/OnboardingRequired';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import type { Campaign } from '@/types/unignored';
-import { formatMoney, formatDate, formatRate } from '@/lib/format';
-import { campaignImage } from '@/lib/campaign-image';
+import { formatMoney, formatDate, formatRate, formatViews } from '@/lib/format';
+import { useCampaignCover } from '@/lib/campaign-image';
 import { Loader2, Plus, Eye } from 'lucide-react';
+
+const CampaignCover = ({ id, coverImage, alt }: { id: string; coverImage?: string | null; alt: string }) => {
+  const src = useCampaignCover(id, coverImage);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={768}
+      height={576}
+      loading="lazy"
+      decoding="async"
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+    />
+  );
+};
 
 const BrandDashboard = () => {
   const { user } = useAuth();
@@ -38,8 +54,8 @@ const BrandDashboard = () => {
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <h1 className="font-display text-4xl font-bold mb-2">Brand dashboard</h1>
-            <p className="text-muted-foreground">You only pay for verified views.</p>
+            <h1 className="font-display text-4xl font-bold mb-2">My campaigns</h1>
+            <p className="text-muted-foreground">Funded distribution. Pay only for verified views.</p>
           </div>
           <Button variant="invofy" size="invofy" asChild>
             <Link to="/brand/campaigns/new">
@@ -47,6 +63,8 @@ const BrandDashboard = () => {
             </Link>
           </Button>
         </div>
+
+        <OnboardingBanner />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {[
@@ -89,15 +107,7 @@ const BrandDashboard = () => {
                   className="group bg-white border border-[#f1f1f1] rounded-[30px] overflow-hidden flex flex-col hover:border-[#dcdcdc] transition-colors"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={campaignImage(c.id)}
-                      alt={`${c.title} campaign`}
-                      width={768}
-                      height={576}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                    />
+                    <CampaignCover id={c.id} coverImage={c.cover_image} alt={`${c.title} campaign`} />
                     <div className="absolute top-4 right-4">
                       <StatusBadge status={c.status} />
                     </div>
@@ -115,7 +125,13 @@ const BrandDashboard = () => {
                         {formatMoney(c.spent_amount)} of {formatMoney(c.funded_amount)} spent
                       </span>
                       <span className="flex items-center gap-1 font-semibold">
-                        <Eye className="h-3.5 w-3.5" /> {formatMoney(Number(c.rate_per_1k) === 0 ? 0 : Number(c.spent_amount) / Number(c.rate_per_1k) * 1000)} views
+                        <Eye className="h-3.5 w-3.5" />{' '}
+                        {formatViews(
+                          Number(c.rate_per_1k) === 0
+                            ? 0
+                            : (Number(c.spent_amount) / Number(c.rate_per_1k)) * 1000,
+                        )}{' '}
+                        views
                       </span>
                     </div>
                   </div>

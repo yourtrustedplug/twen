@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import backgroundImage from '@/assets/background-image-01.webp';
 import foregroundImage from '@/assets/image-05.jpg';
 import brandForegroundImage from '@/assets/image-06.jpg';
 import { Audience, audienceCopy } from '@/lib/audience';
+import { useStartAuth } from '@/hooks/use-start-auth';
 
 
 interface HowItWorksProps extends React.ComponentProps<'section'> {
@@ -13,6 +13,7 @@ interface HowItWorksProps extends React.ComponentProps<'section'> {
 
 const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksProps) => {
   const copy = audienceCopy[audience];
+  const startAuth = useStartAuth();
   return (
     <section
       className={cn(
@@ -31,7 +32,7 @@ const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksPro
           </h2>
           <div className="w-full">
             <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-  {copy.sub}
+              {copy.stepsSub}
             </p>
           </div>
         </div>
@@ -60,7 +61,7 @@ const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksPro
             </div>
           </div>
 
-          <div className="w-full h-full ml-[-100px] relative max-lg:ml-0">
+          <div className="w-full h-full relative lg:pl-6">
             <div className="flex flex-col justify-between items-end w-full h-full gap-6 2xl:gap-8">
               <div className="flex flex-col justify-center w-full h-full gap-5 2xl:gap-8 max-md:gap-3">
                 {copy.steps.map((step, index) => (
@@ -83,8 +84,8 @@ const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksPro
                 ))}
               </div>
 
-              <Button variant="invofy" size="invofy" asChild>
-                <Link to={copy.secondaryCta.href}>{copy.secondaryCta.label}</Link>
+              <Button variant="invofy" size="invofy" onClick={() => startAuth(audience)}>
+                {copy.primaryCta}
               </Button>
             </div>
           </div>

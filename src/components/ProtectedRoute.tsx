@@ -1,20 +1,22 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { roleHome, UserRole } from '@/contexts/AuthContext';
+import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
+import { isStaff } from '@/lib/staff';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  /** When set, users signed in under the other role are bounced to their own home. */
+  /** Exact role required (e.g. brand / creator). */
   role?: UserRole;
+  /** Admin panel: moderator and admin are the same. */
+  staff?: boolean;
 }
 
-export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, role, staff }: ProtectedRouteProps) {
   const { user, profile, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) {
+  if (isLoading || (user && (role || staff) && !profile)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -27,6 +29,10 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
+
+  if (staff && profile && !isStaff(profile.role)) {
+    return <Navigate to={roleHome(profile.role)} replace />;
   }
 
   if (role && profile && profile.role !== role) {

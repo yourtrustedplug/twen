@@ -23,7 +23,7 @@ const AboutMission = () => {
             Our Mission
           </span>
           <h2 className="text-[2.5rem] max-[991px]:text-[2rem] max-[479px]:text-2xl font-bold leading-[1.2] max-w-[50rem]">
-            You already make the videos. You already get the views. Unignored is where those views turn into money.
+            You already make the videos. You already get the views. Twen is where those views turn into money.
           </h2>
         </div>
 

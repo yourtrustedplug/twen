@@ -5,7 +5,6 @@ import Hero from '@/components/Hero';
 const LogoCloud = lazy(() => import('@/components/LogoCloud'));
 const Features = lazy(() => import('@/components/Features'));
 const HowItWorks = lazy(() => import('@/components/HowItWorks'));
-const Pricing = lazy(() => import('@/components/Pricing'));
 const CallToAction = lazy(() => import('@/components/CallToAction'));
 const Footer = lazy(() => import('@/components/Footer'));
 
@@ -18,8 +17,7 @@ const BrandLanding = () => (
         <LogoCloud />
         <Features audience="brand" />
         <HowItWorks audience="brand" />
-        <Pricing />
-        <CallToAction />
+        <CallToAction audience="brand" />
         <Footer />
       </Suspense>
     </main>

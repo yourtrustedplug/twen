@@ -10,9 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import type { ProfileRow, Submission } from '@/types/unignored';
 import { PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
+import { formatPlace } from '@/lib/geo';
 import { formatPercent, engagement } from '@/lib/metrics';
 import { campaignImage } from '@/lib/campaign-image';
-import { Loader2, ArrowLeft, MessageSquare, Handshake } from 'lucide-react';
+import { isPro } from '@/lib/plan';
+import { Loader2, ArrowLeft, MessageSquare, Handshake, Lock } from 'lucide-react';
 
 const BrandCreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,9 +25,13 @@ const BrandCreatorProfile = () => {
   const [work, setWork] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const pro = isPro(profile);
 
   useEffect(() => {
-    if (!id) return;
+    if (!pro || !id) {
+      setLoading(false);
+      return;
+    }
     Promise.all([
       supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
       supabase.from('submissions').select('*').eq('creator_id', id).order('verified_views', { ascending: false }).limit(6),
@@ -34,7 +40,25 @@ const BrandCreatorProfile = () => {
       setWork((s as Submission[]) ?? []);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, pro]);
+
+  if (!pro) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <main className="max-w-2xl mx-auto px-5 py-20 text-center">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12">
+            <Lock className="h-8 w-8 mx-auto mb-5 text-muted-foreground" />
+            <h1 className="font-display text-3xl font-bold mb-3">Creator profiles are Twen Plus</h1>
+            <p className="text-muted-foreground mb-8">Upgrade to browse creators, view rate cards, and hire directly.</p>
+            <Button variant="invofy" size="invofy" asChild>
+              <Link to="/pricing">See Twen Plus</Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const startChat = async (hire: boolean) => {
     if (!user || !creator) return;
@@ -122,7 +146,10 @@ const BrandCreatorProfile = () => {
           <div>
             <h1 className="font-display text-4xl font-bold mb-1">{creator.full_name ?? 'Creator'}</h1>
             <p className="text-muted-foreground mb-6">
-              {creator.tiktok_handle} {creator.location ? `· ${creator.location}` : ''}
+              {[creator.tiktok_handle, creator.instagram_handle].filter(Boolean).join(' · ')}
+              {formatPlace(creator.city, creator.country, creator.location)
+                ? ` · ${formatPlace(creator.city, creator.country, creator.location)}`
+                : ''}
             </p>
             {creator.bio && <p className="leading-relaxed mb-8 max-w-2xl">{creator.bio}</p>}
 

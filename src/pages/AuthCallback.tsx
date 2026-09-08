@@ -4,18 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_AUTHED_ROUTE, SIGNED_OUT_ROUTE } from "@/lib/auth-routes";
 
 /**
- * /auth/callback — where every OAuth (Google/Apple) and email-confirmation link lands.
- *
- * This is the fix for the recurring "signed in but bounced back to /sign-in (or the
- * marketing homepage)" bug. The Lovable OAuth broker can return the session two ways:
- *   1. fragment tokens  — `#access_token=…&refresh_token=…` (implicit / web_message)
- *   2. a PKCE `code`     — `?code=…` (when the supabase client uses flowType: 'pkce')
- * A callback that only handles ONE of these strands the user whenever the client is
- * configured for the other. So we establish the session from WHICHEVER arrived, then
- * land the user INSIDE the app — never `/`. Only after a genuine "no session either
- * way" do we fall back to the sign-in screen.
- *
- * See docs/design/auth.md.
+ * /auth/callback — residual handler for any Supabase session tokens that land
+ * in the URL (legacy email links / hash tokens). Primary login is Privy →
+ * privy-exchange and does not need this route.
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -23,7 +14,7 @@ const AuthCallback = () => {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (ran.current) return; // StrictMode double-invoke / re-render guard
+    if (ran.current) return;
     ran.current = true;
 
     (async () => {
@@ -35,17 +26,15 @@ const AuthCallback = () => {
 
       try {
         if (accessToken && refreshToken) {
-          // Broker returned tokens directly (implicit / web_message flow).
-          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
         } else if (code) {
-          // Broker returned a PKCE authorization code — exchange it for a session.
           await supabase.auth.exchangeCodeForSession(url.href);
         }
-        // If neither is present, the client's detectSessionInUrl may already have
-        // consumed the URL — getSession() below is the source of truth either way.
       } catch {
-        // Swallow and let the session check decide; a thrown exchange still often
-        // leaves a valid session behind, and if not we surface a retry below.
+        // Fall through to getSession()
       }
 
       const {

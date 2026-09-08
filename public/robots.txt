@@ -1,8 +1,28 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
+Disallow: /brand
+Disallow: /creator
+Disallow: /admin
+Disallow: /moderator
+Disallow: /messages
+Disallow: /auth/
+Disallow: /signin
+Disallow: /signup
+Disallow: /reset-password
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
+Disallow: /brand
+Disallow: /creator
+Disallow: /admin
+Disallow: /moderator
+Disallow: /messages
+Disallow: /auth/
+Disallow: /signin
+Disallow: /signup
+Disallow: /reset-password
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +32,15 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /brand
+Disallow: /creator
+Disallow: /admin
+Disallow: /moderator
+Disallow: /messages
+Disallow: /auth/
+Disallow: /signin
+Disallow: /signup
+Disallow: /reset-password
+
+Sitemap: https://twen.app/sitemap.xml

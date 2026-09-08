@@ -1,22 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import { StatusBadge } from '@/components/StatusBadge';
-import { MetricTile, VerdictPill } from '@/components/MetricTile';
+import { MetricTile } from '@/components/MetricTile';
 import SignedImage from '@/components/SignedImage';
+import { BrandKitCard } from '@/components/BrandKitCard';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, Submission, ProfileRow } from '@/types/unignored';
 import { PLATFORM_LABELS, parseChecklist, parseChecklistResults, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatDate, formatViews, formatRate } from '@/lib/format';
-import { campaignImage } from '@/lib/campaign-image';
-import { cpm, cpmVerdict, engagementVerdict, formatPercent, daysRemaining } from '@/lib/metrics';
-import { Loader2, ArrowLeft, ShieldCheck, CalendarPlus, Check, X, MessageSquare, ExternalLink } from 'lucide-react';
+import { campaignImage, useCampaignCover } from '@/lib/campaign-image';
+import { formatPercent, daysRemaining } from '@/lib/metrics';
+import { isPro } from '@/lib/plan';
+import { kitFromCampaign } from '@/lib/brand-kit';
+import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { Loader2, ArrowLeft, ShieldCheck, CalendarPlus, Check, X, MessageSquare } from 'lucide-react';
+
+const CampaignHero = ({ id, coverImage, title }: { id: string; coverImage?: string | null; title: string }) => {
+  const src = useCampaignCover(id, coverImage);
+  return <img src={src} alt={title} className="w-full h-full object-cover" decoding="async" />;
+};
 
 const BrandCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -24,6 +34,7 @@ const BrandCampaignDetail = () => {
   const [creators, setCreators] = useState<Record<string, ProfileRow>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const brandIsPro = isPro(profile);
 
   const load = useCallback(async () => {
     if (!id || !user) return;
@@ -46,17 +57,36 @@ const BrandCampaignDetail = () => {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (searchParams.get('funded') !== 'pending') return;
+    toast({
+      title: 'Payment received — confirming escrow',
+      description: 'If the campaign is still draft, refresh in a few seconds while NardoPay webhook settles.',
+    });
+    const next = new URLSearchParams(searchParams);
+    next.delete('funded');
+    setSearchParams(next, { replace: true });
+    const t = window.setTimeout(() => load(), 2500);
+    return () => window.clearTimeout(t);
+  }, [searchParams, setSearchParams, toast, load]);
+
   const fund = async () => {
     if (!campaign) return;
     setBusy(true);
-    const { error } = await supabase.rpc('fund_campaign', { p_campaign_id: campaign.id });
+    const { data, error } = await supabase.functions.invoke('create-campaign-checkout', {
+      body: { campaignId: campaign.id },
+    });
     setBusy(false);
-    if (error) {
-      toast({ title: 'Funding failed', description: error.message, variant: 'destructive' });
+    if (error || data?.error || !data?.url) {
+      toast({
+        title: 'Funding failed',
+        description: edgeFunctionErrorMessage(error, data, 'Could not start checkout'),
+        variant: 'destructive',
+      });
       return;
     }
-    toast({ title: 'Live', description: `${formatMoney(campaign.budget)} in escrow. Runs at least 10 days.` });
-    load();
+    toast({ title: 'Redirecting to NardoPay', description: 'Complete payment to fund escrow.' });
+    window.location.href = data.url as string;
   };
 
   const extend = async (days: number) => {
@@ -72,24 +102,15 @@ const BrandCampaignDetail = () => {
     load();
   };
 
-  const review = async (submission: Submission, status: 'approved' | 'rejected') => {
-    const reason = status === 'rejected' ? window.prompt('What was missed? (shown to the creator)') ?? '' : null;
-    if (status === 'rejected' && !reason) return;
-    setBusy(true);
-    const { error } = await supabase
-      .from('submissions')
-      .update({ status, rejection_reason: reason })
-      .eq('id', submission.id);
-    setBusy(false);
-    if (error) {
-      toast({ title: 'Review failed', description: error.message, variant: 'destructive' });
-      return;
-    }
-    load();
-  };
-
   const message = async (creatorId: string, creatorName: string) => {
     if (!user) return;
+    if (!brandIsPro) {
+      toast({
+        title: 'Messaging is Twen Plus',
+        description: 'Upgrade to message creators directly.',
+      });
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from('conversations').upsert(
       {
@@ -110,22 +131,20 @@ const BrandCampaignDetail = () => {
   };
 
   const stats = useMemo(() => {
-    const approved = submissions.filter((s) => s.status === 'approved');
-    const views = approved.reduce((n, s) => n + Number(s.verified_views), 0);
-    const likes = approved.reduce((n, s) => n + Number(s.likes), 0);
-    const comments = approved.reduce((n, s) => n + Number(s.comments), 0);
-    const shares = approved.reduce((n, s) => n + Number(s.shares), 0);
-    const spent = Number(campaign?.spent_amount ?? 0);
+    const live = submissions.filter((s) => s.status !== 'rejected');
+    const views = live.reduce((n, s) => n + Number(s.verified_views), 0);
+    const likes = live.reduce((n, s) => n + Number(s.likes), 0);
+    const comments = live.reduce((n, s) => n + Number(s.comments), 0);
+    const shares = live.reduce((n, s) => n + Number(s.shares), 0);
     return {
       creators: new Set(submissions.map((s) => s.creator_id)).size,
       videos: submissions.length,
-      approved: approved.length,
       views,
-      interactions: likes + comments + shares,
+      likes,
+      comments,
       engagement: views ? (likes + comments + shares) / views : 0,
-      effectiveCpm: cpm(spent, views),
     };
-  }, [submissions, campaign]);
+  }, [submissions]);
 
   if (loading) {
     return (
@@ -153,8 +172,8 @@ const BrandCampaignDetail = () => {
   const pct = Number(campaign.funded_amount) > 0 ? (Number(campaign.spent_amount) / Number(campaign.funded_amount)) * 100 : 0;
   const checklist = parseChecklist(campaign.checklist);
   const assets = parseStringArray(campaign.asset_urls);
-  const links = parseStringArray(campaign.links);
   const days = daysRemaining(campaign.deadline);
+  const brandKit = kitFromCampaign(campaign);
 
   return (
     <div className="min-h-screen bg-background">
@@ -165,12 +184,7 @@ const BrandCampaignDetail = () => {
         </Link>
 
         <div className="relative rounded-[34px] overflow-hidden mb-8 aspect-[21/9] max-md:aspect-[4/3]">
-          <img
-            src={campaignImage(campaign.id)}
-            alt={campaign.title}
-            className="w-full h-full object-cover"
-            decoding="async"
-          />
+          <CampaignHero id={campaign.id} coverImage={campaign.cover_image} title={campaign.title} />
           <div className="absolute top-5 right-5">
             <StatusBadge status={campaign.status} />
           </div>
@@ -183,17 +197,13 @@ const BrandCampaignDetail = () => {
         </div>
 
         {/* Campaign stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
           <MetricTile label="Creators" value={String(stats.creators)} />
           <MetricTile label="Videos" value={String(stats.videos)} />
           <MetricTile label="Verified views" value={formatViews(stats.views)} />
-          <MetricTile label="Interactions" value={formatViews(stats.interactions)} />
-          <MetricTile label="Engagement" value={formatPercent(stats.engagement)} />
-          <MetricTile label="Your CPM" value={`$${stats.effectiveCpm.toFixed(2)}`} />
-        </div>
-        <div className="flex flex-wrap gap-3 mb-12">
-          <VerdictPill verdict={cpmVerdict(stats.effectiveCpm)} />
-          <VerdictPill verdict={engagementVerdict(stats.engagement)} />
+          <MetricTile label="Likes" value={formatViews(stats.likes)} />
+          <MetricTile label="Comments" value={formatViews(stats.comments)} />
+          <MetricTile label="Engagement rate" value={formatPercent(stats.engagement)} />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
@@ -226,22 +236,9 @@ const BrandCampaignDetail = () => {
                   </ul>
                 </div>
               )}
-              {links.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {links.map((l) => (
-                    <a
-                      key={l}
-                      href={l}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-semibold bg-white border border-[#f1f1f1] rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
-                    >
-                      <ExternalLink className="h-3 w-3" /> {new URL(l).hostname}
-                    </a>
-                  ))}
-                </div>
-              )}
             </div>
+
+            <BrandKitCard kit={brandKit} />
 
             {assets.length > 0 && (
               <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-10">
@@ -264,7 +261,6 @@ const BrandCampaignDetail = () => {
                   const creator = creators[s.creator_id];
                   const eng = Number(s.engagement_rate) || (Number(s.verified_views) ? (Number(s.likes) + Number(s.comments) + Number(s.shares)) / Number(s.verified_views) : 0);
                   const results = parseChecklistResults(s.checklist_results);
-                  const subCpm = cpm(s.earnings, s.verified_views);
                   return (
                     <div key={s.id} className="bg-white border border-[#f1f1f1] rounded-[30px] p-6 flex flex-col gap-5">
                       <div className="flex items-start justify-between gap-4">
@@ -275,29 +271,26 @@ const BrandCampaignDetail = () => {
                             <img src={campaignImage(s.creator_id)} alt={s.creator_name} className="h-12 w-12 rounded-full object-cover" />
                           )}
                           <div className="min-w-0">
-                            <Link to={`/brand/creators/${s.creator_id}`} className="font-semibold hover:underline">
-                              {s.creator_name || 'Creator'}
-                            </Link>
+                            {brandIsPro ? (
+                              <Link to={`/brand/creators/${s.creator_id}`} className="font-semibold hover:underline">
+                                {s.creator_name || 'Creator'}
+                              </Link>
+                            ) : (
+                              <p className="font-semibold">{s.creator_name || 'Creator'}</p>
+                            )}
                             <p className="text-sm text-muted-foreground truncate">
                               {s.tiktok_handle} · {PLATFORM_LABELS[s.platform] ?? s.platform}
-                              {creator?.rate_per_video ? ` · ${formatMoney(creator.rate_per_video)}/video` : ''}
                             </p>
                           </div>
                         </div>
                         <StatusBadge status={s.status} />
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <MetricTile label="Views" value={formatViews(s.verified_views)} />
                         <MetricTile label="Likes" value={formatViews(s.likes)} />
                         <MetricTile label="Comments" value={formatViews(s.comments)} />
-                        <MetricTile label="Shares" value={formatViews(s.shares)} />
                         <MetricTile label="Engagement" value={formatPercent(eng)} />
-                      </div>
-
-                      <div className="flex flex-wrap gap-3">
-                        <VerdictPill verdict={cpmVerdict(subCpm)} />
-                        <VerdictPill verdict={engagementVerdict(eng)} />
                       </div>
 
                       {results.length > 0 && (
@@ -321,20 +314,15 @@ const BrandCampaignDetail = () => {
                         </a>
                         <span className="text-sm text-muted-foreground">{formatMoney(s.earnings)} earned</span>
                         <div className="flex-1" />
-                        <Button variant="invofyOutline" size="sm" onClick={() => message(s.creator_id, s.creator_name)} disabled={busy}>
-                          <MessageSquare className="h-4 w-4 mr-1.5" /> Message
-                        </Button>
-                        {s.status !== 'rejected' && (
-                          <Button variant="invofyOutline" size="sm" onClick={() => review(s, 'rejected')} disabled={busy}>
-                            Reject
-                          </Button>
-                        )}
-                        {s.status === 'rejected' && (
-                          <Button variant="invofy" size="sm" onClick={() => review(s, 'approved')} disabled={busy}>
-                            Re-approve
+                        {brandIsPro && (
+                          <Button variant="invofyOutline" size="sm" onClick={() => message(s.creator_id, s.creator_name)} disabled={busy}>
+                            <MessageSquare className="h-4 w-4 mr-1.5" /> Message
                           </Button>
                         )}
                       </div>
+                      {s.status === 'submitted' && (
+                        <p className="text-sm text-muted-foreground">Waiting for moderator review before it earns.</p>
+                      )}
                       {s.status === 'rejected' && s.rejection_reason && (
                         <p className="text-sm text-rose-600">Rejected: {s.rejection_reason}</p>
                       )}
@@ -379,7 +367,7 @@ const BrandCampaignDetail = () => {
               {campaign.status === 'open' && (
                 <>
                   <p className="text-xs text-muted-foreground">
-                    Campaigns run a minimum of 10 days. Give it more time instead of stopping it.
+                    Campaigns run a minimum of 15 days. Give it more time instead of stopping it.
                   </p>
                   <div className="flex gap-2">
                     {[7, 14, 30].map((d) => (

@@ -20,8 +20,12 @@ export interface ChecklistResult extends ChecklistItem {
   met: boolean;
 }
 
-export const PLATFORMS = ['tiktok', 'instagram', 'youtube', 'facebook', 'x'] as const;
+export const PLATFORMS = ['tiktok', 'instagram'] as const;
 export type PlatformId = (typeof PLATFORMS)[number];
+
+/** Platforms a campaign can target (same as creator platforms). */
+export const CAMPAIGN_PLATFORMS = PLATFORMS;
+export type CampaignPlatformId = PlatformId;
 
 export const PLATFORM_LABELS: Record<string, string> = {
   tiktok: 'TikTok',
@@ -29,6 +33,44 @@ export const PLATFORM_LABELS: Record<string, string> = {
   youtube: 'YouTube Shorts',
   facebook: 'Facebook',
   x: 'X',
+};
+
+export const NICHES = [
+  'beauty',
+  'fashion',
+  'food',
+  'fitness',
+  'tech',
+  'gaming',
+  'finance',
+  'lifestyle',
+  'comedy',
+  'education',
+  'travel',
+  'music',
+  'parenting',
+  'sports',
+  'other',
+] as const;
+
+export type NicheId = (typeof NICHES)[number];
+
+export const NICHE_LABELS: Record<string, string> = {
+  beauty: 'Beauty',
+  fashion: 'Fashion',
+  food: 'Food',
+  fitness: 'Fitness',
+  tech: 'Tech',
+  gaming: 'Gaming',
+  finance: 'Finance',
+  lifestyle: 'Lifestyle',
+  comedy: 'Comedy',
+  education: 'Education',
+  travel: 'Travel',
+  music: 'Music',
+  parenting: 'Parenting',
+  sports: 'Sports',
+  other: 'Other',
 };
 
 export const parseChecklist = (value: unknown): ChecklistItem[] =>
@@ -43,3 +85,12 @@ export const parseChecklistResults = (value: unknown): ChecklistResult[] =>
 
 export const parseStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === 'string') : [];
+
+/** Turns a newline / bullet list string into clean items. */
+export const parseListText = (value: string | null | undefined): string[] =>
+  (value ?? '')
+    .split(/\n|•|;/)
+    .map((s) => s.replace(/^[-*]\s*/, '').trim())
+    .filter(Boolean);
+
+export const joinListText = (items: string[]) => items.map((s) => s.trim()).filter(Boolean).join('\n');

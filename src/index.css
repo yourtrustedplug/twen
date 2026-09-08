@@ -4,7 +4,7 @@
 
 /* Fonts are now loaded via link tags in index.html for non-blocking render */
 
-/* Unignored Design System – custom Tailwind-based design system */
+/* Twen Design System – custom Tailwind-based design system */
 
 @layer base {
   :root {

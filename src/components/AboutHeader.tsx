@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { audienceHref } from '@/lib/hosts';
 import aboutBg from '@/assets/about/about-bg.jpg';
 import aboutImage01 from '@/assets/about/about-image-01.jpg';
 import aboutImage02 from '@/assets/about/about-image-02.jpg';
@@ -79,8 +80,8 @@ const AboutHeader = () => {
           {/* Header Content with Images */}
           <div className="relative pt-48 pb-24 max-[991px]:pt-40 max-[991px]:pb-20 max-[767px]:pt-36 max-[767px]:pb-16 max-[479px]:pt-32 max-[479px]:pb-12">
             
-            {/* Positioned Images - Desktop Only */}
-            <div className="max-[991px]:hidden">
+            {/* Positioned Images — wide screens only, so they never cover the copy */}
+            <div className="hidden min-[1440px]:block pointer-events-none">
               {/* Top Left - Woman in yellow sweater */}
               <motion.div 
                 className="absolute left-[2%] top-[12%] w-[13rem] min-[1440px]:w-[14rem] min-[1920px]:w-[16rem]"
@@ -168,7 +169,7 @@ const AboutHeader = () => {
 
               {/* Description */}
               <p className="text-foreground/80 text-lg max-[479px]:text-base leading-relaxed mb-10 max-[479px]:mb-8 max-w-[32rem]">
-                Unignored exists because creators in this region were already earning attention — just not money. We fixed the second part.
+                Twen exists because creators in this region were already earning attention — just not money. We fixed the second part. Let's go.
               </p>
               
               {/* Buttons */}
@@ -177,13 +178,13 @@ const AboutHeader = () => {
                   <Link to="/contact">Get in Touch</Link>
                 </Button>
                 <Button variant="invofyOutline" size="invofy" asChild>
-                  <Link to="/pricing">How Earnings Work</Link>
+                  <a href={audienceHref('creator')}>Why Creators</a>
                 </Button>
               </div>
             </div>
             
-            {/* Mobile/Tablet Images Grid */}
-            <div className="hidden max-[991px]:grid grid-cols-2 gap-4 mt-12 max-[479px]:mt-8 max-[479px]:gap-3">
+            {/* Images below the copy on laptop and smaller */}
+            <div className="grid min-[1440px]:hidden grid-cols-2 gap-4 mt-12 max-[479px]:mt-8 max-[479px]:gap-3">
               <div className="overflow-hidden rounded-2xl min-[480px]:max-[991px]:rounded-3xl aspect-square">
                 <img 
                   src={aboutImage03}

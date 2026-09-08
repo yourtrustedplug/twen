@@ -1,44 +1,48 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/AuthContext';
+import { Logo } from '@/logos';
+import { audienceHref } from '@/lib/hosts';
 
-const LogoIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-[26px] h-[26px] text-foreground md:w-[22px] md:h-[22px]"
-  >
-    <path d="M18.5293 15.3193C18.7059 14.8935 19.2943 14.8935 19.4707 15.3193L19.7236 15.9307C20.1556 16.9735 20.9615 17.8062 21.9746 18.2568L22.6924 18.5762C23.1026 18.759 23.1026 19.3562 22.6924 19.5391L21.9326 19.877C20.9449 20.3162 20.1534 21.1194 19.7139 22.1279L19.4668 22.6934C19.2864 23.1075 18.7137 23.1075 18.5332 22.6934L18.2871 22.1279C17.8476 21.1193 17.0552 20.3163 16.0674 19.877L15.3076 19.5391C14.8974 19.3562 14.8974 18.759 15.3076 18.5762L16.0254 18.2568C17.0385 17.8062 17.8445 16.9735 18.2764 15.9307L18.5293 15.3193ZM20.002 2C20.5532 2.00012 21 2.45576 21 2.99219V13.3418C20.3744 13.1207 19.7013 13 19 13C15.6863 13 13 15.6863 13 19C13 20.0932 13.2939 21.1173 13.8047 22H3.99316C3.44463 21.9999 3 21.5507 3 20.9922V9H9C9.55228 9 10 8.55228 10 8V2H20.002ZM8 7H3L8 2.00293V7Z"></path>
-  </svg>
-);
-
-const navLinks = [
-  { label: 'Why Creators', href: '/creators' },
-  { label: 'Why Brands', href: '/brands' },
+const staticNavLinks = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
 ];
 
-const accountLinks = [
-  { label: 'Sign In', href: '/signin' },
-  { label: 'Sign Up', href: '/signup' },
-  { label: 'Reset Password', href: '/reset-password' },
+const marketingNavLinks = () => [
+  { label: 'Why Creators', href: audienceHref('creator') },
+  { label: 'Why Brands', href: audienceHref('brand') },
+  ...staticNavLinks,
 ];
 
-const authenticatedLinks = [
-  { label: 'Dashboard', href: '/dashboard' },
-];
+const NavItem = ({
+  href,
+  onMouseEnter,
+  onClick,
+  className,
+  children,
+}: {
+  href: string;
+  onMouseEnter?: () => void;
+  onClick?: () => void;
+  className?: string;
+  children: React.ReactNode;
+}) => {
+  const external = href.startsWith('http');
+  if (external) {
+    return (
+      <a href={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className}>
+      {children}
+    </Link>
+  );
+};
 
 const prefetchAbout = () => {
   import('@/pages/About');
@@ -50,58 +54,53 @@ const prefetchContact = () => {
   import('@/pages/Contact');
 };
 
-const Navbar = () => {
+interface NavbarProps {
+  /** Icon + wordmark + hamburger only — used on the home gate. */
+  compact?: boolean;
+}
+
+const Navbar = ({ compact = false }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { user, isAnonymous, signOut, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const navLinks = marketingNavLinks();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleAccountSubmenu = () => setIsAccountOpen(!isAccountOpen);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
-
-  const currentAccountLinks = user ? authenticatedLinks : accountLinks;
 
   return (
     <nav className="fixed inset-x-0 top-0 z-50 bg-transparent pt-3 max-xs:pt-2">
       <div className="w-full h-full px-5 md:px-10">
-        <div className="w-full max-w-[90rem] h-full mx-auto rounded-full border border-border/60 bg-background/70 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-5 md:px-6 max-lg:bg-transparent max-lg:border-none max-lg:shadow-none max-lg:px-0">
-          <div className="flex flex-row justify-between items-center py-2 max-lg:py-4">
+        <div
+          className={
+            compact
+              ? 'w-full max-w-[90rem] h-full mx-auto px-0'
+              : 'w-full max-w-[90rem] h-full mx-auto rounded-full border border-border/60 bg-background/70 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-5 md:px-6 max-lg:bg-transparent max-lg:border-none max-lg:shadow-none max-lg:px-0'
+          }
+        >
+          <div
+            className={`flex flex-row justify-between items-center py-2 ${compact ? '' : 'max-lg:py-4'}`}
+          >
             {/* Logo */}
             <Link to="/" className="relative z-10 flex items-center gap-2 no-underline group">
-              <LogoIcon />
-              <div className="relative h-8 overflow-hidden">
-                <div className="flex flex-col">
-                  <span className="text-foreground text-[1.675rem] font-bold font-display leading-8 max-xs:text-[1.5rem] transition-transform duration-300 group-hover:-translate-y-8">
-                    Unignored
-                  </span>
-                  <span className="text-foreground text-[1.675rem] font-bold font-display leading-8 max-xs:text-[1.5rem] transition-transform duration-300 group-hover:-translate-y-8">
-                    Unignored
-                  </span>
-                </div>
-              </div>
+              <Logo
+                variant="full"
+                animatedWordmark
+                iconClassName="w-[26px] h-[26px] md:w-[22px] md:h-[22px]"
+                wordmarkClassName="text-[1.675rem] max-xs:text-[1.5rem] transition-transform duration-300 group-hover:-translate-y-8"
+              />
             </Link>
 
             {/* Desktop Navigation */}
+            {!compact && (
             <div className="hidden lg:flex items-center gap-6">
               <div className="flex items-center gap-6">
                 {navLinks.map((link) => (
-                  <Link
+                  <NavItem
                     key={link.label}
-                    to={link.href}
+                    href={link.href}
                     onMouseEnter={
                       link.href === '/about'
                         ? prefetchAbout
                         : link.href === '/pricing'
                         ? prefetchPricing
-                        : link.href === '/contact'
-                        ? prefetchContact
                         : undefined
                     }
                     className="no-underline group"
@@ -116,82 +115,22 @@ const Navbar = () => {
                         </span>
                       </div>
                     </div>
-                  </Link>
+                  </NavItem>
                 ))}
-
-                {/* Account Dropdown */}
-                <div
-                  className="relative"
-                  onPointerEnter={() => setIsDropdownOpen(true)}
-                  onPointerLeave={() => setIsDropdownOpen(false)}
-                >
-                  <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <button className="no-underline flex items-center gap-1 cursor-pointer bg-transparent border-none outline-none">
-                        <span className="text-foreground text-base font-semibold leading-5">
-                          {user ? (isAnonymous ? 'Demo' : 'Account') : 'Account'}
-                        </span>
-                        <ChevronDown
-                          className={`w-4 h-4 text-foreground transition-transform duration-300 ${
-                            isDropdownOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      sideOffset={2}
-                      portalled={false}
-                      className="min-w-[160px] rounded-2xl p-3 flex flex-col gap-5"
-                    >
-                      {currentAccountLinks.map((link) => (
-                        <DropdownMenuItem
-                          key={link.label}
-                          asChild
-                          className="p-0 focus:bg-transparent"
-                        >
-                          <Link to={link.href} className="cursor-pointer w-full no-underline group/item">
-                            <div className="relative h-5 overflow-hidden">
-                              <div className="flex flex-col">
-                                <span className="text-foreground text-base font-semibold leading-5 transition-transform duration-300 group-hover/item:-translate-y-5">
-                                  {link.label}
-                                </span>
-                                <span className="text-foreground text-base leading-5 transition-transform duration-300 group-hover/item:-translate-y-5 font-semibold">
-                                  {link.label}
-                                </span>
-                              </div>
-                            </div>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                      {user && (
-                        <DropdownMenuItem
-                          className="p-0 focus:bg-transparent cursor-pointer"
-                          onClick={handleSignOut}
-                        >
-                          <div className="flex items-center gap-2 text-foreground text-base font-semibold">
-                            <LogOut className="w-4 h-4" />
-                            Sign Out
-                          </div>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
               </div>
 
-              {/* Get Started Button */}
               <Button variant="invofy" size="invofy" asChild>
-                <Link to={user ? '/dashboard' : '/signup'}>
-                  {user ? 'Dashboard' : 'Get Started'}
+                <Link to="/contact" onMouseEnter={prefetchContact}>
+                  Contact
                 </Link>
               </Button>
             </div>
+            )}
 
-            {/* Mobile Menu Button */}
+            {/* Menu Button — always shown in compact (home) mode */}
             <button
               onClick={toggleMenu}
-              className="lg:hidden z-10 flex justify-center items-center w-16 h-16 max-lg:w-[3.75rem] max-lg:h-[3.75rem] max-xs:w-[3.75rem] max-xs:h-[3.75rem] bg-primary rounded-full transition-colors"
+              className={`${compact ? '' : 'lg:hidden'} z-10 flex justify-center items-center w-16 h-16 max-lg:w-[3.75rem] max-lg:h-[3.75rem] max-xs:w-[3.75rem] max-xs:h-[3.75rem] bg-primary rounded-full transition-colors`}
               aria-label="Toggle menu"
             >
               <div className="relative flex justify-center items-center w-6 h-full">
@@ -221,14 +160,14 @@ const Navbar = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden fixed inset-0 z-[5] bg-transparent flex justify-center items-center"
+            className={`${compact ? '' : 'lg:hidden'} fixed inset-0 z-[5] bg-transparent flex justify-center items-center`}
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="flex flex-col items-center justify-start gap-8 w-full h-full bg-background pt-48 max-xs:pt-40"
+              className="flex flex-col items-center justify-start gap-8 w-full h-full overflow-y-auto bg-background pt-48 max-xs:pt-40"
             >
               {navLinks.map((link, index) => (
                 <motion.div
@@ -237,15 +176,13 @@ const Navbar = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.15 + index * 0.05 }}
                 >
-                  <Link
-                    to={link.href}
+                  <NavItem
+                    href={link.href}
                     onMouseEnter={
                       link.href === '/about'
                         ? prefetchAbout
                         : link.href === '/pricing'
                         ? prefetchPricing
-                        : link.href === '/contact'
-                        ? prefetchContact
                         : undefined
                     }
                     onClick={() => setIsMenuOpen(false)}
@@ -254,87 +191,22 @@ const Navbar = () => {
                     <span className="text-foreground text-5xl max-md:text-[2.5rem] max-xs:text-[2.25rem] font-semibold font-display leading-tight">
                       {link.label}
                     </span>
-                  </Link>
+                  </NavItem>
                 </motion.div>
               ))}
 
-              {/* Mobile Account Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.15 + navLinks.length * 0.05 }}
-                className="flex flex-col items-center"
-              >
-                <button
-                  onClick={toggleAccountSubmenu}
-                  className="no-underline group flex items-center gap-2 bg-transparent border-none cursor-pointer"
-                >
-                  <span className="text-foreground text-5xl max-md:text-[2.5rem] max-xs:text-[2.25rem] font-semibold font-display leading-tight">
-                    {user ? (isAnonymous ? 'Demo' : 'Account') : 'Account'}
-                  </span>
-                  <ChevronDown
-                    className={`w-8 h-8 max-md:w-6 max-md:h-6 text-foreground transition-transform duration-300 ${
-                      isAccountOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                <AnimatePresence>
-                  {isAccountOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex flex-col items-center gap-4 mt-4 overflow-hidden"
-                    >
-                      {currentAccountLinks.map((link, index) => (
-                        <motion.div
-                          key={link.label}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.05 }}
-                        >
-                          <Link
-                            to={link.href}
-                            onClick={() => setIsMenuOpen(false)}
-                            className="no-underline"
-                          >
-                            <span className="text-foreground/80 text-3xl max-md:text-2xl max-xs:text-xl font-medium font-display leading-tight hover:text-foreground transition-colors">
-                              {link.label}
-                            </span>
-                          </Link>
-                        </motion.div>
-                      ))}
-                      {user && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2, delay: currentAccountLinks.length * 0.05 }}
-                        >
-                          <button
-                            onClick={handleSignOut}
-                            className="flex items-center gap-2 text-foreground/80 text-3xl max-md:text-2xl max-xs:text-xl font-medium font-display leading-tight hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
-                          >
-                            <LogOut className="w-6 h-6 max-md:w-5 max-md:h-5" />
-                            Sign Out
-                          </button>
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-
-              {/* Mobile Get Started Button */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.35 + 0.05 }}
               >
-                <Button variant="invofy" size="invofy" asChild onClick={() => setIsMenuOpen(false)}>
-                  <Link to={user ? '/dashboard' : '/signup'}>
-                    {user ? 'Dashboard' : 'Get Started'}
+                <Button variant="invofy" size="invofy" asChild>
+                  <Link
+                    to="/contact"
+                    onMouseEnter={prefetchContact}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Contact
                   </Link>
                 </Button>
               </motion.div>
