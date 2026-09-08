@@ -1,33 +1,37 @@
 import { useCallback } from 'react';
-import { useLogin } from '@privy-io/react-auth';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, roleHome } from '@/contexts/AuthContext';
 import { type Audience } from '@/lib/audience';
-import { beginAuth, markAuthRedirect } from '@/lib/pending-signup';
 import { authStartHref, goToAppPath } from '@/lib/hosts';
 
-/** Opens the Privy modal. Pass creator/brand from the home gate so new profiles get a role. */
+/**
+ * Starts auth on the role subdomain (or /signin locally) so the dark splash
+ * plays, then Privy opens — one origin, one login.
+ */
 export function useStartAuth() {
-  const { login } = useLogin();
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   return useCallback(
     (role?: Audience | null) => {
       if (user) {
-        void goToAppPath(profile?.role, roleHome(profile?.role));
+        void goToAppPath(profile?.role, roleHome(profile?.role), navigate);
         return;
       }
-      // Login on the role subdomain so Privy + app share one origin (no second sign-in).
-      if (role === 'creator' || role === 'brand') {
-        const hop = authStartHref(role);
-        if (hop) {
-          window.location.assign(hop);
-          return;
-        }
-        beginAuth(role);
+
+      const audience: Audience = role === 'brand' ? 'brand' : 'creator';
+      const hop = authStartHref(audience);
+      if (hop) {
+        window.location.assign(hop);
+        return;
       }
-      markAuthRedirect();
-      login();
+
+      // Same host — go through /signin for splash → login
+      if (!window.location.pathname.startsWith('/signin')) {
+        navigate(`/signin?role=${audience}`);
+        return;
+      }
     },
-    [login, user, profile],
+    [user, profile, navigate],
   );
 }
