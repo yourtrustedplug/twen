@@ -1,6 +1,7 @@
 /** Site-wide SEO constants and per-route meta for Twen (https://twen.app). */
 
-export const SITE_URL = 'https://twen.app';
+/** Must match the live canonical host (Vercel 308s apex → www). */
+export const SITE_URL = 'https://www.twen.app';
 export const SITE_NAME = 'Twen';
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og.png`;
 export const DEFAULT_TITLE = "Twen — Africa's content distribution network";

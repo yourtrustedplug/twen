@@ -1,17 +1,22 @@
 /**
  * Subdomain tenants for Twen.
  *
- *   creators.twen.app  — creator marketing + app
- *   brands.twen.app    — brand marketing + app
- *   admin.twen.app     — staff panel
- *   twen.app           — audience gate (pick creator / brand)
+ * Marketing (landings) always live on the apex:
+ *   twen.app/            — audience gate
+ *   twen.app/creators    — creator landing
+ *   twen.app/brands      — brand landing
  *
- * Local: creators.localhost:8080 (etc.) works the same way.
+ * Subdomains are app entry points (same SPA):
+ *   creator.twen.app     — /creator app
+ *   brand.twen.app       — /brand app
+ *   admin.twen.app       — /admin
+ *
+ * Local: creator.localhost:8080 (etc.) works the same way.
  */
 
-export type AppTenant = 'creators' | 'brands' | 'admin' | 'apex';
+export type AppTenant = 'creator' | 'brand' | 'admin' | 'apex';
 
-const TENANTS = ['creators', 'brands', 'admin'] as const;
+const TENANTS = ['creator', 'brand', 'admin'] as const;
 
 export function normalizeHostname(hostname: string): string {
   return hostname.replace(/^www\./i, '').toLowerCase();
@@ -51,7 +56,7 @@ export function isLocalApex(host: string): boolean {
 
 function shouldKeepPort(apex: string, port: string): boolean {
   if (!port) return false;
-  return isLocalApex(apex) || apex === 'localhost' || apex.endsWith('.localhost') || apex === 'localhost';
+  return isLocalApex(apex) || apex.endsWith('.localhost');
 }
 
 /** Origin for a tenant on the current apex (preserves protocol + port in local). */
@@ -70,19 +75,16 @@ export function tenantOrigin(
   return `${protocol}//${host}${suffix}`;
 }
 
-/** Absolute href for creator/brand marketing home (subdomain `/` in prod). */
+/**
+ * Marketing landings stay on apex paths: /creators, /brands.
+ * From a subdomain, link back to https://twen.app/creators (etc.).
+ */
 export function audienceHref(audience: 'creator' | 'brand'): string {
-  const tenant: AppTenant = audience === 'brand' ? 'brands' : 'creators';
-  if (typeof window === 'undefined') {
-    return audience === 'brand' ? 'https://brands.twen.app/' : 'https://creators.twen.app/';
-  }
+  const path = audience === 'brand' ? '/brands' : '/creators';
+  if (typeof window === 'undefined') return `https://twen.app${path}`;
   const host = getHostname();
-  if (isLocalApex(host)) {
-    return audience === 'brand' ? '/brands' : '/creators';
-  }
-  const origin = tenantOrigin(tenant);
-  if (window.location.origin === origin) return '/';
-  return `${origin}/`;
+  if (isLocalApex(host) || getAppTenant() === 'apex') return path;
+  return `${tenantOrigin('apex')}${path}`;
 }
 
 export function adminHref(): string {
@@ -95,7 +97,7 @@ export function adminHref(): string {
 
 /**
  * Build a role-scoped app origin from PUBLIC_APP_URL (edge / server).
- * https://twen.app + brand → https://brands.twen.app
+ * https://twen.app + brand → https://brand.twen.app
  */
 export function roleScopedAppUrl(appUrl: string, role: 'brand' | 'creator' | 'staff'): string {
   let parsed: URL;
@@ -108,7 +110,7 @@ export function roleScopedAppUrl(appUrl: string, role: 'brand' | 'creator' | 'st
   const tenant = parseTenant(host);
   if (tenant !== 'apex') return parsed.origin;
   if (isLocalApex(host)) return parsed.origin;
-  const sub = role === 'brand' ? 'brands' : role === 'staff' ? 'admin' : 'creators';
+  const sub = role === 'brand' ? 'brand' : role === 'staff' ? 'admin' : 'creator';
   parsed.hostname = `${sub}.${host}`;
   return parsed.origin;
 }

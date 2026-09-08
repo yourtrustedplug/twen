@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Add origins to Privy allowed_domains (API). Usage:
 #   ./scripts/privy-set-domains.sh http://localhost:8080 https://twen.app \
-#     https://creators.twen.app https://brands.twen.app https://admin.twen.app
+#     https://creator.twen.app https://brand.twen.app https://admin.twen.app
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -f .env ]; then
@@ -14,7 +14,7 @@ fi
 : "${PRIVY_APP_SECRET:?PRIVY_APP_SECRET missing}"
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <origin> [origin...]"
-  echo "Example: $0 http://localhost:8080 https://twen.app https://creators.twen.app https://brands.twen.app https://admin.twen.app"
+  echo "Example: $0 http://localhost:8080 https://twen.app https://creator.twen.app https://brand.twen.app https://admin.twen.app"
   exit 1
 fi
 

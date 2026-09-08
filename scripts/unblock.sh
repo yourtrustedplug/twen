@@ -12,10 +12,10 @@ You said you'll handle hosting. After Vite is on https://twen.app:
      ./scripts/push-secrets.sh
      ./scripts/privy-set-domains.sh \
        https://twen.app \
-       https://creators.twen.app \
-       https://brands.twen.app \
+       https://creator.twen.app \
+       https://brand.twen.app \
        https://admin.twen.app
-     # DNS: same SPA aliases for creators / brands / admin .twen.app
+     # DNS: same SPA aliases for creator / brand / admin .twen.app
 
   2) Paste SQL (Supabase SQL Editor) — clipboard has supabase/PASTE_NEXT.sql:
      PROFILE_ABOUT (names/geo + OAuth + id-documents) + ONBOARDING gates in one file

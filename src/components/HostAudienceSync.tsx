@@ -6,8 +6,8 @@ import { getAppTenant } from '@/lib/hosts';
 export function HostAudienceSync() {
   useEffect(() => {
     const tenant = getAppTenant();
-    if (tenant === 'creators') rememberAudience('creator');
-    if (tenant === 'brands') rememberAudience('brand');
+    if (tenant === 'creator') rememberAudience('creator');
+    if (tenant === 'brand') rememberAudience('brand');
   }, []);
 
   return null;

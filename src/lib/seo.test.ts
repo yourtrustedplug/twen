@@ -6,7 +6,7 @@ describe('resolvePageSeo', () => {
     const page = resolvePageSeo('/creators');
     expect(page.title).toMatch(/Creators/i);
     expect(page.robots).toMatch(/index/);
-    expect(absoluteUrl(page.path)).toBe('https://twen.app/creators');
+    expect(absoluteUrl(page.path)).toBe('https://www.twen.app/creators');
   });
 
   it('noindexes authenticated app routes', () => {

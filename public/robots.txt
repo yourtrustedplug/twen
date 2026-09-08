@@ -43,4 +43,4 @@ Disallow: /signin
 Disallow: /signup
 Disallow: /reset-password
 
-Sitemap: https://twen.app/sitemap.xml
+Sitemap: https://www.twen.app/sitemap.xml

@@ -12,19 +12,20 @@
 ## Flow
 
 1. Home: pick creator or brand → Privy modal opens on the same page
-   (or land directly on `creators.twen.app` / `brands.twen.app`).
+   (or land directly on `creator.twen.app` / `brand.twen.app`).
 2. `AuthProvider` sees Privy `authenticated`, calls `supabase.functions.invoke('privy-exchange')`.
 3. Edge function verifies the Privy JWT, ensures a Supabase auth user, returns access + refresh tokens.
 4. Client `supabase.auth.setSession(...)`; profile is ensured in `profiles`.
 5. `AuthRedirect` sends them to their role home.
 
-Subdomains (same SPA deploy):
+Subdomains (same SPA deploy). Marketing landings stay on apex paths
+(`/creators`, `/brands`). Subdomains are app entry points:
 
 | Host | Surface |
 |---|---|
-| `twen.app` | Audience gate |
-| `creators.twen.app` | Creator marketing + `/creator` app |
-| `brands.twen.app` | Brand marketing + `/brand` app |
+| `twen.app` | Audience gate + landings `/creators`, `/brands` |
+| `creator.twen.app` | Creator app (`/creator`) |
+| `brand.twen.app` | Brand app (`/brand`) |
 | `admin.twen.app` | Staff `/admin` |
 
 Allowlist all four origins in Privy. Edge CORS allows sibling subdomains of `PUBLIC_APP_URL`.
