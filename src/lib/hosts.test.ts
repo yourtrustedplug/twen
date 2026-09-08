@@ -1,4 +1,11 @@
-import { parseTenant, apexHostFrom, roleScopedAppUrl, tenantOrigin } from './hosts';
+import {
+  parseTenant,
+  apexHostFrom,
+  roleScopedAppUrl,
+  tenantOrigin,
+  tenantForRole,
+  isAppPath,
+} from './hosts';
 
 describe('hosts', () => {
   it('parses tenant labels', () => {
@@ -34,5 +41,13 @@ describe('hosts', () => {
     expect(roleScopedAppUrl('https://twen.app', 'staff')).toBe('https://admin.twen.app');
     expect(roleScopedAppUrl('https://brand.twen.app', 'creator')).toBe('https://brand.twen.app');
     expect(roleScopedAppUrl('http://localhost:8080', 'brand')).toBe('http://localhost:8080');
+  });
+
+  it('maps roles to tenants and app paths', () => {
+    expect(tenantForRole('creator')).toBe('creator');
+    expect(tenantForRole('brand')).toBe('brand');
+    expect(tenantForRole('admin')).toBe('admin');
+    expect(isAppPath('/creator/profile')).toBe(true);
+    expect(isAppPath('/creators')).toBe(false);
   });
 });

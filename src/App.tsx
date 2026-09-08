@@ -6,9 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
 import { AppPrivyProvider } from "@/providers/PrivyProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppNavigate } from "@/components/AppNavigate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ConfigGuard } from "@/components/ConfigGuard";
 import { AuthRedirect } from "@/components/AuthRedirect";
+import { AppHostRedirect } from "@/components/AppHostRedirect";
 import CreatorLanding from "./pages/CreatorLanding";
 import BrandLanding from "./pages/BrandLanding";
 import { HomeByHost } from "./components/HomeByHost";
@@ -44,11 +46,11 @@ import { Seo } from "./components/Seo";
 
 const queryClient = new QueryClient();
 
-/** Sends signed-in users to the dashboard for their role. */
+/** Sends signed-in users to the dashboard for their role (on the role subdomain). */
 const DashboardRouter = () => {
   const { profile, isLoading } = useAuth();
   if (isLoading) return null;
-  return <Navigate to={roleHome(profile?.role)} replace />;
+  return <AppNavigate role={profile?.role} path={roleHome(profile?.role)} />;
 };
 
 /** Old /signup links go to the home gate — pick a role, Privy opens there. */
@@ -68,6 +70,7 @@ const App = () => (
                 <Seo />
                 <HostAudienceSync />
                 <AuthRedirect />
+                <AppHostRedirect />
                 <Routes>
                 <Route path="/" element={<HomeByHost />} />
                 <Route path="/creators" element={<CreatorLanding />} />

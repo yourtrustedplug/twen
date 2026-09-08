@@ -28,7 +28,9 @@ Subdomains (same SPA deploy). Marketing landings stay on apex paths
 | `brand.twen.app` | Brand app (`/brand`) |
 | `admin.twen.app` | Staff `/admin` |
 
-Allowlist all four origins in Privy. Edge CORS allows sibling subdomains of `PUBLIC_APP_URL`.
+Allowlist all app origins in Privy. Enable **HttpOnly cookies** with app domain
+`twen.app` so a login on `www` stays authenticated on `creator` / `brand` / `admin`.
+Edge CORS allows sibling subdomains of `PUBLIC_APP_URL`.
 
 Get Started / Sign Up elsewhere also opens the Privy modal (`useStartAuth`).
 `/signin` is only a fallback for protected routes (opens the same modal).

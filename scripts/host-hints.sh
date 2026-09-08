@@ -54,9 +54,7 @@ App subdomains (same Vercel deploy):
   Wait until Vercel Domains shows each hostname as Valid / SSL issued
   (can take a few minutes to an hour).
 
-────────────────────────────────────────
-3) After DNS is green
-────────────────────────────────────────
+After DNS is green — Privy (required for subdomain login):
   1. PUBLIC_APP_URL=https://twen.app in .env
   2. ./scripts/push-secrets.sh
   3. ./scripts/privy-set-domains.sh \
@@ -65,8 +63,12 @@ App subdomains (same Vercel deploy):
        https://creator.twen.app \
        https://brand.twen.app \
        https://admin.twen.app
-  4. TikTok + Meta redirect URI: https://twen.app/auth/social-callback
-  5. ./scripts/check-remote.sh
+  4. Privy Dashboard → Configuration → App settings → Domains:
+       Enable HttpOnly cookies, app domain = twen.app
+       (so login on www stays logged in on creator/brand/admin)
+       Add any DNS TXT/CNAME Privy shows, then Refresh until verified.
+  5. TikTok + Meta redirect URI: https://twen.app/auth/social-callback
+  6. ./scripts/check-remote.sh
 
 SQL (if not done yet) — paste in Supabase SQL Editor:
   supabase/PASTE_NEXT.sql

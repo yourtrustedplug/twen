@@ -95,6 +95,52 @@ export function adminHref(): string {
   return `${tenantOrigin('admin')}/admin`;
 }
 
+/** Which subdomain a signed-in role should live on. */
+export function tenantForRole(role: string | null | undefined): AppTenant {
+  if (role === 'brand') return 'brand';
+  if (role === 'admin' || role === 'moderator') return 'admin';
+  return 'creator';
+}
+
+export function isAppPath(pathname: string): boolean {
+  return /^\/(creator|brand|admin|dashboard|messages)(\/|$)/.test(pathname);
+}
+
+/**
+ * Path or absolute URL for an in-app screen on the role's subdomain.
+ * Localhost stays path-only; production jumps to creator/brand/admin.twen.app.
+ */
+export function roleAppHref(role: string | null | undefined, path: string): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window === 'undefined') {
+    const sub = tenantForRole(role);
+    return `https://${sub}.twen.app${normalized}`;
+  }
+  const host = getHostname();
+  if (isLocalApex(host)) return normalized;
+  const origin = tenantOrigin(tenantForRole(role));
+  if (window.location.origin === origin) return normalized;
+  return `${origin}${normalized}`;
+}
+
+/** Navigate within the SPA, or hard-assign when the role subdomain differs. */
+export function goToAppPath(
+  role: string | null | undefined,
+  path: string,
+  navigate?: (to: string, opts?: { replace?: boolean }) => void,
+  replace = true,
+): void {
+  const href = roleAppHref(role, path);
+  if (href.startsWith('http')) {
+    if (replace) window.location.replace(href);
+    else window.location.assign(href);
+    return;
+  }
+  if (navigate) navigate(href, { replace });
+  else if (replace) window.location.replace(href);
+  else window.location.assign(href);
+}
+
 /**
  * Build a role-scoped app origin from PUBLIC_APP_URL (edge / server).
  * https://twen.app + brand → https://brand.twen.app

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
 import { isStaff } from '@/lib/staff';
+import { AppNavigate } from '@/components/AppNavigate';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -32,11 +33,11 @@ export function ProtectedRoute({ children, role, staff }: ProtectedRouteProps) {
   }
 
   if (staff && profile && !isStaff(profile.role)) {
-    return <Navigate to={roleHome(profile.role)} replace />;
+    return <AppNavigate role={profile.role} path={roleHome(profile.role)} />;
   }
 
   if (role && profile && profile.role !== role) {
-    return <Navigate to={roleHome(profile.role)} replace />;
+    return <AppNavigate role={profile.role} path={roleHome(profile.role)} />;
   }
 
   return <>{children}</>;
