@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://www.twen.app/</loc>
+    <image:image>
+      <image:loc>https://www.twen.app/og.png</image:loc>
+      <image:title>Twen Open Graph image</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/gate-creator.jpg</image:loc>
+      <image:title>Twen for creators</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/gate-brand.jpg</image:loc>
+      <image:title>Twen for brands</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/hero-creators.jpg</image:loc>
+      <image:title>Creator earning on Twen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/hero-brands.jpg</image:loc>
+      <image:title>Brand campaign on Twen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/creators-film.jpg</image:loc>
+      <image:title>Creator filming for Twen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/brands-campaign.jpg</image:loc>
+      <image:title>Twen brand distribution</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/how-it-works.jpg</image:loc>
+      <image:title>How Twen works</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/about.jpg</image:loc>
+      <image:title>About Twen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/pricing.jpg</image:loc>
+      <image:title>Twen pricing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/contact.jpg</image:loc>
+      <image:title>Contact Twen</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/icon-512.png</image:loc>
+      <image:title>Twen logo</image:title>
+    </image:image>
+  </url>
+</urlset>

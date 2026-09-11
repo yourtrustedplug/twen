@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import footerBg from '@/assets/footer-bg.jpg';
 import xIcon from '@/assets/icons/x-icon.png';
 import instagramIcon from '@/assets/icons/instagram-icon.png';
@@ -21,10 +22,10 @@ const footerNavLinks = () => [
 ];
 
 const socialLinks = [
-  { icon: xIcon, href: 'https://www.x.com/', alt: 'X' },
-  { icon: instagramIcon, href: 'https://www.instagram.com/', alt: 'Instagram' },
-  { icon: linkedinIcon, href: 'https://www.linkedin.com/', alt: 'LinkedIn' },
-  { icon: facebookIcon, href: 'https://www.facebook.com/', alt: 'Facebook' },
+  { icon: xIcon, href: 'https://www.x.com/', alt: 'Twen on X' },
+  { icon: instagramIcon, href: 'https://www.instagram.com/', alt: 'Twen on Instagram' },
+  { icon: linkedinIcon, href: 'https://www.linkedin.com/', alt: 'Twen on LinkedIn' },
+  { icon: facebookIcon, href: 'https://www.facebook.com/', alt: 'Twen on Facebook' },
 ];
 
 const prefetchAbout = () => {
@@ -45,22 +46,16 @@ const SlideUpLink = ({
   href,
   alignEnd = false,
   onMouseEnter,
-  onClick,
 }: {
   label: string;
   href: string;
   alignEnd?: boolean;
   onMouseEnter?: () => void;
-  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-}) => (
-  <a
-    href={href}
-    onMouseEnter={onMouseEnter}
-    onClick={onClick}
-    className={`no-underline group flex flex-col gap-[0.375rem] text-base max-xs:text-[0.925rem] ${
-      alignEnd ? 'items-end' : 'items-start'
-    }`}
-  >
+}) => {
+  const className = `no-underline group flex flex-col gap-[0.375rem] text-base max-xs:text-[0.925rem] ${
+    alignEnd ? 'items-end' : 'items-start'
+  }`;
+  const body = (
     <div className="relative h-[1.5em] overflow-hidden">
       <div className="flex flex-col transition-transform duration-300 will-change-transform group-hover:-translate-y-[1.5em]">
         <span className="block text-foreground font-medium whitespace-nowrap leading-[1.5]">
@@ -71,8 +66,21 @@ const SlideUpLink = ({
         </span>
       </div>
     </div>
-  </a>
-);
+  );
+  const external = href.startsWith('http');
+  if (external) {
+    return (
+      <a href={href} onMouseEnter={onMouseEnter} className={className}>
+        {body}
+      </a>
+    );
+  }
+  return (
+    <Link to={href} onMouseEnter={onMouseEnter} className={className}>
+      {body}
+    </Link>
+  );
+};
 
 const SocialIcon = ({ icon, href, alt }: { icon: string; href: string; alt: string }) => (
   <a
@@ -110,13 +118,13 @@ const Footer = () => {
           <div className="pt-32 pb-80 max-lg:pb-64 max-md:pt-24 max-md:pb-56 max-xs:pt-20 max-xs:pb-32 2xl:pb-[22rem] 3xl:pb-[25rem]">
             <div className="relative z-[5] grid grid-cols-2 gap-8 w-full max-xs:grid-cols-1">
               <div className="flex flex-col gap-5 items-start justify-start max-xs:col-span-1">
-                <a href="/" className="relative z-10 flex items-center gap-2 no-underline">
+                <Link to="/" className="relative z-10 flex items-center gap-2 no-underline">
                   <Logo
                     variant="full"
                     iconClassName="w-6 h-6 max-xs:w-5 max-xs:h-5"
                     wordmarkClassName="text-[1.675rem] max-xs:text-[1.5rem] leading-[1.2]"
                   />
-                </a>
+                </Link>
 
                 <div className="w-full max-w-[25rem] mb-[10px]">
                   <p className="text-[1.125rem] max-xs:text-base leading-[1.5]">

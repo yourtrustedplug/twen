@@ -1,12 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { absoluteUrl, resolvePageSeo } from '@/lib/seo';
+import { absoluteUrl, breadcrumbJsonLd, resolvePageSeo } from '@/lib/seo';
 
 describe('resolvePageSeo', () => {
-  it('returns marketing meta for public routes', () => {
+  it('returns marketing meta + images for public routes', () => {
     const page = resolvePageSeo('/creators');
     expect(page.title).toMatch(/Creators/i);
     expect(page.robots).toMatch(/index/);
+    expect(page.image).toContain('/seo/hero-creators.jpg');
+    expect(page.images?.length).toBeGreaterThan(0);
     expect(absoluteUrl(page.path)).toBe('https://www.twen.app/creators');
+  });
+
+  it('builds breadcrumbs for subpages', () => {
+    const page = resolvePageSeo('/pricing');
+    const crumbs = breadcrumbJsonLd(page);
+    expect(crumbs.itemListElement).toHaveLength(2);
+    expect(crumbs.itemListElement[1]).toMatchObject({
+      name: 'Pricing',
+      item: 'https://www.twen.app/pricing',
+    });
   });
 
   it('noindexes authenticated app routes', () => {

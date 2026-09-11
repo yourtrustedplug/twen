@@ -56,7 +56,16 @@ const Features = ({ className, audience = 'creator', ...props }: FeaturesProps) 
                     key={index}
                     className="bg-white border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6"
                   >
-                    <img src={featureIcons[index % featureIcons.length]} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" />
+                    <img
+                      src={featureIcons[index % featureIcons.length]}
+                      alt=""
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-10 h-10"
+                      aria-hidden="true"
+                    />
                     <div className="flex flex-col gap-3">
                       <h3 className="text-2xl leading-[1.4] font-bold">{feature.title}</h3>
                       <p className="text-lg leading-[1.4] text-muted-foreground w-[90%] font-normal">

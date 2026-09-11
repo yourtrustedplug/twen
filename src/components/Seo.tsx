@@ -4,9 +4,11 @@ import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
   absoluteUrl,
+  breadcrumbJsonLd,
   organizationJsonLd,
   resolvePageSeo,
   softwareApplicationJsonLd,
+  webPageJsonLd,
   websiteJsonLd,
 } from '@/lib/seo';
 
@@ -34,8 +36,13 @@ function upsertLink(rel: string, href: string) {
   el.setAttribute('href', href);
 }
 
-function upsertJsonLd(id: string, data: Record<string, unknown>) {
-  let el = document.getElementById(id) as HTMLScriptElement | null;
+function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
+  const existing = document.getElementById(id);
+  if (!data) {
+    existing?.remove();
+    return;
+  }
+  let el = existing as HTMLScriptElement | null;
   if (!el) {
     el = document.createElement('script');
     el.id = id;
@@ -59,6 +66,7 @@ export function Seo() {
     const robots =
       page.robots ??
       'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+    const indexable = !robots.includes('noindex');
 
     document.title = page.title;
 
@@ -87,9 +95,14 @@ export function Seo() {
 
     upsertLink('canonical', url);
 
-    upsertJsonLd('ld-organization', organizationJsonLd());
-    upsertJsonLd('ld-website', websiteJsonLd());
-    upsertJsonLd('ld-software', softwareApplicationJsonLd());
+    upsertJsonLd('ld-organization', indexable ? organizationJsonLd() : null);
+    upsertJsonLd('ld-website', indexable ? websiteJsonLd() : null);
+    upsertJsonLd('ld-software', indexable ? softwareApplicationJsonLd() : null);
+    upsertJsonLd('ld-webpage', indexable ? webPageJsonLd(page) : null);
+    upsertJsonLd(
+      'ld-breadcrumb',
+      indexable && page.breadcrumbs?.length ? breadcrumbJsonLd(page) : null,
+    );
   }, [pathname]);
 
   return null;

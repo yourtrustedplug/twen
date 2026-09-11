@@ -13,17 +13,17 @@ import { Audience, audienceCopy, rememberAudience } from '@/lib/audience';
 import { useStartAuth } from '@/hooks/use-start-auth';
 
 const heroImages = [
-  { src: heroImage01, alt: 'Professional with tablet', bgColor: '#d4d0e8' },
-  { src: heroImage02, alt: 'Smiling professional', bgColor: '#f5e9c5' },
-  { src: heroImage03, alt: 'Business woman with coffee', bgColor: '#f5c5c5' },
-  { src: heroImage04, alt: 'Professional with phone', bgColor: '#c5ddf5' },
+  { src: heroImage01, alt: 'Creator browsing funded Twen campaigns on a tablet', bgColor: '#d4d0e8' },
+  { src: heroImage02, alt: 'Creator smiling after earning on Twen', bgColor: '#f5e9c5' },
+  { src: heroImage03, alt: 'Creator planning a brand video brief on Twen', bgColor: '#f5c5c5' },
+  { src: heroImage04, alt: 'Creator withdrawing Twen earnings to mobile money', bgColor: '#c5ddf5' },
 ];
 
 const brandImages = [
-  { src: campaign01, alt: 'Creator video for a funded campaign', bgColor: '#d4d0e8' },
-  { src: campaign02, alt: 'Creator video for a funded campaign', bgColor: '#f5e9c5' },
-  { src: campaign03, alt: 'Creator video for a funded campaign', bgColor: '#f5c5c5' },
-  { src: campaign04, alt: 'Creator video for a funded campaign', bgColor: '#c5ddf5' },
+  { src: campaign01, alt: 'Creator video posted for a funded Twen brand campaign', bgColor: '#d4d0e8' },
+  { src: campaign02, alt: 'Short-form brand content distributed through Twen', bgColor: '#f5e9c5' },
+  { src: campaign03, alt: 'Verified Instagram and TikTok views from a Twen campaign', bgColor: '#f5c5c5' },
+  { src: campaign04, alt: 'Brand reach across African creators on Twen', bgColor: '#c5ddf5' },
 ];
 
 interface HeroProps {

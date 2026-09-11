@@ -18,11 +18,13 @@ import { formatPlace, CONTINENTS, countriesIn, continentOf } from '@/lib/geo';
 import { joinName, splitName } from '@/lib/name';
 import { suggestRatePerVideo } from '@/lib/suggest-rate';
 import { isPro } from '@/lib/plan';
-import { ID_BUCKET } from '@/lib/storage';
+import { ID_BUCKET, uploadAsset } from '@/lib/storage';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import { OnboardingBanner } from '@/components/OnboardingRequired';
 import { Loader2, Upload, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 const TABS = [
   { id: 'about', label: 'About' },
@@ -166,14 +168,22 @@ const CreatorProfile = () => {
 
   const uploadAvatar = async (file: File) => {
     if (!user) return;
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast({ title: 'File too large', description: 'Use a JPG or PNG under 5 MB.', variant: 'destructive' });
+      return;
+    }
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `avatars/${user.id}.${ext}`;
-    const { error } = await supabase.storage.from('creator-assets').upload(path, file, { upsert: true });
-    if (error) {
-      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
-    } else {
+    try {
+      // Same private bucket + {userId}/… path rules as brand logos (campaign-assets).
+      const path = await uploadAsset(file, user.id, 'avatars');
       setForm((f) => ({ ...f, avatar_url: path }));
+      toast({ title: 'Photo ready', description: 'Click Save profile to keep it.' });
+    } catch (e) {
+      toast({
+        title: 'Upload failed',
+        description: e instanceof Error ? e.message : 'Could not upload photo',
+        variant: 'destructive',
+      });
     }
     setUploading(false);
   };

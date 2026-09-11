@@ -88,9 +88,9 @@ const AboutHeader = () => {
                 style={{ x: topLeftX, y: topLeftY }}
               >
                 <div className="relative overflow-hidden rounded-3xl bg-[#e8c547] aspect-square">
-                  <img 
+                  <img
                     src={aboutImage03}
-                    alt="Team member"
+                    alt="Creator collaborating on a Twen campaign"
                     width={256}
                     height={256}
                     loading="lazy"
@@ -108,7 +108,7 @@ const AboutHeader = () => {
                 <div className="relative overflow-hidden rounded-3xl bg-[#6fa8dc] aspect-square">
                   <img 
                     src={aboutImage04}
-                    alt="Team member"
+                    alt="Brand marketer reviewing Twen campaign reach"
                     width={256}
                     height={256}
                     loading="lazy"
@@ -126,7 +126,7 @@ const AboutHeader = () => {
                 <div className="relative overflow-hidden rounded-3xl bg-[#a4c2a5] aspect-square">
                   <img 
                     src={aboutImage01}
-                    alt="Team member"
+                    alt="East African creator on Twen"
                     width={256}
                     height={256}
                     loading="lazy"
@@ -144,7 +144,7 @@ const AboutHeader = () => {
                 <div className="relative overflow-hidden rounded-3xl bg-[#5daa9e] aspect-square">
                   <img 
                     src={aboutImage02}
-                    alt="Team member"
+                    alt="Creator checking earnings on a phone with Twen"
                     width={256}
                     height={256}
                     loading="lazy"
@@ -188,7 +188,7 @@ const AboutHeader = () => {
               <div className="overflow-hidden rounded-2xl min-[480px]:max-[991px]:rounded-3xl aspect-square">
                 <img 
                   src={aboutImage03}
-                  alt="Team member"
+                  alt="Creator collaborating on a Twen campaign"
                   width={256}
                   height={256}
                   loading="lazy"
@@ -199,7 +199,7 @@ const AboutHeader = () => {
               <div className="overflow-hidden rounded-2xl min-[480px]:max-[991px]:rounded-3xl aspect-square">
                 <img 
                   src={aboutImage04}
-                  alt="Team member"
+                  alt="Brand marketer reviewing Twen campaign reach"
                   width={256}
                   height={256}
                   loading="lazy"
@@ -210,7 +210,7 @@ const AboutHeader = () => {
               <div className="overflow-hidden rounded-2xl min-[480px]:max-[991px]:rounded-3xl aspect-square">
                 <img 
                   src={aboutImage01}
-                  alt="Team member"
+                  alt="East African creator on Twen"
                   width={256}
                   height={256}
                   loading="lazy"
@@ -221,7 +221,7 @@ const AboutHeader = () => {
               <div className="overflow-hidden rounded-2xl min-[480px]:max-[991px]:rounded-3xl aspect-square">
                 <img 
                   src={aboutImage02}
-                  alt="Team member"
+                  alt="Creator checking earnings on a phone with Twen"
                   width={256}
                   height={256}
                   loading="lazy"

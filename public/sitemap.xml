@@ -1,34 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://www.twen.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/og.png</image:loc>
+      <image:title>Twen — Africa's content distribution network</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/gate-creator.jpg</image:loc>
+      <image:title>Twen for creators</image:title>
+      <image:caption>Creators earn per verified view on Twen</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/gate-brand.jpg</image:loc>
+      <image:title>Twen for brands</image:title>
+      <image:caption>Brands fund campaigns and buy verified reach on Twen</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/creators</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/hero-creators.jpg</image:loc>
+      <image:title>Creator earning on Twen</image:title>
+      <image:caption>African creator posting short-form video for a funded campaign</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/creators-film.jpg</image:loc>
+      <image:title>Creator filming for Twen</image:title>
+      <image:caption>Creator filming a short video on a phone for Twen</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/how-it-works.jpg</image:loc>
+      <image:title>How Twen works for creators</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/brands</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/hero-brands.jpg</image:loc>
+      <image:title>Brand campaign on Twen</image:title>
+      <image:caption>Creator video distributed for a funded brand campaign</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/brands-campaign.jpg</image:loc>
+      <image:title>Twen brand distribution</image:title>
+      <image:caption>Real people distributing brand content on Instagram and TikTok</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/pricing.jpg</image:loc>
+      <image:title>Twen pricing</image:title>
+      <image:caption>Creator and brand plans on Twen</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/about.jpg</image:loc>
+      <image:title>About Twen</image:title>
+      <image:caption>Twen team and community across East Africa</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://www.twen.app/seo/contact.jpg</image:loc>
+      <image:title>Contact Twen</image:title>
+      <image:caption>Get in touch with the Twen team</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.twen.app/terms</loc>

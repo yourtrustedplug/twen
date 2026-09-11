@@ -81,7 +81,7 @@ export function tenantOrigin(
  */
 export function audienceHref(audience: 'creator' | 'brand'): string {
   const path = audience === 'brand' ? '/brands' : '/creators';
-  if (typeof window === 'undefined') return `https://twen.app${path}`;
+  if (typeof window === 'undefined') return `https://www.twen.app${path}`;
   const host = getHostname();
   if (isLocalApex(host) || getAppTenant() === 'apex') return path;
   return `${tenantOrigin('apex')}${path}`;

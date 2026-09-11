@@ -51,7 +51,11 @@ const HowItWorks = ({ className, audience = 'creator', ...props }: HowItWorksPro
               />
               <img
                 src={audience === 'brand' ? brandForegroundImage : foregroundImage}
-                alt="Creator filming a short video on a phone"
+                alt={
+                  audience === 'brand'
+                    ? 'Brand campaign content being filmed for Twen distribution'
+                    : 'Creator filming a short video on a phone for Twen'
+                }
                 width={512}
                 height={640}
                 loading="lazy"
