@@ -21,6 +21,9 @@ supabase functions deploy social-oauth-callback --project-ref "$REF" --no-verify
 supabase functions deploy verify-id --project-ref "$REF"
 supabase functions deploy verify-submission --project-ref "$REF"
 supabase functions deploy review-submission --project-ref "$REF"
+supabase functions deploy review-id --project-ref "$REF"
+supabase functions deploy resolve-payout --project-ref "$REF"
+supabase functions deploy notify-hire --project-ref "$REF"
 supabase functions deploy delete-account --project-ref "$REF"
 
 cat <<'EOF'

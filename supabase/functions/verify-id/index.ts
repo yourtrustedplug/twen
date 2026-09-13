@@ -4,23 +4,8 @@
  * Secrets: DIDIT_API_KEY (optional). Without it, status stays pending.
  * Docs: https://docs.didit.me/standalone-apis/id-verification
  */
-import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
-
-function adminClient() {
-  const url = Deno.env.get('SUPABASE_URL')!
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SECRET_KEY')!
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
-}
-
-function userClient(req: Request) {
-  const url = Deno.env.get('SUPABASE_URL')!
-  const anon = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
-  return createClient(url, anon, {
-    global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-}
+import { adminClient, emailKycDecision, greetingName, userClient } from '../_shared/resend.ts'
 
 async function download(admin: ReturnType<typeof adminClient>, path: string) {
   const { data, error } = await admin.storage.from('id-documents').download(path)
@@ -106,6 +91,14 @@ Deno.serve(async (req) => {
         full_name: [first, last].filter(Boolean).join(' ') || undefined,
       })
       .eq('id', authData.user.id)
+
+    if (status === 'verified' || status === 'rejected') {
+      await emailKycDecision(admin, {
+        userId: authData.user.id,
+        firstName: greetingName({ first_name: first, full_name: [first, last].filter(Boolean).join(' ') }),
+        status,
+      })
+    }
 
     return jsonResponseFor(req, {
       status,

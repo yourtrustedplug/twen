@@ -2,101 +2,30 @@
  * review-submission — staff approve or reject a queued creator video.
  *
  * Reject requires a written reason. That reason is stored on the row and emailed
- * to the creator via Resend. Approval does not email.
+ * to the creator. Approval emails the creator and the brand.
  *
  * Secrets: RESEND_API_KEY, RESEND_FROM_EMAIL, PUBLIC_APP_URL
  */
-import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
 import { roleScopedAppUrl } from '../_shared/hosts.ts'
+import {
+  approvalMail,
+  brandCampaignUrl,
+  brandGotCreatorMail,
+  creatorCampaignUrl,
+  rejectionMail,
+} from '../_shared/mail.ts'
+import { appUrl, emailUser, greetingName, requireStaff } from '../_shared/resend.ts'
 
 const MAX_REJECTION_REASON = 1000
-
-function adminClient() {
-  const url = Deno.env.get('SUPABASE_URL')!
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SECRET_KEY')!
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
-}
-
-function userClient(req: Request) {
-  const url = Deno.env.get('SUPABASE_URL')!
-  const anon = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
-  return createClient(url, anon, {
-    global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-
-function creatorEmail(user: {
-  email?: string | null
-  user_metadata?: Record<string, unknown> | null
-}): string | null {
-  const fromAuth = user.email?.trim().toLowerCase()
-  if (fromAuth && fromAuth.includes('@')) return fromAuth
-  const meta = user.user_metadata?.email
-  if (typeof meta === 'string' && meta.includes('@')) return meta.trim().toLowerCase()
-  return null
-}
-
-function rejectionMail(opts: {
-  firstName: string
-  campaignTitle: string
-  brandName: string
-  reason: string
-  campaignUrl: string
-}) {
-  const title = opts.campaignTitle.trim() || 'a campaign'
-  const brief = opts.brandName.trim() ? `${title} (${opts.brandName.trim()})` : title
-  const hi = opts.firstName.trim() ? `Hi ${opts.firstName.trim()},` : 'Hi,'
-  const subject = `Your video for ${title} was not approved`
-  const text = [
-    hi,
-    '',
-    `A moderator reviewed your video for ${brief} and did not approve it.`,
-    '',
-    `Reason: ${opts.reason}`,
-    '',
-    'You can post a new video for this brief and submit that link instead:',
-    opts.campaignUrl,
-    '',
-    '— Twen',
-  ].join('\n')
-  const html = `
-    <p>${escapeHtml(hi)}</p>
-    <p>A moderator reviewed your video for <strong>${escapeHtml(brief)}</strong> and did not approve it.</p>
-    <p><strong>Reason:</strong><br />${escapeHtml(opts.reason).replaceAll('\n', '<br />')}</p>
-    <p><a href="${escapeHtml(opts.campaignUrl)}">Submit a new video</a></p>
-    <p>— Twen</p>
-  `
-  return { subject, text, html }
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsForRequest(req) })
   if (req.method !== 'POST') return jsonResponseFor(req, { error: 'Method not allowed' }, 405)
 
-  const userSb = userClient(req)
-  const { data: authData, error: authError } = await userSb.auth.getUser()
-  if (authError || !authData.user) return jsonResponseFor(req, { error: 'Sign in first' }, 401)
-
-  const admin = adminClient()
-  const { data: staffProfile } = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', authData.user.id)
-    .maybeSingle()
-  if (staffProfile?.role !== 'moderator' && staffProfile?.role !== 'admin') {
-    return jsonResponseFor(req, { error: 'Only staff can review submissions' }, 403)
-  }
+  const staff = await requireStaff(req)
+  if ('error' in staff) return jsonResponseFor(req, { error: staff.error }, staff.status)
+  const { admin } = staff
 
   let body: { submission_id?: string; status?: string; reason?: string }
   try {
@@ -122,7 +51,7 @@ Deno.serve(async (req) => {
 
   const { data: submission, error: loadError } = await admin
     .from('submissions')
-    .select('id, status, creator_id, campaign_id, campaigns(title, brand_name)')
+    .select('id, status, creator_id, campaign_id, campaigns(title, brand_name, brand_id)')
     .eq('id', submissionId)
     .maybeSingle()
   if (loadError) return jsonResponseFor(req, { error: loadError.message }, 500)
@@ -146,13 +75,9 @@ Deno.serve(async (req) => {
     return jsonResponseFor(req, { error: 'This submission is no longer waiting for review' }, 409)
   }
 
-  if (status !== 'rejected') {
-    return jsonResponseFor(req, { ok: true, status, emailed: false })
-  }
-
   const campaignRel = submission.campaigns as
-    | { title?: string; brand_name?: string }
-    | { title?: string; brand_name?: string }[]
+    | { title?: string; brand_name?: string; brand_id?: string }
+    | { title?: string; brand_name?: string; brand_id?: string }[]
     | null
   const campaign = Array.isArray(campaignRel) ? campaignRel[0] : campaignRel
   const { data: creatorProfile } = await admin
@@ -160,58 +85,60 @@ Deno.serve(async (req) => {
     .select('first_name, full_name')
     .eq('id', submission.creator_id)
     .maybeSingle()
-  const { data: creatorAuth, error: creatorAuthError } = await admin.auth.admin.getUserById(
-    submission.creator_id,
-  )
-  if (creatorAuthError) console.error('creator email lookup', creatorAuthError.message)
+  const creatorName =
+    creatorProfile?.full_name?.trim() || greetingName(creatorProfile) || 'A creator'
+  const firstName = greetingName(creatorProfile)
+  const publicUrl = appUrl()
+  const creatorOrigin = roleScopedAppUrl(publicUrl, 'creator')
+  const brandOrigin = roleScopedAppUrl(publicUrl, 'brand')
+  const campaignTitle = campaign?.title ?? 'this campaign'
+  const brandName = campaign?.brand_name ?? ''
 
-  const to = creatorAuth?.user ? creatorEmail(creatorAuth.user) : null
-  const appUrl = Deno.env.get('PUBLIC_APP_URL') ?? 'https://twen.app'
-  const campaignUrl = `${roleScopedAppUrl(appUrl, 'creator')}/creator/campaigns/${submission.campaign_id}?submit=1`
-  const firstName =
-    creatorProfile?.first_name?.trim() ||
-    creatorProfile?.full_name?.trim()?.split(/\s+/)[0] ||
-    ''
-  const mail = rejectionMail({
-    firstName,
-    campaignTitle: campaign?.title ?? 'this campaign',
-    brandName: campaign?.brand_name ?? '',
-    reason,
-    campaignUrl,
-  })
-
-  const apiKey = Deno.env.get('RESEND_API_KEY')
-  const from = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Twen <hello@twen.app>'
   let emailed = false
-  if (!to) {
-    console.error('reject email skipped — creator has no email', submission.creator_id)
-  } else if (!apiKey) {
-    console.error('reject email skipped — RESEND_API_KEY is not set')
+  let brandEmailed = false
+
+  if (status === 'rejected') {
+    emailed = await emailUser(
+      admin,
+      submission.creator_id,
+      rejectionMail({
+        firstName,
+        campaignTitle,
+        brandName,
+        reason,
+        campaignUrl: creatorCampaignUrl(creatorOrigin, submission.campaign_id, true),
+      }),
+    )
   } else {
-    try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from,
-          to: [to],
-          subject: mail.subject,
-          text: mail.text,
-          html: mail.html,
+    emailed = await emailUser(
+      admin,
+      submission.creator_id,
+      approvalMail({
+        firstName,
+        campaignTitle,
+        brandName,
+        campaignUrl: creatorCampaignUrl(creatorOrigin, submission.campaign_id),
+      }),
+    )
+    const brandId = campaign?.brand_id
+    if (brandId) {
+      const { data: brandProfile } = await admin
+        .from('profiles')
+        .select('first_name, full_name, company_name')
+        .eq('id', brandId)
+        .maybeSingle()
+      brandEmailed = await emailUser(
+        admin,
+        brandId,
+        brandGotCreatorMail({
+          firstName: greetingName(brandProfile),
+          creatorName,
+          campaignTitle,
+          campaignUrl: brandCampaignUrl(brandOrigin, submission.campaign_id),
         }),
-      })
-      if (res.ok) {
-        emailed = true
-      } else {
-        console.error('reject Resend error', res.status, (await res.text()).slice(0, 400))
-      }
-    } catch (e) {
-      console.error('reject email failed', e)
+      )
     }
   }
 
-  return jsonResponseFor(req, { ok: true, status, emailed })
+  return jsonResponseFor(req, { ok: true, status, emailed, brand_emailed: brandEmailed })
 })

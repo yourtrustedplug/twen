@@ -23,4 +23,10 @@ describe('hire messages', () => {
   it('sends nothing unless a note or hire flag is set', () => {
     expect(hireMessage({ creatorName: 'Amina' })).toBe('');
   });
+
+  it('only hires and book notes produce a message worth emailing', () => {
+    expect(Boolean(hireMessage({ hire: true, creatorName: 'Amina' }))).toBe(true);
+    expect(Boolean(hireMessage({ body: 'Friday work', creatorName: 'Amina' }))).toBe(true);
+    expect(Boolean(hireMessage({ creatorName: 'Amina' }))).toBe(false);
+  });
 });

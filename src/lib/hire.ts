@@ -59,6 +59,9 @@ export async function startBrandCreatorChat(input: {
       sender_id: input.brandId,
       body,
     });
+    void supabase.functions.invoke('notify-hire', {
+      body: { conversation_id: conversationId },
+    });
   }
 
   return { conversationId };

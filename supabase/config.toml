@@ -36,5 +36,14 @@ verify_jwt = true
 [functions.review-submission]
 verify_jwt = true
 
+[functions.review-id]
+verify_jwt = true
+
+[functions.resolve-payout]
+verify_jwt = true
+
+[functions.notify-hire]
+verify_jwt = true
+
 [functions.delete-account]
 verify_jwt = true

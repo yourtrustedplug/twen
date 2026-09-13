@@ -142,11 +142,20 @@ const AdminPanel = () => {
     }
     setRejectingId(null);
     setReason('');
+    const creatorNote = data?.emailed
+      ? 'The creator was emailed.'
+      : 'Creator email could not be sent.';
     toast({
       title: status === 'approved' ? 'Approved' : 'Rejected',
       description:
         status === 'approved'
-          ? 'Submission can earn on verified views.'
+          ? [
+              'Submission can earn on verified views.',
+              creatorNote,
+              data?.brand_emailed ? 'The brand was notified.' : null,
+            ]
+              .filter(Boolean)
+              .join(' ')
           : data?.emailed
             ? 'The creator was emailed the reason.'
             : 'Saved. The creator will see the reason in the app — email could not be sent.',
@@ -156,22 +165,28 @@ const AdminPanel = () => {
 
   const resolvePayout = async (payout: Payout, status: 'completed' | 'failed') => {
     setBusyId(payout.id);
-    const { error } = await supabase.rpc('resolve_payout', {
-      p_payout_id: payout.id,
-      p_status: status,
-      p_note: status === 'completed' ? 'MoMo sent' : 'Payout failed',
+    const { data, error } = await supabase.functions.invoke('resolve-payout', {
+      body: { payout_id: payout.id, status },
     });
     setBusyId(null);
-    if (error) {
-      toast({ title: 'Could not update payout', description: error.message, variant: 'destructive' });
+    if (error || data?.error || !data?.ok) {
+      toast({
+        title: 'Could not update payout',
+        description: await edgeFunctionErrorMessage(error, data, 'Could not save that payout.'),
+        variant: 'destructive',
+      });
       return;
     }
     toast({
       title: status === 'completed' ? 'Marked paid' : 'Marked failed',
       description:
         status === 'completed'
-          ? 'Creator withdrawal marked complete.'
-          : 'Failed payouts stop counting against available balance.',
+          ? data?.emailed
+            ? 'Creator was emailed that we sent the money.'
+            : 'Creator withdrawal marked complete. Email could not be sent.'
+          : data?.emailed
+            ? 'Creator was emailed that the payout failed.'
+            : 'Failed payouts stop counting against available balance. Email could not be sent.',
     });
     load();
   };
@@ -200,16 +215,24 @@ const AdminPanel = () => {
 
   const resolveId = async (row: ProfileRow, status: 'verified' | 'rejected') => {
     setBusyId(row.id);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ id_verification_status: status })
-      .eq('id', row.id);
+    const { data, error } = await supabase.functions.invoke('review-id', {
+      body: { user_id: row.id, status },
+    });
     setBusyId(null);
-    if (error) {
-      toast({ title: 'Could not update ID', description: error.message, variant: 'destructive' });
+    if (error || data?.error || !data?.ok) {
+      toast({
+        title: 'Could not update ID',
+        description: await edgeFunctionErrorMessage(error, data, 'Could not save that ID review.'),
+        variant: 'destructive',
+      });
       return;
     }
-    toast({ title: status === 'verified' ? 'ID verified' : 'ID rejected' });
+    toast({
+      title: status === 'verified' ? 'ID verified' : 'ID rejected',
+      description: data?.emailed
+        ? 'The creator was emailed.'
+        : 'Saved. Email could not be sent.',
+    });
     load();
   };
 

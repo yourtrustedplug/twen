@@ -1,3 +1,5 @@
+import { creatorCampaignUrl, rejectionEmailSubject, rejectionMail } from './transactional-email';
+
 export const MIN_REJECTION_REASON = 1;
 export const MAX_REJECTION_REASON = 1000;
 
@@ -18,13 +20,10 @@ export const rejectionReasonError = (value: string | null | undefined): string |
   return null;
 };
 
-export const rejectionEmailSubject = (campaignTitle: string) => {
-  const title = campaignTitle.trim() || 'a campaign';
-  return `Your video for ${title} was not approved`;
-};
+export { rejectionEmailSubject };
 
 export const rejectionCampaignUrl = (creatorOrigin: string, campaignId: string) =>
-  `${creatorOrigin.replace(/\/$/, '')}/creator/campaigns/${campaignId}?submit=1`;
+  creatorCampaignUrl(creatorOrigin, campaignId, true);
 
 export const rejectionEmailText = ({
   firstName,
@@ -38,21 +37,11 @@ export const rejectionEmailText = ({
   brandName?: string | null;
   reason: string;
   campaignUrl: string;
-}) => {
-  const hi = firstName?.trim() ? `Hi ${firstName.trim()},` : 'Hi,';
-  const title = campaignTitle.trim() || 'this campaign';
-  const brand = brandName?.trim();
-  const brief = brand ? `${title} (${brand})` : title;
-  return [
-    hi,
-    '',
-    `A moderator reviewed your video for ${brief} and did not approve it.`,
-    '',
-    `Reason: ${trimRejectionReason(reason)}`,
-    '',
-    'You can post a new video for this brief and submit that link instead:',
+}) =>
+  rejectionMail({
+    firstName,
+    campaignTitle,
+    brandName,
+    reason: trimRejectionReason(reason),
     campaignUrl,
-    '',
-    '— Twen',
-  ].join('\n');
-};
+  }).text;

@@ -9,7 +9,7 @@ const Privacy = () => (
     <main className="mx-auto max-w-3xl px-6 pt-32 pb-16 prose prose-neutral">
       <PageBreadcrumbs align="start" className="mb-8 not-prose" />
       <h1>Privacy Policy</h1>
-      <p className="lead text-muted-foreground">Last updated: September 7, 2026</p>
+      <p className="lead text-muted-foreground">Last updated: September 13, 2026</p>
       <p>
         Twen (&quot;we&quot;, &quot;us&quot;) explains here how we collect and use personal
         data when you use our website and app.
@@ -24,7 +24,8 @@ const Privacy = () => (
       <h2>How we use it</h2>
       <p>
         To operate the marketplace, authenticate you, process escrow and payouts, moderate
-        submissions, send transactional email (e.g. contact form replies), and improve the product.
+        submissions, send transactional email (reviews, KYC, payouts, hire notices, and contact
+        form replies), and improve the product.
       </p>
       <h2>Processors</h2>
       <p>
