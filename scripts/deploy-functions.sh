@@ -12,6 +12,7 @@ echo "=== Deploy edge functions to $REF ==="
 supabase functions deploy privy-exchange --project-ref "$REF" --no-verify-jwt
 supabase functions deploy send-contact-email --project-ref "$REF" --no-verify-jwt
 supabase functions deploy nardopay-webhook --project-ref "$REF" --no-verify-jwt
+supabase functions deploy instagram-webhook --project-ref "$REF" --no-verify-jwt
 supabase functions deploy create-campaign-checkout --project-ref "$REF"
 supabase functions deploy create-plan-checkout --project-ref "$REF"
 supabase functions deploy request-creator-payout --project-ref "$REF"
