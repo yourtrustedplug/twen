@@ -7,7 +7,7 @@ const missionBlocks = [
   },
   {
     title: 'Money Before Work',
-    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits their time, and unspent money goes back.',
+    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits their time. Unused escrow is returned when the campaign ends.',
   },
   {
     title: 'Built for This Region',

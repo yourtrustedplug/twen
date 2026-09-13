@@ -61,6 +61,26 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.submissions_rejection_reason_guard()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.status = 'rejected' AND btrim(coalesce(NEW.rejection_reason, '')) = '' THEN
+    RAISE EXCEPTION 'Rejection reason is required';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS submissions_rejection_reason_guard ON public.submissions;
+CREATE TRIGGER submissions_rejection_reason_guard
+  BEFORE INSERT OR UPDATE ON public.submissions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.submissions_rejection_reason_guard();
+
 -- Promote yourself (after signup). Replace UUID.
 -- ALTER TABLE public.profiles DISABLE TRIGGER profiles_immutable_privs;
 -- UPDATE public.profiles SET role = 'admin' WHERE id = '<your-user-uuid>';

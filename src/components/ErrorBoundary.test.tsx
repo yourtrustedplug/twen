@@ -37,4 +37,23 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('heading', { name: /dropped the frame/i })).toBeInTheDocument();
     spy.mockRestore();
   });
+
+  it('clears the crash poster when resetKey changes', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <ErrorBoundary resetKey="a">
+        <Boom />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole('heading', { name: /dropped the frame/i })).toBeInTheDocument();
+
+    rerender(
+      <ErrorBoundary resetKey="b">
+        <p>recovered</p>
+      </ErrorBoundary>,
+    );
+    expect(screen.getByText('recovered')).toBeInTheDocument();
+    spy.mockRestore();
+  });
 });

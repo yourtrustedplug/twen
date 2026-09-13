@@ -48,10 +48,10 @@ const SlideUpLink = ({
   const body = (
     <div className="relative h-[1.5em] overflow-hidden">
       <div className="flex flex-col transition-transform duration-300 will-change-transform group-hover:-translate-y-[1.5em]">
-        <span className="block text-foreground font-medium whitespace-nowrap leading-[1.5]">
+        <span className="block text-foreground font-medium whitespace-nowrap leading-[1.5]" aria-hidden="true">
           {label}
         </span>
-        <span className="block text-foreground font-medium whitespace-nowrap leading-[1.5]">
+        <span className="block text-foreground font-medium whitespace-nowrap leading-[1.5]" aria-hidden="true">
           {label}
         </span>
       </div>
@@ -60,13 +60,13 @@ const SlideUpLink = ({
   const external = href.startsWith('http');
   if (external) {
     return (
-      <a href={href} onMouseEnter={onMouseEnter} className={className}>
+      <a href={href} onMouseEnter={onMouseEnter} className={className} aria-label={label}>
         {body}
       </a>
     );
   }
   return (
-    <Link to={href} onMouseEnter={onMouseEnter} className={className}>
+    <Link to={href} onMouseEnter={onMouseEnter} className={className} aria-label={label}>
       {body}
     </Link>
   );
@@ -93,7 +93,7 @@ const Footer = () => {
           <div className="pt-16 pb-40 md:pt-24 md:pb-56 lg:pt-32 lg:pb-80">
             <div className="relative z-[5] grid grid-cols-1 sm:grid-cols-2 gap-10 w-full">
               <div className="flex flex-col gap-5 items-start justify-start">
-                <Link to="/" className="relative z-10 flex items-center gap-2 no-underline">
+                <Link to="/" aria-label="Twen home" className="relative z-10 flex items-center gap-2 no-underline">
                   <Logo
                     variant="full"
                     iconClassName="w-6 h-6 max-xs:w-5 max-xs:h-5"
@@ -103,7 +103,7 @@ const Footer = () => {
 
                 <div className="w-full max-w-[25rem] mb-[10px]">
                   <p className="text-[1.125rem] max-xs:text-base leading-[1.5]">
-                    The largest content distribution network in Africa. Let's go.
+                    Content distribution across Africa. Let's go.
                   </p>
                 </div>
 

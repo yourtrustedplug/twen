@@ -75,6 +75,9 @@ describe('ProfilePlanPanel', () => {
 
     expect(screen.getByRole('heading', { name: 'Twen Plus' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /get twen plus/i })).toBeInTheDocument();
+    expect(screen.getByText(/Search creators and hire specific people/i)).toBeInTheDocument();
+    expect(screen.queryByText(/click or per sale/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/When the campaign ends, unused escrow is returned/i)).toBeInTheDocument();
   });
 
   it('shows $49 as the next Twen Plus charge on billing', () => {

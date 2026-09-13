@@ -16,17 +16,17 @@ const faqData: { question: string; answer: string; audience?: Audience }[] = [
   {
     question: 'What can I do without paying?',
     audience: 'creator',
-    answer: 'Join open campaigns, post, and withdraw to mobile money after a 7-day check. You keep every dollar you earn.',
+    answer: 'Join open campaigns, post, and get paid to mobile money after a 7-day check. You keep every dollar you earn.',
   },
   {
     question: 'What can I do without paying?',
     audience: 'brand',
-    answer: 'Fund a campaign and pay per 1,000 verified views. Unused budget comes back.',
+    answer: 'Fund a campaign and pay per 1,000 verified views. Campaigns run at least 15 days. Unused escrow is returned when the campaign ends — you can extend, not cancel early.',
   },
   {
     question: 'Why would a brand pay $49?',
     audience: 'brand',
-    answer: 'If you want to choose who posts, message them, or pay for clicks and sales instead of only views.',
+    answer: 'If you want to search creators, hire specific people, message them, and agree a rate before they post.',
   },
   {
     question: 'Why would a creator pay $9?',
@@ -41,12 +41,12 @@ const faqData: { question: string; answer: string; audience?: Audience }[] = [
   {
     question: 'Why not just pay on WhatsApp?',
     audience: 'creator',
-    answer: 'On Twen the budget is held until views are checked. Creator Pro can withdraw as soon as the campaign closes.',
+    answer: 'On Twen the budget is held until views are checked. Creator Pro is paid as soon as the campaign closes.',
   },
   {
     question: 'Why not just pay on WhatsApp?',
     audience: 'brand',
-    answer: 'On Twen the budget is held until views are checked, and unused money comes back.',
+    answer: 'On Twen the budget is held until views are checked. Unused escrow is returned when the campaign ends.',
   },
 ];
 

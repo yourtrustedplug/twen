@@ -6,10 +6,12 @@ import SignedImage from '@/components/SignedImage';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { Payout, ProfileRow, Submission } from '@/types/unignored';
+import type { BrandRefund, ContactMessage, Payout, ProfileRow, Submission } from '@/types/unignored';
 import { formatPayoutDestination } from '@/lib/payout-methods';
 import { PLATFORM_LABELS, parseChecklistResults } from '@/types/unignored';
 import { formatDate, formatMoney } from '@/lib/format';
+import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { MAX_REJECTION_REASON, rejectionReasonError } from '@/lib/review-submission';
 import { ID_BUCKET } from '@/lib/storage';
 import { Loader2, Check, X, ExternalLink } from 'lucide-react';
 
@@ -20,6 +22,7 @@ interface QueueRow extends Submission {
 interface Stats {
   pending: number;
   pendingPayouts: number;
+  pendingRefunds: number;
   pendingIds: number;
   openCampaigns: number;
   creators: number;
@@ -30,10 +33,13 @@ const AdminPanel = () => {
   const { toast } = useToast();
   const [rows, setRows] = useState<QueueRow[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [refunds, setRefunds] = useState<BrandRefund[]>([]);
+  const [contacts, setContacts] = useState<ContactMessage[]>([]);
   const [idQueue, setIdQueue] = useState<ProfileRow[]>([]);
   const [stats, setStats] = useState<Stats>({
     pending: 0,
     pendingPayouts: 0,
+    pendingRefunds: 0,
     pendingIds: 0,
     openCampaigns: 0,
     creators: 0,
@@ -45,7 +51,7 @@ const AdminPanel = () => {
   const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
-    const [queueRes, payoutRes, idRes, openRes, creatorsRes, brandsRes] = await Promise.all([
+    const [queueRes, payoutRes, refundRes, contactRes, idRes, openRes, creatorsRes, brandsRes] = await Promise.all([
       supabase
         .from('submissions')
         .select('*, campaigns(title, brand_name)')
@@ -56,6 +62,16 @@ const AdminPanel = () => {
         .select('*')
         .in('status', ['pending', 'processing', 'queued'])
         .order('created_at', { ascending: true }),
+      supabase
+        .from('brand_refunds')
+        .select('*')
+        .in('status', ['pending', 'processing', 'queued'])
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20),
       supabase
         .from('profiles')
         .select('*')
@@ -75,13 +91,18 @@ const AdminPanel = () => {
 
     const queue = (queueRes.data as unknown as QueueRow[]) ?? [];
     const pendingPayouts = (payoutRes.data as Payout[]) ?? [];
+    const pendingRefunds = refundRes.error ? [] : (refundRes.data as BrandRefund[]) ?? [];
+    const inbox = contactRes.error ? [] : (contactRes.data as ContactMessage[]) ?? [];
     const pendingIds = (idRes.data as ProfileRow[]) ?? [];
     setRows(queue);
     setPayouts(pendingPayouts);
+    setRefunds(pendingRefunds);
+    setContacts(inbox);
     setIdQueue(pendingIds);
     setStats({
       pending: queue.length,
       pendingPayouts: pendingPayouts.length,
+      pendingRefunds: pendingRefunds.length,
       pendingIds: pendingIds.length,
       openCampaigns: openRes.count ?? 0,
       creators: creatorsRes.count ?? 0,
@@ -95,28 +116,40 @@ const AdminPanel = () => {
   }, [load]);
 
   const decide = async (row: QueueRow, status: 'approved' | 'rejected') => {
-    if (status === 'rejected' && !reason.trim()) {
-      toast({ title: 'Add a rejection reason', variant: 'destructive' });
-      return;
+    if (status === 'rejected') {
+      const reasonProblem = rejectionReasonError(reason);
+      if (reasonProblem) {
+        toast({ title: reasonProblem, variant: 'destructive' });
+        return;
+      }
     }
     setBusyId(row.id);
-    const { error } = await supabase
-      .from('submissions')
-      .update({
+    const { data, error } = await supabase.functions.invoke('review-submission', {
+      body: {
+        submission_id: row.id,
         status,
-        rejection_reason: status === 'rejected' ? reason.trim() : null,
-      })
-      .eq('id', row.id);
+        reason: status === 'rejected' ? reason.trim() : undefined,
+      },
+    });
     setBusyId(null);
-    if (error) {
-      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
+    if (error || data?.error || !data?.ok) {
+      toast({
+        title: 'Update failed',
+        description: await edgeFunctionErrorMessage(error, data, 'Could not save that review.'),
+        variant: 'destructive',
+      });
       return;
     }
     setRejectingId(null);
     setReason('');
     toast({
       title: status === 'approved' ? 'Approved' : 'Rejected',
-      description: status === 'approved' ? 'Submission can earn on verified views.' : 'Creator will see the reason.',
+      description:
+        status === 'approved'
+          ? 'Submission can earn on verified views.'
+          : data?.emailed
+            ? 'The creator was emailed the reason.'
+            : 'Saved. The creator will see the reason in the app — email could not be sent.',
     });
     load();
   };
@@ -143,6 +176,28 @@ const AdminPanel = () => {
     load();
   };
 
+  const resolveRefund = async (refund: BrandRefund, status: 'completed' | 'failed') => {
+    setBusyId(refund.id);
+    const { error } = await supabase.rpc('resolve_brand_refund', {
+      p_refund_id: refund.id,
+      p_status: status,
+      p_note: status === 'completed' ? 'Escrow returned' : 'Refund failed',
+    });
+    setBusyId(null);
+    if (error) {
+      toast({ title: 'Could not update refund', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({
+      title: status === 'completed' ? 'Marked returned' : 'Marked failed',
+      description:
+        status === 'completed'
+          ? 'Brand unused escrow marked complete.'
+          : 'Failed refund stays in the ledger for a retry.',
+    });
+    load();
+  };
+
   const resolveId = async (row: ProfileRow, status: 'verified' | 'rejected') => {
     setBusyId(row.id);
     const { error } = await supabase
@@ -164,13 +219,14 @@ const AdminPanel = () => {
       <main className="max-w-4xl mx-auto px-5 md:px-10 py-8 md:py-12">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Admin panel</h1>
         <p className="text-muted-foreground mb-8">
-          Moderators and admins share this panel. Review submissions and process mobile money payouts.
+          Moderators and admins share this panel. Review submissions, process mobile money payouts, and return unused brand escrow.
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-10">
           {[
             { label: 'Pending review', value: stats.pending },
             { label: 'Pending payouts', value: stats.pendingPayouts },
+            { label: 'Pending refunds', value: stats.pendingRefunds },
             { label: 'Pending IDs', value: stats.pendingIds },
             { label: 'Open campaigns', value: stats.openCampaigns },
             { label: 'Creators', value: stats.creators },
@@ -230,6 +286,76 @@ const AdminPanel = () => {
                     <X className="h-4 w-4 mr-1.5" /> Failed
                   </Button>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className="font-display text-2xl font-bold mb-4">Unused escrow returns</h2>
+        {loading ? null : refunds.length === 0 ? (
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 text-center text-muted-foreground mb-10">
+            No brand refunds waiting. After you send unused escrow back, mark them completed here.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 mb-10">
+            {refunds.map((r) => (
+              <div
+                key={r.id}
+                className="bg-white border border-[#f1f1f1] rounded-[30px] p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+              >
+                <div>
+                  <p className="font-display text-lg font-bold">{formatMoney(r.amount)}</p>
+                  <p className="text-sm text-muted-foreground">{formatDate(r.created_at)}</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">{r.brand_id}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{r.campaign_id}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="invofy"
+                    size="sm"
+                    disabled={busyId === r.id}
+                    onClick={() => resolveRefund(r, 'completed')}
+                  >
+                    {busyId === r.id ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-1.5" />
+                    )}
+                    Mark returned
+                  </Button>
+                  <Button
+                    variant="invofyOutline"
+                    size="sm"
+                    disabled={busyId === r.id}
+                    onClick={() => resolveRefund(r, 'failed')}
+                  >
+                    <X className="h-4 w-4 mr-1.5" /> Failed
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className="font-display text-2xl font-bold mb-4">Contact inbox</h2>
+        {loading ? null : contacts.length === 0 ? (
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 text-center text-muted-foreground mb-10">
+            No contact messages. Run the contact_messages SQL if the public form returns 502.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 mb-10">
+            {contacts.map((c) => (
+              <div key={c.id} className="bg-white border border-[#f1f1f1] rounded-[30px] p-5 flex flex-col gap-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-display text-lg font-bold">{c.subject}</p>
+                  <p className="text-sm text-muted-foreground">{formatDate(c.created_at)}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {c.full_name} · {c.email}
+                  {c.phone ? ` · ${c.phone}` : ''}
+                  {c.emailed_at ? ' · emailed' : ' · inbox only'}
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{c.message}</p>
               </div>
             ))}
           </div>
@@ -358,15 +484,21 @@ const AdminPanel = () => {
                       <Textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder="Why is this rejected? Shown to the creator."
+                        placeholder="Why is this rejected? Emailed to the creator and shown in the app."
                         rows={3}
+                        required
+                        maxLength={MAX_REJECTION_REASON}
+                        aria-label="Rejection reason"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Required. We email this to the creator with a link to submit a new video.
+                      </p>
                       <div className="flex flex-wrap gap-3">
                         <Button
                           variant="invofy"
                           size="sm"
                           onClick={() => decide(s, 'rejected')}
-                          disabled={busyId === s.id}
+                          disabled={busyId === s.id || Boolean(rejectionReasonError(reason))}
                         >
                           {busyId === s.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                           Confirm reject

@@ -96,8 +96,12 @@ function WordmarkText({
   return (
     <div className="relative h-8 overflow-hidden">
       <div className="flex flex-col">
-        <span className={cn(textClass, 'leading-8')}>Twen</span>
-        <span className={cn(textClass, 'leading-8')}>Twen</span>
+        <span className={cn(textClass, 'leading-8')} aria-hidden="true">
+          Twen
+        </span>
+        <span className={cn(textClass, 'leading-8')} aria-hidden="true">
+          Twen
+        </span>
       </div>
     </div>
   );
@@ -142,7 +146,9 @@ export function Logo({
   return (
     <span className={cn('inline-flex items-center gap-2', inkClass, className)}>
       <Mark title={title} reverse={reverse} className={cn('shrink-0', iconClassName)} />
-      <WordmarkText reverse={reverse} animated={animatedWordmark} className={wordmarkClassName} />
+      <span aria-hidden="true">
+        <WordmarkText reverse={reverse} animated={animatedWordmark} className={wordmarkClassName} />
+      </span>
     </span>
   );
 }

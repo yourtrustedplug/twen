@@ -38,7 +38,9 @@ describe('twen welcome', () => {
     expect(brand).toMatch(/^Hi Ada\./);
     expect(brand).toMatch(/escrow/);
     expect(brand).toMatch(/pay creators immediately/);
+    expect(brand).toMatch(/When the deadline passes, unused escrow is queued back to you/);
     expect(brand).not.toMatch(/1–2 business days/);
+    expect(brand).not.toMatch(/Unused budget can come back/);
   });
 
   it('pins the Twen thread above other chats', () => {

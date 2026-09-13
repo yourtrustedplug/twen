@@ -27,10 +27,10 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
     >
       <div className="max-w-[1040px] mx-auto px-4 max-lg:max-w-full">
         <p className="text-center text-muted-foreground font-medium mb-12 max-md:mb-8 text-base font-sans">
-          Campaigns funded by brands like
+          Campaigns go live on Instagram and TikTok
         </p>
 
-        <div className="relative">
+        <div className="relative" aria-hidden="true">
           <div className="absolute left-0 top-0 bottom-0 w-24 max-md:w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-24 max-md:w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
@@ -39,7 +39,7 @@ export function LogoCloud({ className, ...props }: LogoCloudProps) {
               <img
                 key={logo.alt}
                 src={logo.src}
-                alt={logo.alt}
+                alt=""
                 width={170}
                 height={45}
                 loading="lazy"

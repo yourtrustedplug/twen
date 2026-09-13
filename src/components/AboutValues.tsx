@@ -21,7 +21,7 @@ const valuesData = [
     icon: valueIcon02,
     number: 2,
     title: 'Money Before Work',
-    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits time, and unspent money goes back to the brand.',
+    description: 'Campaigns are escrow-funded before creators see them. The budget exists before anyone commits time. Unused escrow is returned to the brand when the campaign ends.',
   },
   {
     icon: valueIcon03,

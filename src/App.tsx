@@ -7,7 +7,7 @@ import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
 import { AppPrivyProvider } from "@/providers/PrivyProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppNavigate } from "@/components/AppNavigate";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary, RouteErrorBoundary } from "@/components/ErrorBoundary";
 import { ConfigGuard } from "@/components/ConfigGuard";
 import { AuthRedirect } from "@/components/AuthRedirect";
 import { AppHostRedirect } from "@/components/AppHostRedirect";
@@ -71,6 +71,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteErrorBoundary>
             <AppPrivyProvider>
               <AuthProvider>
                 <ScrollToTop />
@@ -166,8 +167,9 @@ const App = () => (
                 <Route path="*" element={<PublicFallback />} />
               </Routes>
             </AuthProvider>
-          </AppPrivyProvider>
-        </BrowserRouter>
+            </AppPrivyProvider>
+            </RouteErrorBoundary>
+          </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
     </ConfigGuard>

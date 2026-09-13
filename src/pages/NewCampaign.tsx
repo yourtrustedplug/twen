@@ -627,7 +627,7 @@ const NewCampaign = () => {
             <div className="flex items-start gap-3 bg-white border border-[#f1f1f1] rounded-[30px] p-6 mb-8">
               <ShieldCheck className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
               <p className="text-sm text-muted-foreground">
-                The full budget goes into escrow when you fund. You only pay for verified views. Unspent budget comes back.
+                The full budget goes into escrow when you fund. You only pay for verified views. Campaigns run at least 15 days. Unused escrow is returned when the campaign ends — you can extend, not cancel early.
               </p>
             </div>
 

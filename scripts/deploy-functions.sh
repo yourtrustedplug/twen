@@ -20,6 +20,7 @@ supabase functions deploy connect-social --project-ref "$REF"
 supabase functions deploy social-oauth-callback --project-ref "$REF" --no-verify-jwt
 supabase functions deploy verify-id --project-ref "$REF"
 supabase functions deploy verify-submission --project-ref "$REF"
+supabase functions deploy review-submission --project-ref "$REF"
 supabase functions deploy delete-account --project-ref "$REF"
 
 cat <<'EOF'
@@ -50,9 +51,10 @@ supabase secrets set --project-ref utzkityhzxpzipvmdmxz \
 Note: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically —
 do not pass SUPABASE_* via `supabase secrets set` (CLI skips those names).
 
-Paste ONE SQL file in Supabase SQL Editor:
+Paste in Supabase SQL Editor:
   supabase/LAUNCH.sql
   (+ ADMIN_STAFF.sql if is_staff() is missing)
+  supabase/REJECT_REASON.sql
 
 On NardoPay project, set the SAME NARDOPAY_WEBHOOK_SECRET so signatures match.
 

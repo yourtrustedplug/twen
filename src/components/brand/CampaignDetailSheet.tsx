@@ -26,7 +26,7 @@ import { kitFromCampaign } from '@/lib/brand-kit';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import { campaignCheckoutUrlIfReusable } from '@/lib/nardopay-checkout';
 import { usePlanCheckout } from '@/hooks/use-plan-checkout';
-import { Loader2, ShieldCheck, CalendarPlus, Check, X, MessageSquare } from 'lucide-react';
+import { Loader2, ShieldCheck, CalendarPlus, Check, X, MessageSquare, Wallet } from 'lucide-react';
 
 type Props = {
   campaignId: string | null;
@@ -116,6 +116,20 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
     onUpdated?.();
   };
 
+  const closeCampaign = async () => {
+    if (!campaign) return;
+    setBusy(true);
+    const { error } = await supabase.rpc('close_campaign', { p_campaign_id: campaign.id });
+    setBusy(false);
+    if (error) {
+      toast({ title: 'Could not close', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Campaign closed', description: 'Unused escrow is queued to be returned.' });
+    await load();
+    onUpdated?.();
+  };
+
   const message = async (creatorId: string, creatorName: string) => {
     if (!user) return;
     if (!brandIsPro) {
@@ -176,7 +190,11 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
         <SheetHeader className="space-y-1 border-b border-[#f1f1f1] px-5 py-4 pr-12 text-left">
           <SheetTitle className="font-display text-xl truncate">{campaign?.title ?? 'Campaign'}</SheetTitle>
           <SheetDescription>
-            {campaign ? `${campaign.brand_name} · ${days} days left` : 'Campaign details'}
+            {campaign
+              ? campaign.status === 'closed'
+                ? `${campaign.brand_name} · Ended`
+                : `${campaign.brand_name} · ${days} days left`
+              : 'Campaign details'}
           </SheetDescription>
         </SheetHeader>
 
@@ -233,7 +251,7 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
                 {campaign.status === 'open' && (
                   <>
                     <p className="text-xs text-muted-foreground">
-                      Campaigns run a minimum of 15 days. Give it more time instead of stopping it.
+                      Campaigns run at least 15 days. You can extend anytime. Unused escrow is returned after the deadline — you cannot cancel early.
                     </p>
                     <div className="flex gap-2">
                       {[7, 14, 30].map((d) => (
@@ -242,7 +260,20 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
                         </Button>
                       ))}
                     </div>
+                    {days === 0 && (
+                      <Button variant="invofy" size="invofy" onClick={closeCampaign} disabled={busy}>
+                        {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
+                        Close and return unused escrow
+                      </Button>
+                    )}
                   </>
+                )}
+                {campaign.status === 'closed' && (
+                  <p className="text-xs text-muted-foreground">
+                    {remaining > 0
+                      ? `This campaign ended. ${formatMoney(remaining)} unused escrow is queued to be returned.`
+                      : 'This campaign ended and used its full budget.'}
+                  </p>
                 )}
               </div>
 
@@ -305,7 +336,11 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
                 </h2>
                 {submissions.length === 0 ? (
                   <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[22px] p-5 text-sm text-muted-foreground">
-                    {campaign.status === 'open' ? 'Creators are browsing now.' : 'Fund the campaign to make it visible.'}
+                    {campaign.status === 'open'
+                      ? 'Creators are browsing now.'
+                      : campaign.status === 'closed'
+                        ? 'This campaign has ended.'
+                        : 'Fund the campaign to make it visible.'}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">

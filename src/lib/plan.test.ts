@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BRAND_FREE_PERKS,
   BRAND_PLUS_MONTHLY_USD,
+  BRAND_PLUS_PERKS,
   CREATOR_PRO_MONTHLY_USD,
   formatUsd,
   isPro,
@@ -24,6 +26,14 @@ describe('plan', () => {
     expect(formatUsd(CREATOR_PRO_MONTHLY_USD)).toBe('$9');
     expect(paidPlanName('creator')).toBe('Creator Pro');
     expect(paidPlanName('brand')).toBe('Twen Plus');
+  });
+
+  it('sells unused escrow after the deadline, not CPC or competitor hiding', () => {
+    expect(BRAND_FREE_PERKS.join(' ')).toMatch(/when the campaign ends/i);
+    expect(BRAND_FREE_PERKS.join(' ')).not.toMatch(/comes back/i);
+    expect(BRAND_PLUS_PERKS.join(' ')).toMatch(/Search creators/i);
+    expect(BRAND_PLUS_PERKS.join(' ')).toMatch(/Message them/i);
+    expect(BRAND_PLUS_PERKS.join(' ')).not.toMatch(/click|sale|competitor/i);
   });
 
   it('shows the next charge date and amount', () => {

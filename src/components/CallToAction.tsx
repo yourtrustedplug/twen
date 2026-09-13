@@ -62,8 +62,6 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
   const y6 = useTransform(smoothProgress, [0.2, 0.95], ['0vh', '35vh']);
   const scale6 = useTransform(smoothProgress, [0.2, 0.95], [1, 0.75]);
 
-  const contentOpacity = useTransform(smoothProgress, [0.7, 0.8], [0, 1]);
-
   const imageTransforms = [
     { x: x1, y: y1, scale: scale1 },
     { x: x2, y: y2, scale: scale2 },
@@ -143,10 +141,7 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
             </Button>
           </div>
 
-          <motion.div
-            style={{ opacity: contentOpacity }}
-            className="relative z-10 hidden md:flex flex-col items-center text-center px-5 max-w-[40rem]"
-          >
+          <div className="relative z-10 hidden md:flex flex-col items-center text-center px-5 max-w-[40rem]">
             <span className="text-xs tracking-[1px] uppercase font-semibold mb-4">
               {copy.ctaEyebrow}
             </span>
@@ -158,7 +153,7 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
             <Button variant="invofy" size="invofy" onClick={() => startAuth(role)}>
               {copy.primaryCta}
             </Button>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

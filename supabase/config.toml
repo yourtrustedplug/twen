@@ -33,5 +33,8 @@ verify_jwt = true
 [functions.verify-submission]
 verify_jwt = true
 
+[functions.review-submission]
+verify_jwt = true
+
 [functions.delete-account]
 verify_jwt = true

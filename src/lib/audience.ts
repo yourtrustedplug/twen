@@ -23,6 +23,9 @@ export const getRememberedAudience = (): Audience | null => {
   }
 };
 
+/** Pricing defaults to the last marketing audience, else creators. */
+export const defaultPricingAudience = (): Audience => getRememberedAudience() ?? 'creator';
+
 export const audiencePath = (audience: Audience) =>
   audience === 'brand' ? '/brands' : '/creators';
 
@@ -59,7 +62,7 @@ export const audienceCopy: Record<Audience, AudienceCopy> = {
       { title: 'Paid for views, not followers', description: 'You earn on verified views. A new account gets the same rate as a big one.' },
       { title: 'Post where you already are', description: 'Reels and TikToks on your own accounts. Follow the brief, submit the link, done.' },
       { title: 'See the money before you film', description: 'Every campaign is funded in escrow. Rate, remaining budget, and deadline are shown upfront.' },
-      { title: 'Cash out to your phone', description: 'Withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa — not a bank that takes weeks.' },
+      { title: 'Cash out to your phone', description: 'Paid to EcoCash, M-Pesa, MTN MoMo, Airtel Money, and more — not a bank that takes weeks.' },
       { title: 'No gate. No agency.', description: 'No follower cutoff. No pitching brands one by one. Pick a live campaign and post.' },
     ],
     featureCard: { title: 'Start earning today', description: 'Create a free account, pick a funded campaign, and get paid for posting.' },
@@ -68,13 +71,13 @@ export const audienceCopy: Record<Audience, AudienceCopy> = {
     steps: [
       { number: '01', title: 'Pick a campaign', description: 'Rate, budget, and deadline shown before you accept.' },
       { number: '02', title: 'Post on IG or TikTok', description: 'Follow the brief, publish, submit your link.' },
-      { number: '03', title: 'Withdraw to mobile money', description: 'Verified views pay out to your wallet.' },
+      { number: '03', title: 'Get paid to mobile money', description: 'Verified views pay out to your wallet.' },
     ],
     ctaEyebrow: "Let's go",
     ctaHeadline: 'It really is that easy',
   },
   brand: {
-    eyebrow: 'The largest content distribution network in Africa',
+    eyebrow: 'Content distribution across Africa',
     headline: 'Flood social media\nwith your content',
     sub: 'Real people distribute your content on Instagram and TikTok',
     primaryCta: 'Fund a Campaign',
@@ -85,16 +88,16 @@ export const audienceCopy: Record<Audience, AudienceCopy> = {
       { title: 'Real people, real posts', description: 'Creators post your product on their own accounts. Their audience sees a person they trust, not a banner.' },
       { title: 'Flood the feed', description: 'One brief. Dozens of creators. Your app or product shows up across Instagram and TikTok at once.' },
       { title: 'Distribution you can buy', description: 'Set a budget and a rate per thousand views. Creators compete to spread your content.' },
-      { title: 'Pay only for what lands', description: 'Verified views only. Escrowed budget. Unspent money comes back.' },
+      { title: 'Pay only for what lands', description: 'Verified views only. Escrowed budget. Unused escrow is returned when the campaign ends.' },
       { title: 'You keep control', description: 'Write the brief. Platform moderators approve posts before they earn.' },
     ],
     featureCard: { title: 'Launch distribution', description: 'Fund a campaign and watch creators push your content live.' },
     stepsHeadline: 'Brief. Fund. Flood.',
-    stepsSub: 'Fund once. Creators post. Unspent budget comes back.',
+    stepsSub: 'Fund once. Creators post. Unused escrow is returned when the campaign ends.',
     steps: [
       { number: '01', title: 'Write the brief', description: 'What to say, what to show, what to avoid.' },
       { number: '02', title: 'Fund the campaign', description: 'Creators see it and start posting.' },
-      { number: '03', title: 'Watch it spread', description: 'Pay for verified views. Refund the rest.' },
+      { number: '03', title: 'Watch it spread', description: 'Pay for verified views. Unused escrow is returned after the deadline.' },
     ],
     ctaEyebrow: "Let's go",
     ctaHeadline: 'Flood the feed. Pay for views.',

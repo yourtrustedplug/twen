@@ -9,7 +9,7 @@ const Terms = () => (
     <main className="mx-auto max-w-3xl px-6 pt-32 pb-16 prose prose-neutral">
       <PageBreadcrumbs align="start" className="mb-8 not-prose" />
       <h1>Terms of Service</h1>
-      <p className="lead text-muted-foreground">Last updated: September 7, 2026</p>
+      <p className="lead text-muted-foreground">Last updated: September 13, 2026</p>
       <p>
         These Terms govern your use of Twen (&quot;we&quot;, &quot;us&quot;), a content distribution
         network that connects brands and creators for performance-based campaigns.
@@ -25,6 +25,13 @@ const Terms = () => (
         rate, subject to budget caps, review, and hold periods disclosed in the product. Payouts
         are processed to the mobile-money details you provide. Fees, if any, are shown before you
         confirm a funding or withdrawal action.
+      </p>
+      <h2>Campaign length &amp; unused escrow</h2>
+      <p>
+        Funded campaigns run for at least 15 days. Brands may extend a live campaign. Brands may
+        not cancel early to reclaim escrow. When the deadline passes, the campaign closes. Creators
+        stop earning from it, and any unused escrow is returned to the brand. Returns are processed
+        by Twen operations after the campaign ends — they are not instant card refunds at checkout.
       </p>
       <h2>Content</h2>
       <p>

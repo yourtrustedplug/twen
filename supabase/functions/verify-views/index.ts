@@ -4,7 +4,7 @@
  * For every approved submission:
  *   1. Prefer creator_oauth_tokens (Connect TikTok/IG in profile).
  *   2. Fall back to global TIKTOK_* / INSTAGRAM_ACCESS_TOKEN if set.
- *   3. Call accrue_views RPC; close campaigns past deadline.
+ *   3. Call accrue_views RPC; close expired campaigns and queue unused escrow.
  *
  * Paste supabase/PROFILE_ABOUT.sql so creator_oauth_tokens exists.
  * Set ALLOW_SIMULATED_VIEWS=true only for non-prod testing.
@@ -392,12 +392,7 @@ Deno.serve(async (req) => {
       accrued += Number(amount ?? 0)
     }
 
-    const { data: closed, error: closeError } = await supabase
-      .from('campaigns')
-      .update({ status: 'closed', closed_at: new Date().toISOString() })
-      .eq('status', 'open')
-      .lt('deadline', new Date().toISOString().slice(0, 10))
-      .select('id')
+    const { data: closedCount, error: closeError } = await supabase.rpc('close_expired_campaigns')
     if (closeError) throw closeError
 
     return new Response(
@@ -406,7 +401,7 @@ Deno.serve(async (req) => {
         verified_submissions: verified,
         skipped_submissions: skipped,
         amount_accrued: accrued,
-        campaigns_closed: closed?.length ?? 0,
+        campaigns_closed: Number(closedCount ?? 0),
         tiktok_verified: tiktokOk,
         instagram_verified: instagramOk,
         creator_token_hits: usedCreatorToken,

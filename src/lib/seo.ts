@@ -9,7 +9,7 @@ export const SITE_NAME = 'Twen';
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og.png`;
 export const DEFAULT_TITLE = "Twen — Africa's content distribution network";
 export const DEFAULT_DESCRIPTION =
-  'Twen is the largest content distribution network in Africa. Brands fund campaigns. Creators get paid per verified view, straight to mobile money.';
+  'Twen is a content distribution network across Africa. Brands fund campaigns. Creators get paid per verified view, straight to mobile money.';
 
 export type SeoImage = {
   url: string;

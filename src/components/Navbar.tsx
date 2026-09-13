@@ -22,23 +22,25 @@ const NavItem = ({
   onClick,
   className,
   children,
+  label,
 }: {
   href: string;
   onMouseEnter?: () => void;
   onClick?: () => void;
   className?: string;
   children: React.ReactNode;
+  label?: string;
 }) => {
   const external = href.startsWith('http');
   if (external) {
     return (
-      <a href={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className}>
+      <a href={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className} aria-label={label}>
         {children}
       </a>
     );
   }
   return (
-    <Link to={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className}>
+    <Link to={href} onMouseEnter={onMouseEnter} onClick={onClick} className={className} aria-label={label}>
       {children}
     </Link>
   );
@@ -86,7 +88,7 @@ const Navbar = ({ compact = false }: NavbarProps) => {
             className={`flex flex-row justify-between items-center py-2 ${compact ? '' : 'max-lg:py-4'}`}
           >
             {/* Logo */}
-            <Link to="/" className="relative z-10 flex items-center gap-2 no-underline group">
+            <Link to="/" aria-label="Twen home" className="relative z-10 flex items-center gap-2 no-underline group">
               <Logo
                 variant="full"
                 animatedWordmark
@@ -103,6 +105,7 @@ const Navbar = ({ compact = false }: NavbarProps) => {
                   <NavItem
                     key={link.label}
                     href={link.href}
+                    label={link.label}
                     onMouseEnter={
                       link.href === '/about'
                         ? prefetchAbout
@@ -114,10 +117,16 @@ const Navbar = ({ compact = false }: NavbarProps) => {
                   >
                     <div className="relative h-5 overflow-hidden">
                       <div className="flex flex-col">
-                        <span className="text-foreground text-base font-semibold leading-5 transition-transform duration-300 group-hover:-translate-y-5">
+                        <span
+                          className="text-foreground text-base font-semibold leading-5 transition-transform duration-300 group-hover:-translate-y-5"
+                          aria-hidden="true"
+                        >
                           {link.label}
                         </span>
-                        <span className="text-foreground text-base leading-5 transition-transform duration-300 group-hover:-translate-y-5 font-semibold">
+                        <span
+                          className="text-foreground text-base leading-5 transition-transform duration-300 group-hover:-translate-y-5 font-semibold"
+                          aria-hidden="true"
+                        >
                           {link.label}
                         </span>
                       </div>

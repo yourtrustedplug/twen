@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_refunds: {
+        Row: {
+          amount: number
+          brand_id: string
+          campaign_id: string
+          created_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          brand_id: string
+          campaign_id: string
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          brand_id?: string
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           angle: string
@@ -765,6 +792,8 @@ export type Database = {
         Args: { p_new_views: number; p_submission_id: string }
         Returns: number
       }
+      close_campaign: { Args: { p_campaign_id: string }; Returns: number }
+      close_expired_campaigns: { Args: Record<PropertyKey, never>; Returns: number }
       extend_campaign: {
         Args: { p_campaign_id: string; p_days: number }
         Returns: string
@@ -776,6 +805,10 @@ export type Database = {
       }
       resolve_payout: {
         Args: { p_payout_id: string; p_status: string; p_note?: string | null }
+        Returns: undefined
+      }
+      resolve_brand_refund: {
+        Args: { p_refund_id: string; p_status: string; p_note?: string | null }
         Returns: undefined
       }
       seed_demo_data: { Args: { p_user_id: string }; Returns: undefined }

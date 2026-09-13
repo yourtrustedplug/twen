@@ -20,8 +20,8 @@ export const BRAND_PLUS_UPGRADE_PATH = '/brand/profile?tab=plan&upgrade=1';
 export const CREATOR_FREE_PERKS = [
   'Join open campaigns and post',
   'Keep every dollar you earn',
-  'Withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa',
-  'Withdraw after a 7-day check',
+  'Get paid to EcoCash, M-Pesa, MTN MoMo, Airtel Money, and more',
+  'Earnings release after a 7-day check',
   'No commission',
 ] as const;
 
@@ -36,16 +36,15 @@ export const CREATOR_PRO_PERKS = [
 export const BRAND_FREE_PERKS = [
   'Fund a campaign and pay per 1,000 views',
   'Any creator can join',
-  'Unused budget comes back',
+  'When the campaign ends, unused escrow is returned',
   'No commission. No per-campaign fee.',
 ] as const;
 
 export const BRAND_PLUS_PERKS = [
   'Search creators and hire specific people',
   'Message them and agree a rate',
-  'Pay per click or per sale, not only views',
-  'See which posts brought customers',
-  'Hide creators who already worked with competitors',
+  'See profiles and rate cards',
+  'Views and engagement on every post',
 ] as const;
 
 export const upcomingChargeDate = (renewsAt: string | null | undefined, now = new Date()): Date | null => {

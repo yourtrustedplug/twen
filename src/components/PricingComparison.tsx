@@ -29,8 +29,8 @@ const comparisonData: { category: string; features: ComparisonRow[] }[] = [
     category: 'Campaigns and payouts',
     features: [
       { name: 'Pay for verified views', free: true, brandsPro: true, creatorPro: true },
-      { name: 'Unused budget comes back / creators keep 100%', free: true, brandsPro: true, creatorPro: true },
-      { name: 'Pay per click, per sale, or hire someone', free: false, brandsPro: true, creatorPro: 'You can be hired' },
+      { name: 'Unused escrow returned when the campaign ends / creators keep 100%', free: true, brandsPro: true, creatorPro: true },
+      { name: 'Hire a specific creator', free: false, brandsPro: true, creatorPro: 'You can be hired' },
       { name: 'Withdraw as soon as the campaign ends', free: false, brandsPro: '—', creatorPro: true },
     ],
   },
@@ -41,7 +41,6 @@ const comparisonData: { category: string; features: ComparisonRow[] }[] = [
       { name: 'Search and invite specific creators', free: false, brandsPro: true, creatorPro: 'You show up in search' },
       { name: 'Public profile and rate card', free: false, brandsPro: 'Browse profiles', creatorPro: true },
       { name: 'More than one social account', free: false, brandsPro: '—', creatorPro: true },
-      { name: 'Hide creators who worked with competitors', free: false, brandsPro: true, creatorPro: false },
     ],
   },
   {
@@ -49,8 +48,7 @@ const comparisonData: { category: string; features: ComparisonRow[] }[] = [
     features: [
       { name: 'Direct messages', free: false, brandsPro: true, creatorPro: true },
       { name: 'Agree a rate before they post', free: false, brandsPro: true, creatorPro: true },
-      { name: 'Click and sales reports', free: false, brandsPro: true, creatorPro: 'Your own results' },
-      { name: 'Past campaign results', free: 'View counts', brandsPro: true, creatorPro: true },
+      { name: 'Views and engagement on posts', free: 'View counts', brandsPro: true, creatorPro: true },
     ],
   },
 ];
@@ -317,7 +315,7 @@ const PricingComparison = ({ className, audience = 'creator', onAudienceChange }
               <div className="mt-16 max-[767px]:mt-12 max-w-[42rem] mx-auto text-center">
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {audience === 'brand'
-                    ? 'Open campaigns stay open to every creator. Plus lets you hire specific people and message them.'
+                    ? 'Open campaigns stay open to every creator. Plus lets you search, hire specific people, and message them.'
                     : 'Paying does not jump the queue. Open campaigns stay open to every creator.'}
                 </p>
               </div>

@@ -1,6 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { BRAND_PLUS_MONTHLY_USD, CREATOR_PRO_MONTHLY_USD, formatUsd } from '@/lib/plan';
+import {
+  BRAND_FREE_PERKS,
+  BRAND_PLUS_MONTHLY_USD,
+  BRAND_PLUS_PERKS,
+  CREATOR_FREE_PERKS,
+  CREATOR_PRO_MONTHLY_USD,
+  CREATOR_PRO_PERKS,
+  formatUsd,
+} from '@/lib/plan';
 import { useStartAuth } from '@/hooks/use-start-auth';
 import { usePlanCheckout } from '@/hooks/use-plan-checkout';
 import pricingCardBg from '@/assets/pricing-card-bg.webp';
@@ -17,19 +25,8 @@ export const pricingPlans = [
     brandDescription: 'Run campaigns and pay for views.',
     price: '$0',
     period: 'forever',
-    features: [
-      'Join open campaigns and post',
-      'Keep every dollar you earn',
-      'Withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa',
-      'Withdraw after a 7-day check',
-      'No commission',
-    ],
-    brandFeatures: [
-      'Fund a campaign and pay per 1,000 views',
-      'Any creator can join',
-      'Unused budget comes back',
-      'No commission. No per-campaign fee.',
-    ],
+    features: [...CREATOR_FREE_PERKS],
+    brandFeatures: [...BRAND_FREE_PERKS],
     buttonText: 'Start free',
     buttonVariant: 'invofy' as const,
     featured: true,
@@ -42,14 +39,7 @@ export const pricingPlans = [
     description: 'For brands who want to pick who posts.',
     price: formatUsd(BRAND_PLUS_MONTHLY_USD),
     period: '/mo',
-    features: [
-      'Everything in Free',
-      'Search creators and hire specific people',
-      'Message them and agree a rate',
-      'Pay per click or per sale, not only views',
-      'See which posts brought customers',
-      'Hide creators who already worked with competitors',
-    ],
+    features: ['Everything in Free', ...BRAND_PLUS_PERKS],
     buttonText: 'Get Twen Plus',
     buttonVariant: 'invofyOutline' as const,
     featured: false,
@@ -63,14 +53,7 @@ export const pricingPlans = [
     description: 'For creators who want brands to find them.',
     price: formatUsd(CREATOR_PRO_MONTHLY_USD),
     period: '/mo',
-    features: [
-      'Everything in Free',
-      'Connect more than one account',
-      'Set your price per video',
-      'Get paid as soon as a campaign ends',
-      'Appear when brands search',
-      'Get booking requests from brands',
-    ],
+    features: ['Everything in Free', ...CREATOR_PRO_PERKS],
     buttonText: 'Get Creator Pro',
     buttonVariant: 'invofyOutline' as const,
     featured: false,

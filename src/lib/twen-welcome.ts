@@ -30,10 +30,10 @@ const CREATOR_PAYOUTS =
   `How payouts work\n\n1. You post. We verify the views on the platform.\n2. Earnings accrue while the campaign is open.\n3. When the campaign closes, funds sit for 7 days (Creator Pro skips the wait).\n4. After that, we pay out immediately to ${payoutRailsSummary()} — as soon as a payout number is on file.\n\nAdd your payout number on Earnings when you're ready.`;
 
 const BRAND_WELCOME_REST =
-  "Welcome to Twen.\n\nFund a campaign, brief creators across Africa, and pay only for verified views. Unused budget can come back when the campaign closes.\n\nFinish your brand profile first — company, your name, location, logo, color, website, and a social. You can't create a campaign until that's done. The checklist is on your profile.";
+  "Welcome to Twen.\n\nFund a campaign, brief creators across Africa, and pay only for verified views. Campaigns run at least 15 days. When the campaign ends, unused escrow is returned.\n\nFinish your brand profile first — company, your name, location, logo, color, website, and a social. You can't create a campaign until that's done. The checklist is on your profile.";
 
 const BRAND_MONEY =
-  'How money moves\n\n1. You fund a campaign. That money sits in escrow.\n2. Creators post. We verify the views and pay them from escrow.\n3. After the 7-day hold (Creator Pro skips it), we pay creators immediately to mobile money.\n\nTwen Plus lets you message and hire specific people. Free brands run open bounty campaigns.';
+  'How money moves\n\n1. You fund a campaign. That money sits in escrow.\n2. Creators post. We verify the views and pay them from escrow.\n3. After the 7-day hold (Creator Pro skips it), we pay creators immediately to mobile money.\n4. When the deadline passes, unused escrow is queued back to you. You can extend a live campaign, not cancel early.\n\nTwen Plus lets you search, message, and hire specific people. Free brands run open bounty campaigns.';
 
 export const CREATOR_READY = "You're set. Your profile is complete — go pick a campaign and post.";
 export const BRAND_READY = "You're set. Your profile is complete — create a campaign when you're ready.";

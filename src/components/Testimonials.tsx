@@ -31,7 +31,7 @@ const testimonialsData = [
     avatar: client04,
     name: 'Joseph T.',
     role: 'Brand · Beverages',
-    quote: "One brief, thirty videos. Unspent budget came straight back.",
+    quote: 'One brief. Creators posted on their own accounts. We paid for verified views.',
   },
   {
     avatar: client05,
