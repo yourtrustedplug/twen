@@ -12,7 +12,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, ShieldCheck, Plus, Trash2, Upload, ImagePlus, Check } from 'lucide-react';
 import { formatMoney, formatRate } from '@/lib/format';
-import { minDeadlineInput, MIN_CAMPAIGN_DAYS } from '@/lib/metrics';
+import {
+  campaignBudgetError,
+  campaignRateError,
+  minDeadlineInput,
+  MIN_CAMPAIGN_DAYS,
+  MIN_RATE_PER_1K,
+  SUGGESTED_RATE_PER_1K,
+} from '@/lib/metrics';
 import { uploadAsset, signedUrl } from '@/lib/storage';
 import type { ChecklistItem } from '@/types/unignored';
 import {
@@ -29,10 +36,10 @@ import { isOnboardingComplete } from '@/lib/onboarding';
 import { kitFromProfile, socialsToUrls, toCampaignKit } from '@/lib/brand-kit';
 
 const RATE_SUGGESTIONS = [
-  { value: 0.75, label: 'Lean', hint: 'More creators, lower cost per view' },
-  { value: 1.25, label: 'Standard', hint: 'Balanced reach and quality' },
-  { value: 2.0, label: 'Premium', hint: 'Attracts stronger creators' },
-  { value: 3.0, label: 'Top', hint: 'Competitive for high performers' },
+  { value: SUGGESTED_RATE_PER_1K, label: 'Recommended', hint: 'More creators apply at this rate' },
+  { value: 2.0, label: 'Strong', hint: 'Gets noticed first in the feed' },
+  { value: 3.0, label: 'Premium', hint: 'Attracts high performers' },
+  { value: 5.0, label: 'Top', hint: 'Competitive for the best creators' },
 ];
 
 type Step = 1 | 2;
@@ -137,7 +144,7 @@ const NewCampaign = () => {
     cover_image: '' as string,
     asset_urls: [] as string[],
     budget: '',
-    rate: '',
+    rate: String(SUGGESTED_RATE_PER_1K),
     deadline: '',
   });
 
@@ -179,8 +186,10 @@ const NewCampaign = () => {
   };
 
   const validateFinance = () => {
-    if (budget <= 0) return 'Set a budget above zero.';
-    if (rate <= 0) return 'Set a rate per 1,000 views.';
+    const budgetError = campaignBudgetError(budget);
+    if (budgetError) return budgetError;
+    const rateError = campaignRateError(rate);
+    if (rateError) return rateError;
     if (!form.deadline) return 'Pick a deadline.';
     if (form.deadline < minDeadline) return `Deadline must be at least ${MIN_CAMPAIGN_DAYS} days from today.`;
     return null;
@@ -547,7 +556,8 @@ const NewCampaign = () => {
           <>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Finances</h1>
             <p className="text-muted-foreground mb-10">
-              Set the budget and rate. Campaigns must run at least {MIN_CAMPAIGN_DAYS} days.
+              Set the budget and rate. Higher rates attract more creators.
+              Campaigns must run at least {MIN_CAMPAIGN_DAYS} days.
             </p>
 
             <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 mb-8">
@@ -558,7 +568,10 @@ const NewCampaign = () => {
 
               <div className="flex flex-col gap-3">
                 <Label>Rate per 1,000 views (USD)</Label>
-                <p className="text-xs text-muted-foreground -mt-1">Pick a suggestion or enter your own.</p>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Start at {formatMoney(SUGGESTED_RATE_PER_1K)} — creators notice higher bids. You can go as low as{' '}
+                  {formatMoney(MIN_RATE_PER_1K)}.
+                </p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {RATE_SUGGESTIONS.map((s) => (
                     <button
@@ -584,12 +597,17 @@ const NewCampaign = () => {
                 <Input
                   id="rate"
                   type="number"
-                  min="0"
+                  min={MIN_RATE_PER_1K}
                   step="0.05"
                   value={form.rate}
                   onChange={set('rate')}
                   placeholder="Or type a custom rate"
                 />
+                {rate >= MIN_RATE_PER_1K && rate < SUGGESTED_RATE_PER_1K && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatMoney(SUGGESTED_RATE_PER_1K)} usually gets more creators applying than {formatMoney(rate)}.
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">

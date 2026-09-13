@@ -72,6 +72,29 @@ export const daysRemaining = (deadline: string | Date | null | undefined) => {
 
 export const MIN_CAMPAIGN_DAYS = 15;
 
+/** Lowest rate a brand can set when creating a campaign (USD per 1,000 views). */
+export const MIN_RATE_PER_1K = 1;
+
+/** Rate we pre-select on the create form so brands bid above the floor. */
+export const SUGGESTED_RATE_PER_1K = 1.5;
+
+/** Lowest fund amount when creating a campaign (USD). Do not surface this in copy. */
+export const MIN_CAMPAIGN_BUDGET = 10;
+
+export const campaignRateError = (rate: number) => {
+  if (!Number.isFinite(rate) || rate <= 0) return 'Set a rate per 1,000 views.';
+  if (rate < MIN_RATE_PER_1K) {
+    return `Rate must be at least $${MIN_RATE_PER_1K.toFixed(2)} per 1,000 views.`;
+  }
+  return null;
+};
+
+export const campaignBudgetError = (budget: number) => {
+  if (!Number.isFinite(budget) || budget <= 0) return 'Set a budget above zero.';
+  if (budget < MIN_CAMPAIGN_BUDGET) return 'Set a higher budget.';
+  return null;
+};
+
 /** Creators cannot apply when fewer than this many days remain. */
 export const MIN_APPLY_DAYS = 5;
 

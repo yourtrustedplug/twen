@@ -21,7 +21,7 @@ const faqData: { question: string; answer: string; audience?: Audience }[] = [
   {
     question: 'What can I do without paying?',
     audience: 'brand',
-    answer: 'Fund a campaign and pay per 1,000 verified views. Campaigns run at least 15 days. Unused escrow is returned when the campaign ends — you can extend, not cancel early.',
+    answer: 'Fund a campaign from $1 per 1,000 verified views. Campaigns run at least 15 days. Unused escrow is returned when the campaign ends — you can extend, not cancel early.',
   },
   {
     question: 'Why would a brand pay $49?',
