@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { PageBreadcrumbs } from '@/components/PageBreadcrumbs';
 
 const Footer = lazy(() => import('@/components/Footer'));
 
@@ -32,6 +33,7 @@ const Licenses = () => {
 
       <section className="w-full px-10 max-md:px-6 max-xs:px-5 pt-48 max-lg:pt-40 max-md:pt-36 max-xs:pt-32 pb-24 max-md:pb-16">
         <div className="w-full max-w-[1440px] mx-auto">
+          <PageBreadcrumbs className="mb-8 max-md:mb-6" />
           <h1 className="text-foreground text-[4.5rem] max-lg:text-[3rem] max-md:text-[2.5rem] max-xs:text-[2rem] font-bold font-display leading-[1.2] text-center mb-16 max-md:mb-12 max-xs:mb-10">
             Licenses
           </h1>

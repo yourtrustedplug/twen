@@ -1,12 +1,8 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { isPro } from '@/lib/plan';
-import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { BRAND_PLUS_MONTHLY_USD, CREATOR_PRO_MONTHLY_USD, formatUsd } from '@/lib/plan';
 import { useStartAuth } from '@/hooks/use-start-auth';
+import { usePlanCheckout } from '@/hooks/use-plan-checkout';
 import pricingCardBg from '@/assets/pricing-card-bg.webp';
 import checkIcon from '@/assets/icons/check-icon.png';
 import cardIcon from '@/assets/icons/card-icon.png';
@@ -44,7 +40,7 @@ export const pricingPlans = [
     id: 'plus',
     name: 'Twen Plus',
     description: 'For brands who want to pick who posts.',
-    price: '$49',
+    price: formatUsd(BRAND_PLUS_MONTHLY_USD),
     period: '/mo',
     features: [
       'Everything in Free',
@@ -65,15 +61,15 @@ export const pricingPlans = [
     id: 'creatorPro',
     name: 'Creator Pro',
     description: 'For creators who want brands to find them.',
-    price: '$49',
+    price: formatUsd(CREATOR_PRO_MONTHLY_USD),
     period: '/mo',
     features: [
       'Everything in Free',
-      'Show up when brands search',
-      'Get booking requests and a public rate card',
       'Connect more than one account',
-      'Withdraw as soon as a campaign ends — no 7-day wait',
-      'Message brands about your rate',
+      'Set your price per video',
+      'Get paid as soon as a campaign ends',
+      'Appear when brands search',
+      'Get booking requests from brands',
     ],
     buttonText: 'Get Creator Pro',
     buttonVariant: 'invofyOutline' as const,
@@ -91,10 +87,8 @@ interface PricingCardsProps {
 }
 
 const PricingCards = ({ className, showStagger = false, audience = 'creator' }: PricingCardsProps) => {
-  const { user, profile } = useAuth();
-  const { toast } = useToast();
-  const [busy, setBusy] = useState<string | null>(null);
   const startAuth = useStartAuth();
+  const { startPlanCheckout, busy } = usePlanCheckout();
 
   const visiblePlans = pricingPlans
     .filter((plan) => plan.id === 'free' || plan.checkoutRole === audience)
@@ -106,29 +100,6 @@ const PricingCards = ({ className, showStagger = false, audience = 'creator' }: 
         features: audience === 'brand' ? plan.brandFeatures : plan.features,
       };
     });
-
-  const startProCheckout = async (plan: (typeof pricingPlans)[number]) => {
-    if (!user) {
-      startAuth(plan.checkoutRole ?? null);
-      return;
-    }
-    if (isPro(profile)) {
-      toast({ title: 'You are already on Pro' });
-      return;
-    }
-    setBusy(plan.name);
-    const { data, error } = await supabase.functions.invoke('create-plan-checkout', { body: {} });
-    setBusy(null);
-    if (error || data?.error || !data?.url) {
-      toast({
-        title: 'Checkout failed',
-        description: edgeFunctionErrorMessage(error, data, 'Could not start Pro checkout'),
-        variant: 'destructive',
-      });
-      return;
-    }
-    window.location.href = data.url as string;
-  };
 
   return (
     <div className={cn('grid grid-cols-2 max-[991px]:grid-cols-1 gap-6 lg:items-start max-w-[60rem] mx-auto', className)}>
@@ -164,10 +135,10 @@ const PricingCards = ({ className, showStagger = false, audience = 'creator' }: 
                 variant={plan.buttonVariant}
                 size="invofy"
                 className="w-full mb-6"
-                disabled={busy === plan.name}
-                onClick={() => startProCheckout(plan)}
+                disabled={busy}
+                onClick={() => startPlanCheckout(plan.checkoutRole ?? audience)}
               >
-                {busy === plan.name ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                 {plan.buttonText}
               </Button>
             )}
@@ -185,6 +156,7 @@ const PricingCards = ({ className, showStagger = false, audience = 'creator' }: 
                     loading="lazy"
                     decoding="async"
                     className="w-5 h-5 flex-shrink-0 mt-0.5"
+                    aria-hidden="true"
                   />
                   <span className="text-base text-muted-foreground">{feature}</span>
                 </li>
@@ -202,6 +174,7 @@ const PricingCards = ({ className, showStagger = false, audience = 'creator' }: 
                 loading="lazy"
                 decoding="async"
                 className="w-5 h-5"
+                aria-hidden="true"
               />
               <span className="text-base text-[#91959e]">{plan.footer}</span>
             </div>

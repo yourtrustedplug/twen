@@ -6,43 +6,17 @@ import { Link, useNavigate } from 'react-router-dom';
  import { useToast } from '@/hooks/use-toast';
  import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
- import signinBg from '@/assets/auth/signin-bg.jpg';
- import xIcon from '@/assets/icons/x-icon.png';
- import instagramIcon from '@/assets/icons/instagram-icon.png';
- import linkedinIcon from '@/assets/icons/linkedin-icon.png';
- import facebookIcon from '@/assets/icons/facebook-icon.png';
+import signinBg from '@/assets/auth/signin-bg.jpg';
 import { Logo } from '@/logos';
+import { SupportMailButton } from '@/components/SupportMailButton';
 
-const socialLinks = [
-   { icon: xIcon, href: 'https://www.x.com/', alt: 'X' },
-   { icon: instagramIcon, href: 'https://www.instagram.com/', alt: 'Instagram' },
-   { icon: linkedinIcon, href: 'https://www.linkedin.com/', alt: 'LinkedIn' },
-   { icon: facebookIcon, href: 'https://www.facebook.com/', alt: 'Facebook' },
- ];
- 
- const SocialIcon = ({ icon, href, alt }: { icon: string; href: string; alt: string }) => (
-   <a 
-     href={href} 
-     target="_blank" 
-     rel="noopener noreferrer"
-     className="group flex items-center justify-center w-10 h-10 bg-foreground rounded-full transition-transform duration-300 hover:scale-110"
-   >
-     <div className="relative w-4 h-4 overflow-hidden">
-       <div className="flex flex-col items-center w-full transition-transform duration-300 group-hover:-translate-y-4">
-         <img src={icon} alt={alt} className="w-4 h-4" />
-         <img src={icon} alt={alt} className="w-4 h-4" />
-       </div>
-     </div>
-   </a>
- );
- 
- const resetPasswordSchema = z.object({
-   email: z.string()
-     .trim()
-     .email("Please enter a valid email address")
-     .max(255, "Email must be less than 255 characters"),
- });
- 
+const resetPasswordSchema = z.object({
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+});
+
 const newPasswordSchema = z.object({
   password: z.string()
     .min(8, "Password must be at least 8 characters")
@@ -323,9 +297,7 @@ const newPasswordSchema = z.object({
            
            {/* Social Links */}
            <div className="flex items-center gap-3">
-             {socialLinks.map((social) => (
-               <SocialIcon key={social.alt} {...social} />
-             ))}
+             <SupportMailButton size="sm" />
            </div>
          </div>
        </footer>

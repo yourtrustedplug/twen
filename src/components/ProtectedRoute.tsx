@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
+import { signedOutPath } from '@/lib/auth-routes';
 import { isStaff } from '@/lib/staff';
 import { AppNavigate } from '@/components/AppNavigate';
 import { Loader2 } from 'lucide-react';
@@ -29,7 +30,7 @@ export function ProtectedRoute({ children, role, staff }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    return <Navigate to="/signin" state={{ from: location }} replace />;
+    return <Navigate to={signedOutPath()} state={{ from: location }} replace />;
   }
 
   if (staff && profile && !isStaff(profile.role)) {

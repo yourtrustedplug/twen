@@ -6,6 +6,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
+import { planAmountForRole } from '../_shared/plan-amounts.ts'
 
 async function hmacHex(secret: string, payload: string): Promise<string> {
   const encoder = new TextEncoder()
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
       source?: string
       kind?: string
       user_id?: string
+      role?: string
     }
   }
   try {
@@ -92,8 +94,16 @@ Deno.serve(async (req) => {
 
   // Pro plan upgrade
   if (body.metadata?.kind === 'plan_upgrade' && body.metadata.user_id) {
-    const expectedAmount = Number(Deno.env.get('PRO_PLAN_AMOUNT') ?? '49')
-    if (Number.isFinite(expectedAmount) && amountMismatch(expectedAmount, Number(body.amount))) {
+    const { data: payer } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', body.metadata.user_id)
+      .maybeSingle()
+    const expectedAmount = planAmountForRole(payer?.role ?? body.metadata.role)
+    if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+      return jsonResponse({ error: 'Plan amount is not configured' }, 500)
+    }
+    if (amountMismatch(expectedAmount, Number(body.amount))) {
       return jsonResponse({ error: 'Plan amount mismatch' }, 400)
     }
     const { error } = await admin.rpc('confirm_plan_upgrade', {

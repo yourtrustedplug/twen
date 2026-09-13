@@ -11,7 +11,7 @@ import type { Audience } from '@/lib/audience';
 const faqData: { question: string; answer: string; audience?: Audience }[] = [
   {
     question: 'Is Free actually free?',
-    answer: 'Yes. We make money from the $49 paid plan, not from taking a cut of campaigns or earnings.',
+    answer: 'Yes. We make money from Creator Pro ($9/mo) and Twen Plus ($49/mo), not from taking a cut of campaigns or earnings.',
   },
   {
     question: 'What can I do without paying?',
@@ -29,9 +29,9 @@ const faqData: { question: string; answer: string; audience?: Audience }[] = [
     answer: 'If you want to choose who posts, message them, or pay for clicks and sales instead of only views.',
   },
   {
-    question: 'Why would a creator pay $49?',
+    question: 'Why would a creator pay $9?',
     audience: 'creator',
-    answer: 'If you want brands to find you, take bookings, use more than one account, and withdraw as soon as a campaign ends instead of waiting 7 days.',
+    answer: 'If you want brands to find you, set your own rate, connect more than one account, get hired, and get paid as soon as a campaign ends.',
   },
   {
     question: 'Do paying creators get campaigns first?',
@@ -90,17 +90,17 @@ const FAQ = ({ className, audience = 'creator', ...props }: FAQProps) => {
   return (
     <section
       className={cn(
-        'py-32 px-10 max-lg:py-24 max-md:py-24 max-md:px-6 max-xs:py-20 max-xs:px-5',
+        'py-20 px-5 md:py-24 md:px-6 lg:py-32 lg:px-10',
         className
       )}
       {...props}
     >
       <div className="max-w-[1440px] mx-auto">
-        <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center mb-16 max-md:mb-12">
+        <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center mb-10 md:mb-16">
           <span className="text-xs tracking-[1px] uppercase font-semibold">
             Frequently Asked Questions
           </span>
-          <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
+          <h2 className="text-[clamp(2rem,6vw,4.5rem)] leading-[1.15] font-bold font-display">
             Common questions
           </h2>
           <div className="w-full">
@@ -112,7 +112,7 @@ const FAQ = ({ className, audience = 'creator', ...props }: FAQProps) => {
 
         <div className="flex justify-start items-stretch w-full gap-6 max-lg:flex-col max-lg:gap-8">
           <div className="w-1/2 max-lg:w-full">
-            <div className="relative w-full h-full min-h-[600px] xl:min-h-[680px] 2xl:min-h-[750px] 3xl:min-h-[850px] max-lg:min-h-[500px] md:max-lg:min-h-[580px] max-md:min-h-[400px] overflow-hidden">
+            <div className="relative w-full h-full min-h-[16rem] md:min-h-[400px] lg:min-h-[500px] xl:min-h-[680px] overflow-hidden">
               <img
                 src={backgroundImage}
                 alt=""
@@ -121,15 +121,16 @@ const FAQ = ({ className, audience = 'creator', ...props }: FAQProps) => {
                 loading="lazy"
                 decoding="async"
                 className="absolute inset-0 w-full h-full object-cover rounded-[40px]"
+                aria-hidden="true"
               />
               <img
                 src={foregroundImage}
-                alt="Professional woman"
+                alt="Creator reading Twen pricing and campaign questions"
                 width={512}
                 height={640}
                 loading="lazy"
                 decoding="async"
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[25rem] xl:w-[28rem] 2xl:w-[32rem] 3xl:w-[38rem] max-lg:w-[55vw] max-md:w-[60vw] rounded-t-[34px] shadow-[0_16px_16px_rgba(10,16,29,0.1)] object-cover"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[min(16rem,70vw)] md:w-[60vw] lg:w-[25rem] xl:w-[28rem] 2xl:w-[32rem] rounded-t-[28px] md:rounded-t-[34px] shadow-[0_16px_16px_rgba(10,16,29,0.1)] object-cover"
               />
             </div>
           </div>
@@ -152,8 +153,8 @@ const FAQ = ({ className, audience = 'creator', ...props }: FAQProps) => {
                 ))}
               </AccordionPrimitive.Root>
 
-              <div className="flex justify-end">
-                <Button variant="invofy" size="invofy" asChild>
+              <div className="flex justify-end max-md:justify-stretch">
+                <Button variant="invofy" size="invofy" className="max-md:w-full" asChild>
                   <Link to="/contact">Ask a question</Link>
                 </Button>
               </div>

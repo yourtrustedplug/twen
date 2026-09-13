@@ -1,42 +1,56 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, Submission } from '@/types/unignored';
 import type { Json } from '@/integrations/supabase/types';
 import {
-  PLATFORMS,
-  PLATFORM_LABELS,
   NICHE_LABELS,
+  PLATFORM_LABELS,
   parseChecklist,
-  parseChecklistResults,
   parseStringArray,
   parseListText,
   type ChecklistResult,
 } from '@/types/unignored';
-import { formatMoney, formatDate, formatRate, formatViews } from '@/lib/format';
-import { useCampaignCover } from '@/lib/campaign-image';
-import { canApplyToCampaign, daysRemaining, MIN_APPLY_DAYS } from '@/lib/metrics';
+import { formatMoney, formatDate, formatRate } from '@/lib/format';
+import CampaignCover from '@/components/CampaignCover';
+import { ErrorPoster } from '@/components/ErrorPoster';
+import { PlatformMark } from '@/components/creator/PlatformMark';
+import {
+  canApplyToCampaign,
+  daysRemaining,
+  MIN_APPLY_DAYS,
+  payoutDate,
+  submitDeadline,
+} from '@/lib/metrics';
 import { signedUrl } from '@/lib/storage';
 import { isOnboardingComplete } from '@/lib/onboarding';
 import { OnboardingRequired } from '@/components/OnboardingRequired';
 import { BrandKitCard } from '@/components/BrandKitCard';
-import { Loader2, ArrowLeft, CheckSquare, Square, ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SubmitCampaignPanel, SubmissionStatus } from '@/components/creator/SubmitCampaignPanel';
+import { Loader2, ExternalLink } from 'lucide-react';
 import { kitFromCampaign } from '@/lib/brand-kit';
 import { isValidPlatformUrl, platformUrlHint, type SocialPlatform } from '@/lib/platform-links';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { isPro } from '@/lib/plan';
+import {
+  allChecksDeclared,
+  allowedSubmitPlatforms,
+  canReplaceSubmission,
+  isPlatformConnected,
+  pickSubmitPlatform,
+} from '@/lib/submit-campaign';
 
 const CreatorCampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const composing = searchParams.get('submit') === '1';
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +58,6 @@ const CreatorCampaignDetail = () => {
   const [platform, setPlatform] = useState<string>('tiktok');
   const [submitting, setSubmitting] = useState(false);
   const [checklistResults, setChecklistResults] = useState<ChecklistResult[]>([]);
-  const coverSrc = useCampaignCover(campaign?.id ?? 'x', campaign?.cover_image);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -63,8 +76,6 @@ const CreatorCampaignDetail = () => {
           ? fromChecklist.map((i) => ({ ...i, met: false }))
           : fromMust;
       setChecklistResults(items);
-      const plats = parseStringArray(camp.platforms);
-      if (plats[0]) setPlatform(plats[0]);
     }
     if (camp && user) {
       const { data: s } = await supabase
@@ -78,11 +89,30 @@ const CreatorCampaignDetail = () => {
     setLoading(false);
   }, [id, user]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!campaign) return;
+    setPlatform(pickSubmitPlatform(parseStringArray(campaign.platforms), profile));
+  }, [campaign, profile?.tiktok_connected_at, profile?.instagram_connected_at]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const setComposing = (open: boolean) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (open) next.set('submit', '1');
+        else next.delete('submit');
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const toggleCheck = (itemId: string) =>
     setChecklistResults((prev) =>
-      prev.map((r) => (r.id === itemId ? { ...r, met: !r.met } : r))
+      prev.map((r) => (r.id === itemId ? { ...r, met: !r.met } : r)),
     );
 
   const submit = async () => {
@@ -116,12 +146,18 @@ const CreatorCampaignDetail = () => {
       });
       return;
     }
-    const connected =
-      plat === 'tiktok' ? profile?.tiktok_connected_at : profile?.instagram_connected_at;
-    if (!connected) {
+    if (!isPlatformConnected(profile, plat)) {
       toast({
         title: `Connect ${plat === 'tiktok' ? 'TikTok' : 'Instagram'} first`,
         description: 'We verify the post is yours via Meta/TikTok. Connect the account in your profile.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!allChecksDeclared(checklistResults)) {
+      toast({
+        title: 'Tick the checklist',
+        description: 'Declare every requirement before submitting.',
         variant: 'destructive',
       });
       return;
@@ -140,7 +176,7 @@ const CreatorCampaignDetail = () => {
     if (error || data?.error || !data?.ok) {
       toast({
         title: 'Could not verify link',
-        description: edgeFunctionErrorMessage(error, data, 'TikTok/Meta could not confirm that post.'),
+        description: await edgeFunctionErrorMessage(error, data, 'TikTok/Meta could not confirm that post.'),
         variant: 'destructive',
       });
       return;
@@ -153,6 +189,7 @@ const CreatorCampaignDetail = () => {
       title: 'Submitted for review',
       description: `Link confirmed on your account.${viewsHint} A moderator reviews before it earns.`,
     });
+    setUrl('');
     load();
   };
 
@@ -166,14 +203,17 @@ const CreatorCampaignDetail = () => {
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <AppHeader />
-        <main className="max-w-3xl mx-auto px-5 py-24 text-center">
-          <h1 className="font-display text-3xl font-bold mb-4">Campaign not found or no longer open</h1>
-          <Button variant="invofy" size="invofy" asChild>
-            <Link to="/creator">Back to browse</Link>
-          </Button>
-        </main>
+        <ErrorPoster
+          underChrome
+          documentTitle="Campaign not found | Twen"
+          watermark="404"
+          eyebrow="Campaign"
+          title="This brief isn't open."
+          description="The campaign may have closed, or this link is wrong."
+          actions={[{ label: 'Back to browse', href: '/creator' }]}
+        />
       </div>
     );
   }
@@ -181,272 +221,243 @@ const CreatorCampaignDetail = () => {
   const remaining = Number(campaign.funded_amount) - Number(campaign.spent_amount);
   const assetUrls = parseStringArray(campaign.asset_urls as unknown);
   const campaignPlatforms = parseStringArray(campaign.platforms);
+  const acceptedPlatforms = allowedSubmitPlatforms(campaignPlatforms);
   const mustItems = parseListText(campaign.must_include);
   const avoidItems = parseListText(campaign.avoid);
   const openForApply = canApplyToCampaign(campaign.deadline);
   const brandKit = kitFromCampaign(campaign);
+  const resubmit = canReplaceSubmission(submission?.status);
+  const showForm = !submission || resubmit;
+  const onboarded = isOnboardingComplete(profile);
+  const canSubmitNow = showForm && onboarded && openForApply;
+  const showSubmitCta = canSubmitNow && !composing;
+  const onSubmitScreen = canSubmitNow && composing;
+  const instantPayout = isPro(profile);
+  const submitBy = submitDeadline(campaign.deadline);
+  const payOn = payoutDate(campaign.deadline, instantPayout);
+  const submitDaysLeft = daysRemaining(submitBy);
+
+  const statusBlock = () => {
+    if (submission && !resubmit) return <SubmissionStatus submission={submission} />;
+    if (!onboarded) return <OnboardingRequired action="submit to a campaign" />;
+    if (!openForApply) {
+      return (
+        <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-10 text-center">
+          <h2 className="font-display text-2xl font-bold mb-2">Applications closed</h2>
+          <p className="text-sm text-muted-foreground">
+            The deadline for submitting has passed. Fewer than {MIN_APPLY_DAYS} days remain on this campaign.
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const facts = [
+    {
+      label: 'Deadline for submitting',
+      value: formatDate(submitBy),
+      hint: openForApply ? `${submitDaysLeft} day${submitDaysLeft === 1 ? '' : 's'} left` : 'Closed',
+    },
+    {
+      label: 'Payout date',
+      value: formatDate(payOn),
+      hint: instantPayout ? 'When the campaign ends' : '7 days after the campaign ends',
+    },
+    { label: 'Rate', value: formatRate(campaign.rate_per_1k) },
+    { label: 'Remaining', value: formatMoney(remaining) },
+  ];
+
+  if (onSubmitScreen) {
+    return (
+      <div className="h-dvh bg-background flex flex-col overflow-hidden">
+        <AppHeader />
+        <main className="flex-1 min-h-0 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-5 md:px-8 py-6 md:py-8">
+            <SubmitCampaignPanel
+              campaignPlatforms={campaignPlatforms}
+              checklist={checklistResults}
+              onToggleCheck={toggleCheck}
+              url={url}
+              onUrlChange={setUrl}
+              platform={platform}
+              onPlatformChange={setPlatform}
+              onSubmit={submit}
+              submitting={submitting}
+              profile={profile}
+              ratePer1k={Number(campaign.rate_per_1k)}
+              isResubmit={resubmit}
+              rejectionReason={submission?.rejection_reason}
+              onDismiss={() => setComposing(false)}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-dvh bg-background flex flex-col overflow-hidden">
       <AppHeader />
-      <main className="max-w-3xl mx-auto px-5 md:px-10 py-12">
-        <Link to="/creator" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
-          <ArrowLeft className="h-4 w-4" /> Back to browse
-        </Link>
-
-        <div className="relative rounded-[34px] overflow-hidden mb-8 aspect-[16/9]">
-          <img
-            src={coverSrc}
-            alt={`${campaign.brand_name} campaign`}
-            width={768}
-            height={576}
-            decoding="async"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-5 right-5">
-            <StatusBadge status={campaign.status} />
-          </div>
-          <div className="absolute inset-x-0 bottom-0 p-8 max-md:p-6 bg-gradient-to-t from-black/75 to-transparent">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-white/80 mb-1">
-              {campaign.brand_name} · {formatDate(campaign.deadline)} · {daysRemaining(campaign.deadline)} days left
-            </p>
-            <h1 className="font-display text-4xl max-md:text-2xl font-bold text-white">{campaign.title}</h1>
-          </div>
+      <div className="relative h-36 md:h-44 shrink-0 overflow-hidden">
+        <CampaignCover
+          id={campaign.id}
+          coverImage={campaign.cover_image}
+          alt={`${campaign.brand_name} campaign`}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-4 right-4">
+          <StatusBadge status={campaign.status} />
         </div>
-
-        {(campaign.niche || campaignPlatforms.length > 0) && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {campaign.niche && (
-              <span className="text-xs font-semibold bg-[#fafafa] border border-[#f1f1f1] rounded-full px-4 py-2">
-                {NICHE_LABELS[campaign.niche] ?? campaign.niche}
-              </span>
-            )}
-            {campaignPlatforms.map((p) => (
-              <span key={p} className="text-xs font-semibold bg-[#fafafa] border border-[#f1f1f1] rounded-full px-4 py-2">
-                {PLATFORM_LABELS[p] ?? p}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4 mb-10">
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-6">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Rate</p>
-            <p className="font-display text-2xl font-bold">{formatRate(campaign.rate_per_1k)}</p>
-          </div>
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-6">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Remaining</p>
-            <p className="font-display text-2xl font-bold">{formatMoney(remaining)}</p>
-          </div>
+        <div className="absolute inset-x-0 bottom-0 px-5 md:px-8 py-4 bg-gradient-to-t from-black/80 to-transparent">
+          <p className="text-xs uppercase tracking-[1px] font-semibold text-white/80 mb-0.5">
+            {[campaign.brand_name, campaign.niche ? NICHE_LABELS[campaign.niche] ?? campaign.niche : '']
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <h1 className="font-display text-3xl max-md:text-2xl font-bold text-white">{campaign.title}</h1>
         </div>
+      </div>
 
-        <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6 mb-6">
-          {campaign.topic && (
-            <div>
-              <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Topic</p>
-              <p className="leading-relaxed whitespace-pre-wrap">{campaign.topic}</p>
-            </div>
-          )}
-          {campaign.angle && (
-            <div>
-              <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Angle</p>
-              <p className="leading-relaxed whitespace-pre-wrap">{campaign.angle}</p>
-            </div>
-          )}
-          {mustItems.length > 0 && (
-            <div>
-              <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Must include</p>
-              <ul className="flex flex-col gap-2">
-                {mustItems.map((item) => (
-                  <li key={item} className="text-sm leading-relaxed">· {item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {avoidItems.length > 0 && (
-            <div>
-              <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Avoid</p>
-              <ul className="flex flex-col gap-2">
-                {avoidItems.map((item) => (
-                  <li key={item} className="text-sm leading-relaxed">· {item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <BrandKitCard kit={brandKit} />
-
-        {assetUrls.length > 0 && (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 mb-6">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-4">Campaign materials</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {assetUrls.map((path) => (
-                <AssetThumb key={path} path={path} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {checklistResults.length > 0 && !submission && openForApply && (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 mb-6">
-            <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-4">
-              You will declare these on submit
-            </p>
-            <ul className="flex flex-col gap-3">
-              {checklistResults.map((item) => (
-                <li key={item.id} className="text-sm">{item.label}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Submission panel */}
-        {submission ? (
-          <div className="bg-white border border-[#f1f1f1] rounded-[30px] p-8">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h2 className="font-display text-2xl font-bold">Your submission</h2>
-              <StatusBadge status={submission.status} />
-            </div>
-            <a href={submission.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline break-all">
-              {submission.tiktok_url}
-            </a>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-4">
-              <span className="font-semibold text-foreground">{formatViews(submission.verified_views)} verified views</span>
-              <span>{formatMoney(submission.earnings)} earned</span>
-              {submission.posted_at && <span>Posted {formatDate(submission.posted_at)}</span>}
-              {submission.link_verified_at && <span>Link verified</span>}
-              {submission.last_verified_at && <span>Last checked {formatDate(submission.last_verified_at)}</span>}
-            </div>
-            {submission.status === 'rejected' && submission.rejection_reason && (
-              <p className="text-sm text-rose-600 mt-4">Rejected: {submission.rejection_reason}</p>
-            )}
-            {submission.status === 'submitted' && (
-              <p className="text-sm text-muted-foreground mt-4">
-                Waiting for moderator review. You&apos;ll earn once it&apos;s approved and views are verified.
-              </p>
-            )}
-            {submission.status === 'approved' && (
-              <p className="text-sm text-emerald-600 mt-4">
-                Approved — live. Earnings accrue as views are verified.
-              </p>
-            )}
-            {/* Show submitted checklist results */}
-            {parseChecklistResults(submission.checklist_results).length > 0 && (
-              <div className="mt-6">
-                <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-3">Your declared checklist</p>
-                <ul className="flex flex-col gap-2">
-                  {parseChecklistResults(submission.checklist_results).map((r) => (
-                    <li key={r.id} className="flex items-center gap-2 text-sm">
-                      {r.met ? (
-                        <CheckSquare className="h-4 w-4 text-emerald-500 shrink-0" />
-                      ) : (
-                        <Square className="h-4 w-4 text-muted-foreground shrink-0" />
-                      )}
-                      <span className={r.met ? '' : 'text-muted-foreground'}>{r.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : !isOnboardingComplete(profile) ? (
-          <OnboardingRequired action="submit to a campaign" />
-        ) : !openForApply ? (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 text-center">
-            <h2 className="font-display text-2xl font-bold mb-2">Applications closed</h2>
-            <p className="text-sm text-muted-foreground">
-              Fewer than {MIN_APPLY_DAYS} days remain on this campaign. You can no longer submit.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-5">
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-1">Post it, then drop the link</h2>
-              <p className="text-sm text-muted-foreground">
-                We check the link with TikTok or Meta (views, publish date, and that it&apos;s on your
-                connected account) before a moderator reviews it.
-              </p>
-            </div>
-
-            {/* Platform picker */}
-            <div className="flex flex-col gap-2">
-              <Label>Platform</Label>
-              <div className="flex flex-wrap gap-2">
-                {(campaignPlatforms.length ? campaignPlatforms : [...PLATFORMS]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPlatform(p)}
-                    className={cn(
-                      'text-sm font-semibold px-4 py-2 rounded-full border transition-colors',
-                      platform === p
-                        ? 'bg-primary text-primary-foreground border-transparent'
-                        : 'border-[#e0e0e0] text-muted-foreground hover:border-foreground hover:text-foreground'
-                    )}
-                  >
-                    {PLATFORM_LABELS[p] ?? p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Video URL */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="video-url">Video link</Label>
-              <Input
-                id="video-url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder={platformUrlHint(platform as SocialPlatform)}
+      <main className="flex-1 min-h-0 overflow-y-auto">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 py-4 md:py-5 flex flex-col gap-4">
+          <div className="grid md:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] gap-4 items-start">
+            <div className="flex flex-col gap-4">
+              <BrandKitCard
+                kit={brandKit}
+                title="About the brand"
+                className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] p-5 flex flex-col gap-4"
               />
-              <p className="text-xs text-muted-foreground">
-                Must be a video you posted on your connected {platform === 'instagram' ? 'Instagram' : 'TikTok'}{' '}
-                account during this campaign.
-              </p>
+              <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] p-5 flex flex-col gap-4">
+                {campaign.topic && (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-1">
+                      Topic
+                    </p>
+                    <p className="leading-relaxed whitespace-pre-wrap">{campaign.topic}</p>
+                  </div>
+                )}
+                {campaign.angle && (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-1">
+                      Angle
+                    </p>
+                    <p className="leading-relaxed whitespace-pre-wrap">{campaign.angle}</p>
+                  </div>
+                )}
+                {(mustItems.length > 0 || avoidItems.length > 0) && (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {mustItems.length > 0 && (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-1">
+                          Must include
+                        </p>
+                        <ul className="flex flex-col gap-1.5">
+                          {mustItems.map((item) => (
+                            <li key={item} className="text-sm leading-relaxed">
+                              · {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {avoidItems.length > 0 && (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-1">
+                          Avoid
+                        </p>
+                        <ul className="flex flex-col gap-1.5">
+                          {avoidItems.map((item) => (
+                            <li key={item} className="text-sm leading-relaxed">
+                              · {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Self-declared checklist */}
-            {checklistResults.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <Label>Declare what you included</Label>
-                {checklistResults.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleCheck(item.id)}
-                    className="flex items-center gap-3 text-sm text-left"
-                  >
-                    {item.met ? (
-                      <CheckSquare className="h-5 w-5 text-emerald-500 shrink-0" />
-                    ) : (
-                      <Square className="h-5 w-5 text-muted-foreground shrink-0" />
-                    )}
-                    <span>{item.label}</span>
-                  </button>
-                ))}
+            <div className="flex flex-col gap-4">
+              <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] p-4 flex flex-col gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">
+                    Platforms accepted
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {acceptedPlatforms.map((p) => (
+                      <span
+                        key={p}
+                        className="inline-flex items-center gap-2 bg-white border border-[#f1f1f1] rounded-full pl-2 pr-3 py-1.5"
+                      >
+                        <PlatformMark platform={p} className="w-5 h-5" />
+                        <span className="text-sm font-semibold">{PLATFORM_LABELS[p] ?? p}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="divide-y divide-[#f1f1f1] rounded-[16px] bg-white border border-[#f1f1f1]">
+                  {facts.map((fact) => (
+                    <div key={fact.label} className="flex items-start justify-between gap-3 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground">
+                          {fact.label}
+                        </p>
+                        {fact.hint && <p className="text-xs text-muted-foreground mt-0.5">{fact.hint}</p>}
+                      </div>
+                      <p className="font-display text-base font-bold text-right leading-tight shrink-0">
+                        {fact.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
 
-            <div>
-              <Button variant="invofy" size="invofy" onClick={submit} disabled={submitting || !url.trim()}>
-                {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Submit for review
-              </Button>
+              {assetUrls.length > 0 && (
+                <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] p-4">
+                  <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-3">
+                    Campaign materials
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {assetUrls.map((path) => (
+                      <AssetThumb key={path} path={path} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          {statusBlock()}
+        </div>
       </main>
+
+      {showSubmitCta && (
+        <div className="shrink-0 border-t border-[#f1f1f1] bg-background px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="max-w-6xl mx-auto">
+            <Button
+              type="button"
+              variant="invofy"
+              size="invofy"
+              className="w-full"
+              onClick={() => setComposing(true)}
+            >
+              {resubmit ? 'Submit a new video' : 'Submit'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-/** Renders a signed URL for a storage asset or falls back to filename */
 const AssetThumb = ({ path }: { path: string }) => {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
-    signedUrl(path).then((url) => {
-      if (url) setSrc(url);
+    signedUrl(path).then((next) => {
+      if (next) setSrc(next);
     });
   }, [path]);
 

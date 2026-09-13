@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { audienceHref } from '@/lib/hosts';
+import { PageBreadcrumbs } from '@/components/PageBreadcrumbs';
+import { payoutCountryCount, payoutMethodCount } from '@/lib/payout-methods';
 import aboutBg from '@/assets/about/about-bg.jpg';
 import aboutImage01 from '@/assets/about/about-image-01.jpg';
 import aboutImage02 from '@/assets/about/about-image-02.jpg';
@@ -11,8 +13,8 @@ import aboutImage04 from '@/assets/about/about-image-04.jpg';
 
 const stats = [
   { value: '180K+', label: 'Videos Posted' },
-  { value: '6', label: 'Markets Across East Africa' },
-  { value: '2', label: 'Payout Rails: MoMo & Airtel' },
+  { value: String(payoutCountryCount()), label: 'Markets Across Africa' },
+  { value: String(payoutMethodCount()), label: 'Mobile Money Rails' },
 ];
 
 const AboutHeader = () => {
@@ -72,6 +74,7 @@ const AboutHeader = () => {
         width={1920}
         height={1080}
         className="absolute inset-0 w-full h-full object-cover"
+        aria-hidden="true"
       />
       
       {/* Main Content Container */}
@@ -157,6 +160,7 @@ const AboutHeader = () => {
             
             {/* Centered Content */}
             <div className="relative z-10 flex flex-col items-center text-center max-w-[42rem] mx-auto">
+              <PageBreadcrumbs className="mb-6 max-[479px]:mb-4" />
               {/* Label */}
               <span className="text-foreground text-sm font-semibold uppercase tracking-[0.2em] mb-6 max-[479px]:text-xs max-[479px]:mb-4">
                 About Us

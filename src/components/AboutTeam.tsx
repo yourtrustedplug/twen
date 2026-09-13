@@ -46,7 +46,7 @@ const TeamMemberCard = ({ name, role, image, bgColor }: TeamMemberCardProps) => 
     <div className="aspect-square overflow-hidden rounded-b-[20px]">
       <img 
         src={image} 
-        alt={name}
+        alt={`${name}, ${role}`}
         width={300}
         height={300}
         loading="lazy"
@@ -77,7 +77,7 @@ const AboutTeam = () => {
             The People Behind the Platform
           </h2>
           <p className="text-muted-foreground text-lg leading-[1.4] font-normal">
-            A small team of engineers, operators, and payments people building the payout rails that make same-day mobile money possible across East Africa.
+            A small team of engineers, operators, and payments people building the payout rails that make same-day mobile money possible across Africa.
           </p>
         </div>
 

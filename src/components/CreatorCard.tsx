@@ -4,33 +4,73 @@ import { PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { formatPercent } from '@/lib/metrics';
-import { campaignImage } from '@/lib/campaign-image';
+import { cartoonAvatar } from '@/lib/cartoon-avatar';
 import SignedImage from '@/components/SignedImage';
+import { cn } from '@/lib/utils';
+
+export type CreatorCardModel = Pick<
+  ProfileRow,
+  | 'id'
+  | 'avatar_url'
+  | 'full_name'
+  | 'tiktok_handle'
+  | 'instagram_handle'
+  | 'city'
+  | 'country'
+  | 'location'
+  | 'rate_per_video'
+  | 'avg_views'
+  | 'engagement_rate'
+  | 'platforms'
+>;
+
+/** Same photo brands see: uploaded avatar, else a cartoon assigned from the account id. */
+export const CreatorPhoto = ({
+  id,
+  avatarUrl,
+  alt,
+  className,
+}: {
+  id: string;
+  avatarUrl: string | null | undefined;
+  alt: string;
+  className?: string;
+}) => {
+  if (avatarUrl) {
+    return <SignedImage path={avatarUrl} alt={alt} className={className} />;
+  }
+  return (
+    <img
+      src={cartoonAvatar(id)}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={cn('block', className)}
+    />
+  );
+};
+
+const cardClass =
+  'group bg-white border border-[#f1f1f1] rounded-[30px] overflow-hidden flex flex-col hover:border-[#dcdcdc] transition-colors';
 
 /** Image-led creator tile for the brand-side marketplace. */
-const CreatorCard = ({ creator }: { creator: ProfileRow }) => {
+const CreatorCard = ({
+  creator,
+  preview = false,
+}: {
+  creator: CreatorCardModel;
+  preview?: boolean;
+}) => {
   const platforms = parseStringArray(creator.platforms);
-  return (
-    <Link
-      to={`/brand/creators/${creator.id}`}
-      className="group bg-white border border-[#f1f1f1] rounded-[30px] overflow-hidden flex flex-col hover:border-[#dcdcdc] transition-colors"
-    >
+  const body = (
+    <>
       <div className="relative aspect-[4/5] overflow-hidden">
-        {creator.avatar_url ? (
-          <SignedImage
-            path={creator.avatar_url}
-            alt={creator.full_name ?? 'Creator'}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <img
-            src={campaignImage(creator.id)}
-            alt={creator.full_name ?? 'Creator'}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-        )}
+        <CreatorPhoto
+          id={creator.id}
+          avatarUrl={creator.avatar_url}
+          alt={creator.full_name ?? 'Creator'}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+        />
         <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/75 to-transparent">
           <h3 className="font-display text-xl font-bold text-white leading-snug">
             {creator.full_name ?? 'Creator'}
@@ -66,6 +106,16 @@ const CreatorCard = ({ creator }: { creator: ProfileRow }) => {
           ))}
         </div>
       )}
+    </>
+  );
+
+  if (preview) {
+    return <div className={cn(cardClass, 'pointer-events-none hover:border-[#f1f1f1]')}>{body}</div>;
+  }
+
+  return (
+    <Link to={`/brand/creators/${creator.id}`} className={cardClass}>
+      {body}
     </Link>
   );
 };

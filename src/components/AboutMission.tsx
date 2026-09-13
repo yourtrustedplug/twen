@@ -1,3 +1,5 @@
+import { payoutRailsSummary } from '@/lib/payout-methods';
+
 const missionBlocks = [
   {
     title: 'Pay for What Happens',
@@ -9,7 +11,7 @@ const missionBlocks = [
   },
   {
     title: 'Built for This Region',
-    description: 'Mobile money payouts, local creators, local languages, local formats. Payout is MTN MoMo or Airtel Money — not PayPal, not crypto.',
+    description: `Mobile money payouts, local creators, local languages, local formats. Payout is ${payoutRailsSummary()} — not PayPal, not crypto.`,
   },
 ];
 
@@ -32,12 +34,12 @@ const AboutMission = () => {
           {missionBlocks.map((block, index) => (
             <div
               key={index}
-              className="bg-[#FAFAFA] border border-[#f1f1f1] rounded-[30px] p-8"
+              className="bg-[#FAFAFA] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-6 md:p-8"
             >
-              <h3 className="text-[2rem] max-[479px]:text-2xl font-bold mb-8">
+              <h3 className="text-[1.75rem] md:text-[2rem] max-[479px]:text-2xl font-bold mb-5 md:mb-8">
                 ✦ {block.title}
               </h3>
-              <div className="border-b border-dashed border-[#e9e9e9] mb-8" />
+              <div className="border-b border-dashed border-[#e9e9e9] mb-5 md:mb-8" />
               <p className="text-lg leading-[1.5] text-muted-foreground">
                 {block.description}
               </p>

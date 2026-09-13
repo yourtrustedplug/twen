@@ -38,6 +38,8 @@ export type Database = {
           cover_image: string | null
           nardopay_link_code: string | null
           nardopay_payment_ref: string | null
+          nardopay_checkout_url: string | null
+          nardopay_checkout_amount: number | null
           rate_per_1k: number
           socials: Json
           brand_kit: Json
@@ -71,6 +73,8 @@ export type Database = {
           cover_image?: string | null
           nardopay_link_code?: string | null
           nardopay_payment_ref?: string | null
+          nardopay_checkout_url?: string | null
+          nardopay_checkout_amount?: number | null
           rate_per_1k?: number
           socials?: Json
           brand_kit?: Json
@@ -104,6 +108,8 @@ export type Database = {
           cover_image?: string | null
           nardopay_link_code?: string | null
           nardopay_payment_ref?: string | null
+          nardopay_checkout_url?: string | null
+          nardopay_checkout_amount?: number | null
           rate_per_1k?: number
           socials?: Json
           brand_kit?: Json
@@ -149,6 +155,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          emailed_at: string | null
+          full_name: string
+          id: string
+          message: string
+          phone: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          emailed_at?: string | null
+          full_name: string
+          id?: string
+          message: string
+          phone?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          emailed_at?: string | null
+          full_name?: string
+          id?: string
+          message?: string
+          phone?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           brand_id: string
@@ -158,7 +197,9 @@ export type Database = {
           creator_id: string
           creator_name: string
           id: string
+          kind: string
           last_message_at: string
+          twen_stage: string | null
         }
         Insert: {
           brand_id: string
@@ -168,7 +209,9 @@ export type Database = {
           creator_id: string
           creator_name?: string
           id?: string
+          kind?: string
           last_message_at?: string
+          twen_stage?: string | null
         }
         Update: {
           brand_id?: string
@@ -178,7 +221,9 @@ export type Database = {
           creator_id?: string
           creator_name?: string
           id?: string
+          kind?: string
           last_message_at?: string
+          twen_stage?: string | null
         }
         Relationships: [
           {
@@ -320,6 +365,7 @@ export type Database = {
           body: string
           conversation_id: string
           created_at: string
+          from_twen: boolean
           id: string
           sender_id: string
         }
@@ -327,6 +373,7 @@ export type Database = {
           body: string
           conversation_id: string
           created_at?: string
+          from_twen?: boolean
           id?: string
           sender_id: string
         }
@@ -334,6 +381,7 @@ export type Database = {
           body?: string
           conversation_id?: string
           created_at?: string
+          from_twen?: boolean
           id?: string
           sender_id?: string
         }
@@ -350,6 +398,7 @@ export type Database = {
       payouts: {
         Row: {
           amount: number
+          country: string
           created_at: string
           creator_id: string
           id: string
@@ -360,6 +409,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          country?: string
           created_at?: string
           creator_id: string
           id?: string
@@ -370,6 +420,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          country?: string
           created_at?: string
           creator_id?: string
           id?: string
@@ -404,6 +455,7 @@ export type Database = {
           id_verification_status: string
           instagram_connected_at: string | null
           instagram_handle: string | null
+          instagram_avatar_url: string | null
           last_name: string | null
           location: string
           logo_dark_url: string | null
@@ -411,16 +463,23 @@ export type Database = {
           rate_overridden: boolean
           rate_suggested: number
           tiktok_connected_at: string | null
+          tiktok_avatar_url: string | null
           payout_number: string | null
           payout_provider: string | null
           phone: string | null
           platforms: Json
           plan: string
+          plan_payment_ref: string | null
+          plan_renews_at: string | null
+          nardopay_checkout_url: string | null
+          nardopay_checkout_amount: number | null
+          nardopay_link_code: string | null
           rate_per_video: number
           role: string
           tiktok_handle: string | null
           updated_at: string
           website: string
+          book_slug: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -445,6 +504,7 @@ export type Database = {
           id_verification_status?: string
           instagram_connected_at?: string | null
           instagram_handle?: string | null
+          instagram_avatar_url?: string | null
           last_name?: string | null
           location?: string
           logo_dark_url?: string | null
@@ -452,16 +512,23 @@ export type Database = {
           rate_overridden?: boolean
           rate_suggested?: number
           tiktok_connected_at?: string | null
+          tiktok_avatar_url?: string | null
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
           plan?: string
+          plan_payment_ref?: string | null
+          plan_renews_at?: string | null
+          nardopay_checkout_url?: string | null
+          nardopay_checkout_amount?: number | null
+          nardopay_link_code?: string | null
           rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
           website?: string
+          book_slug?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -486,6 +553,7 @@ export type Database = {
           id_verification_status?: string
           instagram_connected_at?: string | null
           instagram_handle?: string | null
+          instagram_avatar_url?: string | null
           last_name?: string | null
           location?: string
           logo_dark_url?: string | null
@@ -493,16 +561,23 @@ export type Database = {
           rate_overridden?: boolean
           rate_suggested?: number
           tiktok_connected_at?: string | null
+          tiktok_avatar_url?: string | null
           payout_number?: string | null
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
           plan?: string
+          plan_payment_ref?: string | null
+          plan_renews_at?: string | null
+          nardopay_checkout_url?: string | null
+          nardopay_checkout_amount?: number | null
+          nardopay_link_code?: string | null
           rate_per_video?: number
           role?: string
           tiktok_handle?: string | null
           updated_at?: string
           website?: string
+          book_slug?: string | null
         }
         Relationships: []
       }
@@ -627,6 +702,60 @@ export type Database = {
           },
         ]
       }
+      watchlist: {
+        Row: {
+          created_at: string
+          kind: string
+          target_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          target_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          target_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawal_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          country: string
+          created_at: string
+          creator_id: string
+          id: string
+          method: string
+          updated_at: string
+        }
+        Insert: {
+          account_name?: string
+          account_number: string
+          country: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          method: string
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          country?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          method?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -650,6 +779,12 @@ export type Database = {
         Returns: undefined
       }
       seed_demo_data: { Args: { p_user_id: string }; Returns: undefined }
+      ensure_twen_welcome: { Args: { p_user_id?: string }; Returns: string }
+      campaign_brand_logos: {
+        Args: { p_ids: string[] }
+        Returns: { campaign_id: string; logo_path: string | null }[]
+      }
+      book_me_profile: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

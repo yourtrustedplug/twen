@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import { MetricTile } from '@/components/MetricTile';
+import { CampaignDetailSheet } from '@/components/brand/CampaignDetailSheet';
 import type { Campaign, Submission } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPercent, daysRemaining } from '@/lib/metrics';
-import { useCampaignCover } from '@/lib/campaign-image';
+import {
+  analyticsSearchWithoutCampaign,
+  campaignIdFromSearch,
+} from '@/lib/brand-analytics';
+import CampaignCover from '@/components/CampaignCover';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 interface Row {
@@ -21,43 +28,58 @@ interface Row {
   spent: number;
 }
 
-const CampaignThumb = ({ campaign }: { campaign: Campaign }) => {
-  const src = useCampaignCover(campaign.id, campaign.cover_image);
-  return (
-    <img
-      src={src}
-      alt={campaign.title}
-      loading="lazy"
-      className="w-full md:w-56 aspect-[16/10] object-cover rounded-[22px]"
-    />
-  );
-};
-
 const BrandAnalytics = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const selectedId = campaignIdFromSearch(searchParams);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from('campaigns').select('*').eq('brand_id', user.id);
+    const cs = (data as Campaign[]) ?? [];
+    setCampaigns(cs);
+    if (cs.length) {
+      const { data: s } = await supabase
+        .from('submissions')
+        .select('*')
+        .in('campaign_id', cs.map((c) => c.id));
+      setSubmissions((s as Submission[]) ?? []);
+    } else {
+      setSubmissions([]);
+    }
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from('campaigns')
-      .select('*')
-      .eq('brand_id', user.id)
-      .then(async ({ data }) => {
-        const cs = (data as Campaign[]) ?? [];
-        setCampaigns(cs);
-        if (cs.length) {
-          const { data: s } = await supabase
-            .from('submissions')
-            .select('*')
-            .in('campaign_id', cs.map((c) => c.id));
-          setSubmissions((s as Submission[]) ?? []);
-        }
-        setLoading(false);
-      });
-  }, [user]);
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get('funded') !== 'pending') return;
+    toast({
+      title: 'Payment received — confirming escrow',
+      description: 'If the campaign is still draft, refresh in a few seconds while NardoPay webhook settles.',
+    });
+    const next = new URLSearchParams(searchParams);
+    next.delete('funded');
+    setSearchParams(next, { replace: true });
+    const t = window.setTimeout(() => load(), 2500);
+    return () => window.clearTimeout(t);
+  }, [searchParams, setSearchParams, toast, load]);
+
+  const openCampaign = (id: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('campaign', id);
+    setSearchParams(next);
+  };
+
+  const closeCampaign = () => {
+    setSearchParams(analyticsSearchWithoutCampaign(searchParams), { replace: true });
+  };
 
   const rows = useMemo<Row[]>(
     () =>
@@ -80,7 +102,7 @@ const BrandAnalytics = () => {
           };
         })
         .sort((a, b) => b.views - a.views),
-    [campaigns, submissions]
+    [campaigns, submissions],
   );
 
   const totals = useMemo(() => {
@@ -99,11 +121,13 @@ const BrandAnalytics = () => {
     };
   }, [rows, submissions]);
 
+  const selectedCampaign = rows.find((r) => r.campaign.id === selectedId)?.campaign ?? null;
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
-        <h1 className="font-display text-4xl font-bold mb-2">Campaign analytics</h1>
+      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-8 md:py-12">
+        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Campaign analytics</h1>
         <p className="text-muted-foreground mb-10">Views, likes, comments, and engagement across your campaigns.</p>
 
         {loading ? (
@@ -128,18 +152,30 @@ const BrandAnalytics = () => {
             <div className="flex flex-col gap-4">
               {rows.map((r) => {
                 const share = totals.views ? (r.views / totals.views) * 100 : 0;
+                const selected = r.campaign.id === selectedId;
                 return (
-                  <Link
+                  <button
                     key={r.campaign.id}
-                    to={`/brand/campaigns/${r.campaign.id}`}
-                    className="bg-white border border-[#f1f1f1] rounded-[30px] p-5 flex flex-col md:flex-row gap-6 hover:border-[#dcdcdc] transition-colors"
+                    type="button"
+                    onClick={() => openCampaign(r.campaign.id)}
+                    className={cn(
+                      'bg-white border rounded-[30px] p-5 flex flex-col md:flex-row gap-6 text-left transition-colors',
+                      selected ? 'border-[#cfcfcf]' : 'border-[#f1f1f1] hover:border-[#dcdcdc]',
+                    )}
                   >
-                    <CampaignThumb campaign={r.campaign} />
+                    <CampaignCover
+                      id={r.campaign.id}
+                      coverImage={r.campaign.cover_image}
+                      alt={r.campaign.title}
+                      className="w-full md:w-56 aspect-[16/10] object-cover rounded-[22px]"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-4 mb-4">
                         <h2 className="font-display text-xl font-bold truncate">{r.campaign.title}</h2>
                         <span className="text-sm text-muted-foreground shrink-0">
-                          {r.campaign.status === 'open' ? `${daysRemaining(r.campaign.deadline)} days left` : r.campaign.status}
+                          {r.campaign.status === 'open'
+                            ? `${daysRemaining(r.campaign.deadline)} days left`
+                            : r.campaign.status}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -155,13 +191,23 @@ const BrandAnalytics = () => {
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">{share.toFixed(0)}% of all your views</p>
                     </div>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
           </>
         )}
       </main>
+
+      <CampaignDetailSheet
+        campaignId={selectedId}
+        seed={selectedCampaign}
+        open={Boolean(selectedId)}
+        onOpenChange={(next) => {
+          if (!next) closeCampaign();
+        }}
+        onUpdated={load}
+      />
     </div>
   );
 };

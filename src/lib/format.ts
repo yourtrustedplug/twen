@@ -1,3 +1,5 @@
+import { parseCampaignDay } from '@/lib/metrics';
+
 export const formatMoney = (amount: number | string, currency = 'USD') => {
   const value = typeof amount === 'string' ? Number(amount) : amount;
   return new Intl.NumberFormat('en-US', {
@@ -22,6 +24,18 @@ export const formatDate = (date: string | Date | null | undefined) => {
   const d = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+/** Campaign due date as "23 September", with year if it is not this year. */
+export const formatDueBy = (date: string | Date | null | undefined) => {
+  const parsed = parseCampaignDay(date);
+  if (!parsed) return '—';
+  const sameYear = parsed.getFullYear() === new Date().getFullYear();
+  return parsed.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  });
 };
 
 export const formatRate = (rate: number | string) => {

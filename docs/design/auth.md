@@ -33,7 +33,9 @@ Allowlist all app origins in Privy. Enable **HttpOnly cookies** with app domain
 Edge CORS allows sibling subdomains of `PUBLIC_APP_URL`.
 
 Get Started / Sign Up elsewhere also opens the Privy modal (`useStartAuth`).
-`/signin` is only a fallback for protected routes (opens the same modal).
+`/signin` is splash + Privy on `creator.twen.app` / `brand.twen.app` / localhost.
+Apex `twen.app/signin` redirects to `/`. Protected routes on the marketing host
+send signed-out people to `/` (role pick), not a separate auth page.
 `/signup` redirects to `/`.
 
 ## Files
@@ -46,6 +48,7 @@ Get Started / Sign Up elsewhere also opens the Privy modal (`useStartAuth`).
 | `src/components/base/social-auth-buttons.tsx` | Optional Google + email buttons (not the home path) |
 | `src/contexts/AuthContext.tsx` | Sync Privy → Supabase, profile, signOut |
 | `supabase/functions/privy-exchange` | Verify Privy token → Supabase session |
+| `supabase/functions/delete-account` | Signed-in user deletes auth user + storage; best-effort Privy user |
 | `src/lib/auth-routes.ts` | `DEFAULT_AUTHED_ROUTE` / `SIGNED_OUT_ROUTE` |
 
 ## Env
@@ -66,3 +69,8 @@ during `privy-exchange`. Existing accounts keep the role they already have.
 
 Privy is a popup on that pick — there is no signup form. Profile extras
 (name, TikTok, company, payout) live on the in-app profile screens after login.
+
+Account deletion lives on creator and brand profile (`DeleteAccountCard`).
+The `delete-account` edge function removes storage, the Supabase auth user
+(related rows cascade), and the Privy user when `user_metadata.privy_did` is set.
+The same email can sign up again as a new account.

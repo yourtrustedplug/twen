@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
+import { PageBreadcrumbs } from '@/components/PageBreadcrumbs';
 
 const Privacy = () => (
   <div className="min-h-screen bg-background">
     <Navbar />
     <main className="mx-auto max-w-3xl px-6 pt-32 pb-16 prose prose-neutral">
+      <PageBreadcrumbs align="start" className="mb-8 not-prose" />
       <h1>Privacy Policy</h1>
       <p className="lead text-muted-foreground">Last updated: September 7, 2026</p>
       <p>
@@ -33,7 +35,7 @@ const Privacy = () => (
       <h2>Retention &amp; rights</h2>
       <p>
         We retain account and transaction records as long as your account is active and as required
-        for legal/accounting reasons. Contact{' '}
+        for legal/accounting reasons. You can delete your account from My profile. Contact{' '}
         <a href="mailto:hello@twen.app">hello@twen.app</a> to request access, correction,
         or deletion where applicable.
       </p>

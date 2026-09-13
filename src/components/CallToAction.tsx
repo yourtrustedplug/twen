@@ -13,12 +13,12 @@ import { Audience, audienceCopy, getRememberedAudience } from '@/lib/audience';
 import { useStartAuth } from '@/hooks/use-start-auth';
 
 const ctaImages = [
-  { src: ctaImage01, alt: 'Professional man', bgColor: '#d4c4e8', endX: '-30vw', endY: '-28vh', endScale: 0.8 },
-  { src: ctaImage02, alt: 'Professional woman', bgColor: '#f5c5d5', endX: '35vw', endY: '20vh', endScale: 1.1 },
-  { src: ctaImage03, alt: 'Woman with phone', bgColor: '#c4e8e4', endX: '30vw', endY: '-30vh', endScale: 0.9 },
-  { src: ctaImage04, alt: 'Smiling woman', bgColor: '#c4e8f5', endX: '-30vw', endY: '30vh', endScale: 0.95 },
-  { src: ctaImage05, alt: 'Woman in yellow sweater', bgColor: '#c4d4f5', endX: '0vw', endY: '-35vh', endScale: 1 },
-  { src: ctaImage06, alt: 'Man smiling', bgColor: '#f5e8c4', endX: '0vw', endY: '35vh', endScale: 0.75 },
+  { src: ctaImage01, alt: 'Creator reviewing a funded Twen campaign on a laptop', bgColor: '#d4c4e8', endX: '-30vw', endY: '-28vh', endScale: 0.8 },
+  { src: ctaImage02, alt: 'Creator smiling after earning on Twen', bgColor: '#f5c5d5', endX: '35vw', endY: '20vh', endScale: 1.1 },
+  { src: ctaImage03, alt: 'Creator checking Twen campaign views on a phone', bgColor: '#c4e8e4', endX: '30vw', endY: '-30vh', endScale: 0.9 },
+  { src: ctaImage04, alt: 'Brand marketer planning a Twen distribution campaign', bgColor: '#c4e8f5', endX: '-30vw', endY: '30vh', endScale: 0.95 },
+  { src: ctaImage05, alt: 'East African creator filming a Twen brand video', bgColor: '#c4d4f5', endX: '0vw', endY: '-35vh', endScale: 1 },
+  { src: ctaImage06, alt: 'Creator celebrating a Twen payout', bgColor: '#f5e8c4', endX: '0vw', endY: '35vh', endScale: 0.75 },
 ];
 
 const CallToAction = ({ audience }: { audience?: Audience }) => {
@@ -74,8 +74,8 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
   ];
 
   return (
-    <section ref={containerRef} className="relative h-[200vh] bg-background">
-      <div className="sticky top-0 h-screen overflow-hidden">
+    <section ref={containerRef} className="relative bg-background md:h-[200vh]">
+      <div className="relative md:sticky md:top-0 min-h-[32rem] md:h-screen overflow-hidden py-16 md:py-0">
         <img
           src={ctaBg}
           alt=""
@@ -84,8 +84,30 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
           loading="lazy"
           decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-30"
+          aria-hidden="true"
         />
-        <div className="relative w-full h-full flex items-center justify-center">
+
+        <div className="relative w-full h-full min-h-[32rem] md:min-h-0 flex flex-col md:flex-row items-center justify-center">
+          <div className="md:hidden flex items-center justify-center gap-3 mb-8 px-5">
+            {ctaImages.slice(0, 3).map((image) => (
+              <div
+                key={image.alt}
+                style={{ backgroundColor: image.bgColor }}
+                className="w-[5.5rem] aspect-square rounded-[18px] overflow-hidden"
+              >
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  width={120}
+                  height={120}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+            ))}
+          </div>
+
           {ctaImages.map((image, index) => (
             <motion.div
               key={index}
@@ -95,7 +117,7 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
                 scale: imageTransforms[index].scale,
                 backgroundColor: image.bgColor,
               }}
-              className="absolute w-[120px] md:w-[140px] lg:w-[220px] xl:w-[250px] 2xl:w-[280px] aspect-square rounded-[20px] md:rounded-[24px] lg:rounded-[30px] overflow-hidden"
+              className="absolute hidden md:block w-[140px] lg:w-[220px] xl:w-[250px] 2xl:w-[280px] aspect-square rounded-[24px] lg:rounded-[30px] overflow-hidden"
             >
               <img
                 src={image.src}
@@ -109,15 +131,27 @@ const CallToAction = ({ audience }: { audience?: Audience }) => {
             </motion.div>
           ))}
 
+          <div className="relative z-10 flex md:hidden flex-col items-center text-center px-5 max-w-[40rem]">
+            <span className="text-xs tracking-[1px] uppercase font-semibold mb-4">
+              {copy.ctaEyebrow}
+            </span>
+            <h2 className="text-[clamp(1.75rem,7vw,2.25rem)] leading-[1.15] font-bold font-display mb-6">
+              {copy.ctaHeadline}
+            </h2>
+            <Button variant="invofy" size="invofy" onClick={() => startAuth(role)}>
+              {copy.primaryCta}
+            </Button>
+          </div>
+
           <motion.div
             style={{ opacity: contentOpacity }}
-            className="relative z-10 flex flex-col items-center text-center px-5 max-w-[40rem]"
+            className="relative z-10 hidden md:flex flex-col items-center text-center px-5 max-w-[40rem]"
           >
             <span className="text-xs tracking-[1px] uppercase font-semibold mb-4">
               {copy.ctaEyebrow}
             </span>
 
-            <h2 className="text-[2rem] md:text-[3rem] lg:text-[4rem] leading-[1.2] font-bold font-display mb-6">
+            <h2 className="text-[3rem] lg:text-[4rem] leading-[1.2] font-bold font-display mb-6">
               {copy.ctaHeadline}
             </h2>
 

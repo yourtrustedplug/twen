@@ -64,9 +64,9 @@ export const engagementVerdict = (rate: number): Verdict => {
   };
 };
 
-export const daysRemaining = (deadline: string | null) => {
+export const daysRemaining = (deadline: string | Date | null | undefined) => {
   if (!deadline) return 0;
-  const ms = new Date(deadline).getTime() - Date.now();
+  const ms = (deadline instanceof Date ? deadline : new Date(deadline)).getTime() - Date.now();
   return Math.max(0, Math.ceil(ms / 86_400_000));
 };
 
@@ -74,6 +74,34 @@ export const MIN_CAMPAIGN_DAYS = 15;
 
 /** Creators cannot apply when fewer than this many days remain. */
 export const MIN_APPLY_DAYS = 5;
+
+/** Standard wait after a campaign ends before earnings can be withdrawn. */
+export const PAYOUT_HOLD_DAYS = 7;
+
+/** Parse a campaign date column (yyyy-mm-dd) without timezone off-by-one. */
+export const parseCampaignDay = (value: string | Date | null | undefined): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const day = String(value).slice(0, 10);
+  const parsed = new Date(`${day}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+export const shiftCampaignDay = (value: string | null | undefined, days: number): Date | null => {
+  const parsed = parseCampaignDay(value);
+  if (!parsed) return null;
+  const next = new Date(parsed);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+/** Last calendar day a creator can still submit. */
+export const submitDeadline = (campaignDeadline: string | null | undefined) =>
+  shiftCampaignDay(campaignDeadline, -MIN_APPLY_DAYS);
+
+/** When earnings from this campaign can be withdrawn. Pro skips the hold. */
+export const payoutDate = (campaignDeadline: string | null | undefined, instant: boolean) =>
+  shiftCampaignDay(campaignDeadline, instant ? 0 : PAYOUT_HOLD_DAYS);
 
 /** Earliest allowed deadline (yyyy-mm-dd) for a new campaign. */
 export const minDeadlineInput = () =>

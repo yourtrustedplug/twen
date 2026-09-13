@@ -9,9 +9,12 @@ import { componentTagger } from "lovable-tagger";
  */
 function clientEnv(mode: string) {
   const fileEnv = loadEnv(mode, process.cwd(), "");
+  // `npm run dev` is mode=development and does not load .env.production.
+  // That file is committed with publishable client keys so a fresh clone still boots.
+  const prodFile = mode === "production" ? {} : loadEnv("production", process.cwd(), "");
   const get = (...keys: string[]) => {
     for (const key of keys) {
-      const value = (process.env[key] ?? fileEnv[key] ?? "").trim();
+      const value = (process.env[key] ?? fileEnv[key] ?? prodFile[key] ?? "").trim();
       if (value) return value;
     }
     return "";

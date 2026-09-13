@@ -20,12 +20,12 @@ const AudienceGate = () => {
     <main className="h-dvh overflow-hidden bg-background">
       <Navbar compact />
 
-      <div className="h-full flex flex-col px-5 md:px-10 pt-[5.75rem] pb-4 max-xs:pt-[5.25rem] max-xs:pb-3">
+      <div className="h-full flex flex-col px-5 md:px-10 pt-[max(5.25rem,calc(env(safe-area-inset-top)+3.75rem))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <h1 className="text-center text-[clamp(1.75rem,5vw,3rem)] leading-[1.15] font-bold font-display mb-4 max-xs:mb-3 shrink-0">
           You are a…
         </h1>
 
-        <div className="grid grid-cols-2 max-md:grid-cols-1 max-md:grid-rows-2 gap-5 max-md:gap-3 max-w-[80rem] w-full mx-auto flex-1 min-h-0">
+        <div className="grid grid-cols-2 max-md:grid-cols-1 max-md:grid-rows-2 gap-3 md:gap-5 max-w-[80rem] w-full mx-auto flex-1 min-h-0">
           {options.map((option, index) => (
             <motion.button
               key={option.audience}
@@ -53,7 +53,7 @@ const AudienceGate = () => {
                     {option.label}
                   </p>
                 </div>
-                <span className="flex items-center justify-center w-12 h-12 max-xs:w-9 max-xs:h-9 rounded-full bg-white text-black flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1">
+                <span className="flex items-center justify-center h-11 w-11 md:h-12 md:w-12 rounded-full bg-white text-black flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1">
                   <ArrowRight className="w-5 h-5 max-xs:w-4 max-xs:h-4" />
                 </span>
               </div>

@@ -33,7 +33,7 @@ const PricingAudienceSwitch = ({ audience, onAudienceChange, className }: Pricin
               aria-selected={selected}
               onClick={() => onAudienceChange(option.id)}
               className={cn(
-                'min-w-[9.5rem] max-[479px]:min-w-[7.5rem] px-6 py-2.5 rounded-full text-base font-semibold transition-colors duration-200',
+                'min-w-[7.5rem] max-[479px]:min-w-0 max-[479px]:flex-1 px-5 max-[479px]:px-4 py-2.5 rounded-full text-sm sm:text-base font-semibold transition-colors duration-200',
                 selected
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground',

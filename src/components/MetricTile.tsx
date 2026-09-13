@@ -1,10 +1,30 @@
 import { cn } from '@/lib/utils';
 import type { Verdict } from '@/lib/metrics';
 
-export const MetricTile = ({ label, value }: { label: string; value: string }) => (
-  <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] p-5">
-    <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">{label}</p>
-    <p className="font-display text-2xl font-bold leading-none">{value}</p>
+export const MetricTile = ({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) => (
+  <div
+    className={cn(
+      'bg-[#fafafa] border border-[#f1f1f1]',
+      compact ? 'rounded-[14px] p-3' : 'rounded-[20px] md:rounded-[24px] p-4 md:p-5',
+    )}
+  >
+    <p className="text-[10px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-1">{label}</p>
+    <p
+      className={cn(
+        'font-display font-bold leading-none break-words',
+        compact ? 'text-lg' : 'text-xl md:text-2xl',
+      )}
+    >
+      {value}
+    </p>
   </div>
 );
 

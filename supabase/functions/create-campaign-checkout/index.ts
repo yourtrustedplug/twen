@@ -10,6 +10,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
 import { roleScopedAppUrl } from '../_shared/hosts.ts'
+import { amountsMatch, createNardoPayPaymentLink } from '../_shared/nardopay.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsForRequest(req) })
@@ -56,15 +57,17 @@ Deno.serve(async (req) => {
     return jsonResponseFor(req, { error: 'Budget must be positive' }, 400)
   }
 
-  const apiKey = Deno.env.get('NARDOPAY_API_KEY')
-  if (!apiKey) return jsonResponseFor(req, { error: 'NardoPay is not configured' }, 500)
-
-  const defaultNardoUrl =
-    'https://mczqwqsvumfsneoknlep.supabase.co/functions/v1/create-payment-link-api'
-  const apiUrl = Deno.env.get('NARDOPAY_API_URL')?.trim() ||
-    (Deno.env.get('ALLOW_DEFAULT_NARDOPAY_URL') === 'true' ? defaultNardoUrl : '')
-  if (!apiUrl) {
-    return jsonResponseFor(req, { error: 'NARDOPAY_API_URL is not configured' }, 500)
+  const budget = Number(campaign.budget)
+  const { data: cached } = await admin
+    .from('campaigns')
+    .select('nardopay_checkout_url, nardopay_checkout_amount')
+    .eq('id', campaignId)
+    .maybeSingle()
+  const cachedUrl = typeof cached?.nardopay_checkout_url === 'string'
+    ? cached.nardopay_checkout_url.trim()
+    : ''
+  if (cachedUrl && amountsMatch(cached?.nardopay_checkout_amount, budget)) {
+    return jsonResponseFor(req, { url: cachedUrl, reused: true })
   }
 
   const appUrl = (Deno.env.get('PUBLIC_APP_URL') ?? '').replace(/\/$/, '')
@@ -79,44 +82,39 @@ Deno.serve(async (req) => {
   const functionsBase = `${supabaseUrl.replace(/\/$/, '')}/functions/v1`
   const nardopayWebhook = `${functionsBase}/nardopay-webhook`
   const brandOrigin = roleScopedAppUrl(appUrl, 'brand')
-  const redirectUrl = `${brandOrigin}/brand/campaigns/${campaignId}?funded=pending`
+  const redirectUrl = `${brandOrigin}/brand/analytics?campaign=${campaignId}&funded=pending`
 
-  const npRes = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+  const created = await createNardoPayPaymentLink({
+    link_type: 'payment',
+    product_name: `Fund campaign: ${campaign.title}`,
+    amount: budget,
+    amount_mode: 'fixed',
+    description: `Escrow funding for Twen campaign (${campaign.brand_name || 'brand'})`,
+    webhook_url: nardopayWebhook,
+    redirect_url: redirectUrl,
+    metadata: {
+      source: 'unignored',
+      campaign_id: campaign.id,
+      brand_id: campaign.brand_id,
     },
-    body: JSON.stringify({
-      link_type: 'payment',
-      product_name: `Fund campaign: ${campaign.title}`,
-      amount: Number(campaign.budget),
-      amount_mode: 'fixed',
-      description: `Escrow funding for Twen campaign (${campaign.brand_name || 'brand'})`,
-      webhook_url: nardopayWebhook,
-      redirect_url: redirectUrl,
-      metadata: {
-        source: 'unignored',
-        campaign_id: campaign.id,
-        brand_id: campaign.brand_id,
-      },
-    }),
   })
-
-  const npJson = await npRes.json().catch(() => ({}))
-  if (!npRes.ok || !npJson?.url) {
-    console.error('NardoPay create link failed', npRes.status, npJson)
-    return jsonResponseFor(req, { error: npJson?.message || 'Could not create payment link' }, 502)
+  if ('error' in created) {
+    return jsonResponseFor(req, { error: created.error }, created.status)
   }
 
   await admin
     .from('campaigns')
-    .update({ nardopay_link_code: npJson.link_code })
+    .update({
+      nardopay_link_code: created.link_code ?? null,
+      nardopay_checkout_url: created.url,
+      nardopay_checkout_amount: budget,
+    })
     .eq('id', campaign.id)
 
   return jsonResponseFor(req, {
-    url: npJson.url,
-    link_code: npJson.link_code,
-    link_id: npJson.link_id,
+    url: created.url,
+    link_code: created.link_code,
+    link_id: created.link_id,
+    reused: false,
   })
 })

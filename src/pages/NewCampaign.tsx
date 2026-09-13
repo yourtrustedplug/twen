@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { brandAnalyticsPath } from '@/lib/brand-analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
@@ -90,7 +91,7 @@ const ListBuilder = ({
           ))}
         </ol>
       )}
-      <div className="flex gap-2 p-3 border-t border-[#f1f1f1] bg-[#fafafa]">
+      <div className="flex flex-col sm:flex-row gap-2 p-3 border-t border-[#f1f1f1] bg-[#fafafa]">
         <Input
           value={draft}
           onChange={(e) => onDraft(e.target.value)}
@@ -103,7 +104,7 @@ const ListBuilder = ({
           placeholder={placeholder}
           aria-label={`Add to ${label}`}
         />
-        <Button type="button" variant="invofyOutline" size="sm" className="shrink-0 px-4" onClick={onAdd} disabled={!draft.trim()}>
+        <Button type="button" variant="invofyOutline" size="sm" className="shrink-0 px-4 max-sm:w-full" onClick={onAdd} disabled={!draft.trim()}>
           <Plus className="h-4 w-4" />
           Add
         </Button>
@@ -300,25 +301,21 @@ const NewCampaign = () => {
     const { data: checkout, error: fundError } = await supabase.functions.invoke('create-campaign-checkout', {
       body: { campaignId: id },
     });
-    setSaving(false);
     if (fundError || checkout?.error || !checkout?.url) {
+      setSaving(false);
       toast({
         title: 'Saved as draft — checkout failed',
-        description: edgeFunctionErrorMessage(
+        description: await edgeFunctionErrorMessage(
           fundError,
           checkout,
           'Could not start NardoPay checkout',
         ),
         variant: 'destructive',
       });
-      navigate(`/brand/campaigns/${id}`);
+      navigate(brandAnalyticsPath(id));
       return;
     }
 
-    toast({
-      title: 'Complete payment to go live',
-      description: 'Redirecting to NardoPay checkout…',
-    });
     window.location.href = checkout.url as string;
   };
 
@@ -326,7 +323,7 @@ const NewCampaign = () => {
     return (
       <div className="min-h-screen bg-background">
         <AppHeader />
-        <main className="max-w-3xl mx-auto px-5 md:px-10 py-12">
+        <main className="max-w-3xl mx-auto px-5 md:px-10 py-8 md:py-12">
           <Link to="/brand" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
             <ArrowLeft className="h-4 w-4" /> Back to my campaigns
           </Link>
@@ -339,7 +336,7 @@ const NewCampaign = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-3xl mx-auto px-5 md:px-10 py-12">
+      <main className="max-w-3xl mx-auto px-5 md:px-10 py-8 md:py-12">
         <Link to="/brand" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="h-4 w-4" /> Back to my campaigns
         </Link>
@@ -352,12 +349,12 @@ const NewCampaign = () => {
 
         {step === 1 ? (
           <>
-            <h1 className="font-display text-4xl font-bold mb-2">Create a campaign</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Create a campaign</h1>
             <p className="text-muted-foreground mb-10">
               Start with the image creators will see. Then tell them what to make.
             </p>
 
-            <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8">
+            <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8">
               {/* Cover image first */}
               <div className="flex flex-col gap-3">
                 <Label>Campaign image</Label>
@@ -541,19 +538,19 @@ const NewCampaign = () => {
                 )}
               </div>
 
-              <Button variant="invofy" size="invofy" onClick={goToFinances}>
+              <Button variant="invofy" size="invofy" className="max-md:w-full" onClick={goToFinances}>
                 Continue to finances
               </Button>
             </div>
           </>
         ) : (
           <>
-            <h1 className="font-display text-4xl font-bold mb-2">Finances</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Finances</h1>
             <p className="text-muted-foreground mb-10">
               Set the budget and rate. Campaigns must run at least {MIN_CAMPAIGN_DAYS} days.
             </p>
 
-            <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 mb-8">
+            <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 mb-8">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="budget">Budget (USD)</Label>
                 <Input id="budget" type="number" min="0" step="1" value={form.budget} onChange={set('budget')} placeholder="500" />

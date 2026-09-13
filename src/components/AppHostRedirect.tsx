@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth, roleHome } from '@/contexts/AuthContext';
 import { onboardingFor } from '@/lib/onboarding';
-import { getAppTenant, getHostname, goToAppPath, isAppPath, isLocalApex, tenantForRole } from '@/lib/hosts';
+import { getAppTenant, getHostname, goToAppPath, isAppPath, isLocalApex, isLocalLoopback, tenantForRole } from '@/lib/hosts';
 
 /**
  * If the user is on an app path under www/apex (or the wrong tenant host),
@@ -15,7 +15,7 @@ export function AppHostRedirect() {
   useEffect(() => {
     if (isLoading || !user || !profile) return;
     const host = getHostname();
-    if (isLocalApex(host)) return;
+    if (isLocalApex(host) || isLocalLoopback(host)) return;
     if (!isAppPath(location.pathname)) return;
 
     const expected = tenantForRole(profile.role);

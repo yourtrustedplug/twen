@@ -17,6 +17,10 @@ export type BrandKit = {
   secondary: string;
   website: string;
   socials: BrandSocials;
+  company: string;
+  bio: string;
+  city: string;
+  country: string;
 };
 
 const HOST_ALIASES: Record<string, BrandSocialId> = {
@@ -38,7 +42,26 @@ export const emptyBrandKit = (): BrandKit => ({
   secondary: '',
   website: '',
   socials: {},
+  company: '',
+  bio: '',
+  city: '',
+  country: '',
 });
+
+const kitText = (value: unknown) =>
+  typeof value === 'string' && value.trim() ? value.trim() : '';
+
+/** Hostname (+ path) for a brand site link. */
+export function websiteLabel(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '');
+    const path = parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/$/, '');
+    return `${host}${path}`;
+  } catch {
+    return url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  }
+}
 
 export function normalizeHex(value: string | null | undefined): string {
   const t = (value ?? '').trim();
@@ -151,11 +174,14 @@ export function socialsFromUrls(urls: string[]): BrandSocials {
   return out;
 }
 
+const kitPath = (value: unknown) =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
 export function parseCampaignKit(value: unknown): BrandKit {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return emptyBrandKit();
   const src = value as Record<string, unknown>;
-  const logo = typeof src.logo === 'string' && src.logo ? src.logo : null;
-  const logoDark = typeof src.logo_dark === 'string' && src.logo_dark ? src.logo_dark : null;
+  const logo = kitPath(src.logo) || kitPath(src.avatar_url);
+  const logoDark = kitPath(src.logo_dark);
   return {
     logo,
     logo_dark: logoDark,
@@ -163,6 +189,10 @@ export function parseCampaignKit(value: unknown): BrandKit {
     secondary: normalizeHex(typeof src.secondary === 'string' ? src.secondary : ''),
     website: typeof src.website === 'string' ? src.website : '',
     socials: parseBrandSocials(src.socials),
+    company: kitText(src.company),
+    bio: kitText(src.bio),
+    city: kitText(src.city),
+    country: kitText(src.country),
   };
 }
 
@@ -173,6 +203,10 @@ export type BrandKitSource = {
   brand_secondary_color?: string | null;
   website?: string | null;
   brand_socials?: unknown;
+  company_name?: string | null;
+  bio?: string | null;
+  city?: string | null;
+  country?: string | null;
 };
 
 export function kitFromProfile(profile: BrandKitSource | null | undefined): BrandKit {
@@ -184,17 +218,20 @@ export function kitFromProfile(profile: BrandKitSource | null | undefined): Bran
     secondary: normalizeHex(profile.brand_secondary_color),
     website: normalizeWebsite(profile.website),
     socials: normalizeBrandSocials(parseBrandSocials(profile.brand_socials)),
+    company: kitText(profile.company_name),
+    bio: kitText(profile.bio),
+    city: kitText(profile.city),
+    country: kitText(profile.country),
   };
 }
 
 export function kitFromCampaign(campaign: {
   brand_kit?: unknown;
+  brand_name?: string | null;
   links?: unknown;
   socials?: unknown;
 }): BrandKit {
   const kit = parseCampaignKit(campaign.brand_kit);
-  if (kit.logo || kit.logo_dark || kit.primary || kit.website || hasAnySocial(kit.socials)) return kit;
-
   const links = Array.isArray(campaign.links)
     ? campaign.links.filter((v): v is string => typeof v === 'string')
     : [];
@@ -202,9 +239,10 @@ export function kitFromCampaign(campaign: {
     ? campaign.socials.filter((v): v is string => typeof v === 'string')
     : [];
   return {
-    ...emptyBrandKit(),
-    website: links[0] ?? '',
-    socials: socialsFromUrls(socials),
+    ...kit,
+    company: kit.company || kitText(campaign.brand_name),
+    website: kit.website || links[0] || '',
+    socials: hasAnySocial(kit.socials) ? kit.socials : socialsFromUrls(socials),
   };
 }
 
@@ -216,8 +254,30 @@ export function toCampaignKit(kit: BrandKit): BrandKit {
     secondary: kit.secondary,
     website: kit.website,
     socials: kit.socials,
+    company: kit.company,
+    bio: kit.bio,
+    city: kit.city,
+    country: kit.country,
   };
 }
 
 export const kitHasAssets = (kit: BrandKit) =>
-  Boolean(kit.logo || kit.logo_dark || kit.primary || kit.secondary || kit.website || hasAnySocial(kit.socials));
+  Boolean(
+    kit.logo ||
+      kit.logo_dark ||
+      kit.primary ||
+      kit.secondary ||
+      kit.website ||
+      kit.company ||
+      kit.bio ||
+      kit.city ||
+      kit.country ||
+      hasAnySocial(kit.socials),
+  );
+
+/** Storage path for the brand mark on a campaign card. Profile logos are not readable by creators. */
+export function campaignLogoPath(campaign: { brand_kit?: unknown; brand_logo?: string | null }): string | null {
+  if (campaign.brand_logo?.trim()) return campaign.brand_logo.trim();
+  const kit = parseCampaignKit(campaign.brand_kit);
+  return kit.logo || kit.logo_dark;
+}

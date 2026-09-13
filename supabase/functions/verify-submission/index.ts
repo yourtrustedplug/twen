@@ -1,6 +1,6 @@
 /**
  * verify-submission — confirm a TikTok / Instagram link via the creator's
- * connected OAuth token before insert:
+ * connected OAuth token before insert (or replace a rejected row):
  *   - URL must match the platform (no random sites)
  *   - Media must belong to the connected account
  *   - Publish date must fall inside the campaign window
@@ -182,8 +182,9 @@ async function proveTikTok(url: string, accessToken: string, expectedHandle?: st
   }
 
   if (!video?.id || !video.create_time) {
+    const who = expectedHandle ? ` on ${expectedHandle}` : ''
     throw new Error(
-      'TikTok did not return that video on your connected account. Re-connect TikTok and submit a video you posted.',
+      `TikTok did not return that video${who}. Use Share → Copy link on a video you posted on the connected account. Videos posted before you connected Twen often cannot be read — post a new one, then submit that link.`,
     )
   }
 
@@ -407,11 +408,11 @@ Deno.serve(async (req) => {
 
   const { data: existing } = await admin
     .from('submissions')
-    .select('id')
+    .select('id, status')
     .eq('campaign_id', campaignId)
     .eq('creator_id', authData.user.id)
     .maybeSingle()
-  if (existing) {
+  if (existing && existing.status !== 'rejected') {
     return jsonResponseFor(req, { error: 'You already submitted to this campaign' }, 409)
   }
 
@@ -457,12 +458,13 @@ Deno.serve(async (req) => {
   }
 
   // Same media cannot be reused across campaigns.
-  const { data: dup } = await admin
+  let dupQuery = admin
     .from('submissions')
     .select('id')
     .eq('platform', platform)
     .eq('platform_media_id', proof.mediaId)
-    .maybeSingle()
+  if (existing?.id) dupQuery = dupQuery.neq('id', existing.id)
+  const { data: dup } = await dupQuery.maybeSingle()
   if (dup) {
     return jsonResponseFor(
       req,
@@ -480,32 +482,37 @@ Deno.serve(async (req) => {
     profile.full_name ||
     'Creator'
 
-  const { data: submission, error: insertError } = await admin
-    .from('submissions')
-    .insert({
-      campaign_id: campaignId,
-      creator_id: authData.user.id,
-      tiktok_url: rawUrl,
-      creator_name: creatorName,
-      tiktok_handle: handle,
-      platform,
-      status: 'submitted',
-      checklist_results: body.checklist_results ?? [],
-      platform_media_id: proof.mediaId,
-      posted_at: proof.postedAt,
-      link_verified_at: new Date().toISOString(),
-      likes: proof.likes ?? 0,
-      comments: proof.comments ?? 0,
-      shares: proof.shares ?? 0,
-      // Views accrue after moderator approval via verify-views; seed 0 here.
-      verified_views: 0,
-    })
-    .select('*')
-    .single()
+  const verifiedFields = {
+    tiktok_url: rawUrl,
+    creator_name: creatorName,
+    tiktok_handle: handle,
+    platform,
+    status: 'submitted' as const,
+    checklist_results: body.checklist_results ?? [],
+    platform_media_id: proof.mediaId,
+    posted_at: proof.postedAt,
+    link_verified_at: new Date().toISOString(),
+    likes: proof.likes ?? 0,
+    comments: proof.comments ?? 0,
+    shares: proof.shares ?? 0,
+    // Views accrue after moderator approval via verify-views; seed 0 here.
+    verified_views: 0,
+    rejection_reason: null,
+  }
 
-  if (insertError) {
-    console.error('submission insert', insertError)
-    return jsonResponseFor(req, { error: insertError.message }, 500)
+  const write = existing
+    ? admin.from('submissions').update(verifiedFields).eq('id', existing.id)
+    : admin.from('submissions').insert({
+        campaign_id: campaignId,
+        creator_id: authData.user.id,
+        ...verifiedFields,
+      })
+
+  const { data: submission, error: writeError } = await write.select('*').single()
+
+  if (writeError) {
+    console.error('submission write', writeError)
+    return jsonResponseFor(req, { error: writeError.message }, 500)
   }
 
   return jsonResponseFor(req, {

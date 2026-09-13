@@ -34,10 +34,12 @@ need CRON_SECRET
 
 PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://localhost:5173}"
 NARDOPAY_API_URL="${NARDOPAY_API_URL:-https://mczqwqsvumfsneoknlep.supabase.co/functions/v1/create-payment-link-api}"
-RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-Twen <onboarding@resend.dev>}"
+RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-Twen <hello@twen.app>}"
+# CONTACT_TO_EMAIL is the live inbox (personal Gmail until Zoho hello@twen.app receives).
 CONTACT_TO_EMAIL="${CONTACT_TO_EMAIL:-hello@twen.app}"
 PAYOUT_OPS_EMAIL="${PAYOUT_OPS_EMAIL:-$CONTACT_TO_EMAIL}"
 PRO_PLAN_AMOUNT="${PRO_PLAN_AMOUNT:-49}"
+CREATOR_PRO_AMOUNT="${CREATOR_PRO_AMOUNT:-9}"
 
 echo "=== Pushing secrets to $REF (owner privileges required) ==="
 ARGS=(
@@ -52,6 +54,7 @@ ARGS=(
   PAYOUT_OPS_EMAIL="$PAYOUT_OPS_EMAIL"
   PUBLIC_APP_URL="$PUBLIC_APP_URL"
   PRO_PLAN_AMOUNT="$PRO_PLAN_AMOUNT"
+  CREATOR_PRO_AMOUNT="$CREATOR_PRO_AMOUNT"
   CRON_SECRET="$CRON_SECRET"
 )
 

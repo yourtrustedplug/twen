@@ -8,13 +8,11 @@ import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { PageBreadcrumbs } from '@/components/PageBreadcrumbs';
+import { SupportMailButton } from '@/components/SupportMailButton';
 import contactHeaderBg from '@/assets/contact/contact-header-bg.jpg';
 import contactImage01 from '@/assets/contact/contact-image-01.jpg';
 import contactImage02 from '@/assets/contact/contact-image-02.jpg';
-import xIcon from '@/assets/icons/x-icon.png';
-import instagramIcon from '@/assets/icons/instagram-icon.png';
-import linkedinIcon from '@/assets/icons/linkedin-icon.png';
-import facebookIcon from '@/assets/icons/facebook-icon.png';
 
 interface ContactHeaderProps extends React.ComponentProps<'section'> {}
 
@@ -27,32 +25,6 @@ const contactSchema = z.object({
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
-
-const socialLinks = [
-  { icon: facebookIcon, href: 'https://www.facebook.com/', alt: 'Facebook' },
-  { icon: xIcon, href: 'https://www.x.com/', alt: 'X' },
-  { icon: instagramIcon, href: 'https://www.instagram.com/', alt: 'Instagram' },
-  { icon: linkedinIcon, href: 'https://www.linkedin.com/', alt: 'LinkedIn' },
-];
-
-
-// Social icon with scale animation
-const SocialIcon = ({ icon, href, alt }: { icon: string; href: string; alt: string }) => (
-  <a 
-    href={href} 
-    target="_blank" 
-    rel="noopener noreferrer"
-    className="group flex items-center justify-center w-11 h-11 bg-foreground rounded-full transition-transform duration-300 hover:scale-110"
-  >
-    <div className="relative w-5 h-5 overflow-hidden">
-      <div className="flex flex-col items-center w-full transition-transform duration-300 group-hover:-translate-y-5">
-        <img src={icon} alt={alt} width={20} height={20} loading="lazy" decoding="async" className="w-5 h-5" />
-        <img src={icon} alt={alt} width={20} height={20} loading="lazy" decoding="async" className="w-5 h-5" />
-      </div>
-    </div>
-  </a>
-);
-
 
 const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
   const { toast } = useToast();
@@ -137,7 +109,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
 
       if (error || (data && typeof data === 'object' && 'error' in data && data.error)) {
         throw new Error(
-          edgeFunctionErrorMessage(
+          await edgeFunctionErrorMessage(
             error,
             data as { error?: string },
             'Please try again or email hello@twen.app.',
@@ -196,7 +168,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
           <div className="relative overflow-hidden rounded-3xl aspect-square">
             <img 
               src={contactImage01}
-              alt="Contact person"
+              alt="Creator reaching the Twen team from a phone"
               width={256}
               height={256}
               loading="lazy"
@@ -214,7 +186,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
           <div className="relative overflow-hidden rounded-3xl aspect-square">
             <img 
               src={contactImage02}
-              alt="Contact person"
+              alt="Brand marketer getting in touch with Twen"
               width={256}
               height={256}
               loading="lazy"
@@ -230,6 +202,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
         <div className="w-full max-w-[1440px] mx-auto">
           {/* Text Content */}
           <div className="flex flex-col items-center text-center pt-48 max-[991px]:pt-40 max-[767px]:pt-36 max-[479px]:pt-32 pb-16 max-[767px]:pb-12 max-[479px]:pb-10">
+            <PageBreadcrumbs className="mb-4" />
             {/* Label */}
             <span className="text-foreground text-xs tracking-[1px] uppercase font-semibold mb-4">
               Get in Touch
@@ -250,7 +223,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
               <div className="w-28 h-28 max-[479px]:w-24 max-[479px]:h-24 rounded-2xl overflow-hidden">
                 <img 
                   src={contactImage01}
-                  alt="Contact person"
+                  alt="Creator reaching the Twen team from a phone"
                   width={112}
                   height={112}
                   loading="lazy"
@@ -261,7 +234,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
               <div className="w-28 h-28 max-[479px]:w-24 max-[479px]:h-24 rounded-2xl overflow-hidden">
                 <img 
                   src={contactImage02}
-                  alt="Contact person"
+                  alt="Brand marketer getting in touch with Twen"
                   width={112}
                   height={112}
                   loading="lazy"
@@ -279,10 +252,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                 {/* Row 1: Full name & Email */}
                 <div className="grid grid-cols-2 gap-4 max-[767px]:grid-cols-1">
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground px-1">
+                    <label htmlFor="contact-full-name" className="text-sm font-medium text-foreground px-1">
                       Full name
                     </label>
                     <Input
+                      id="contact-full-name"
                       type="text"
                       name="fullName"
                       placeholder="Enter your full name"
@@ -298,10 +272,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground px-1">
+                    <label htmlFor="contact-email" className="text-sm font-medium text-foreground px-1">
                       Email address
                     </label>
                     <Input
+                      id="contact-email"
                       type="email"
                       name="email"
                       placeholder="Enter your email address"
@@ -321,10 +296,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                 {/* Row 2: Phone & Subject */}
                 <div className="grid grid-cols-2 gap-4 max-[767px]:grid-cols-1">
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground px-1">
+                    <label htmlFor="contact-phone" className="text-sm font-medium text-foreground px-1">
                       Phone number
                     </label>
                     <Input
+                      id="contact-phone"
                       type="tel"
                       name="phone"
                       placeholder="Enter your phone number"
@@ -334,10 +310,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground px-1">
+                    <label htmlFor="contact-subject" className="text-sm font-medium text-foreground px-1">
                       Subject
                     </label>
                     <Input
+                      id="contact-subject"
                       type="text"
                       name="subject"
                       placeholder="Enter the subject"
@@ -356,10 +333,11 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                 
                 {/* Row 3: Message */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-foreground px-1">
+                  <label htmlFor="contact-message" className="text-sm font-medium text-foreground px-1">
                     Message
                   </label>
                   <Textarea
+                    id="contact-message"
                     name="message"
                     placeholder="Enter your message"
                     value={formData.message}
@@ -388,9 +366,7 @@ const ContactHeader = ({ className, ...props }: ContactHeaderProps) => {
                   </Button>
                   
                   <div className="flex items-center gap-3 max-[479px]:justify-center">
-                    {socialLinks.map((social) => (
-                      <SocialIcon key={social.alt} {...social} />
-                    ))}
+                    <SupportMailButton />
                   </div>
                 </div>
               </form>

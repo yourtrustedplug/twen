@@ -11,7 +11,9 @@
  *   brand.twen.app       — /brand app
  *   admin.twen.app       — /admin
  *
- * Local: creator.localhost:8080 (etc.) works the same way.
+ * Local HTTP stays on localhost paths (/creator, /brand, /admin). Visiting
+ * creator.localhost over HTTP is rewritten to localhost — Privy will not boot
+ * on HTTP subdomains.
  */
 
 export type AppTenant = 'creator' | 'brand' | 'admin' | 'apex';
@@ -54,9 +56,43 @@ export function isLocalApex(host: string): boolean {
   return h === 'localhost' || h === '127.0.0.1';
 }
 
+export function isLocalLoopback(host: string): boolean {
+  const h = normalizeHostname(host);
+  return isLocalApex(h) || h.endsWith('.localhost');
+}
+
+export function tenantHomePath(tenant: AppTenant): string {
+  if (tenant === 'brand') return '/brand';
+  if (tenant === 'admin') return '/admin';
+  if (tenant === 'creator') return '/creator';
+  return '/';
+}
+
+/**
+ * Privy embedded wallets refuse HTTP except on plain localhost.
+ * Send creator.localhost / brand.localhost to localhost, keeping the tenant path.
+ */
+export function localHttpTenantRewrite(loc: {
+  hostname: string;
+  protocol: string;
+  port: string;
+  pathname: string;
+  search?: string;
+  hash?: string;
+}): string | null {
+  const host = normalizeHostname(loc.hostname);
+  if (loc.protocol === 'https:') return null;
+  if (!host.endsWith('.localhost')) return null;
+  const tenant = parseTenant(host);
+  if (tenant === 'apex') return null;
+  const suffix = loc.port ? `:${loc.port}` : '';
+  const path = loc.pathname === '/' ? tenantHomePath(tenant) : loc.pathname;
+  return `http://localhost${suffix}${path}${loc.search ?? ''}${loc.hash ?? ''}`;
+}
+
 function shouldKeepPort(apex: string, port: string): boolean {
   if (!port) return false;
-  return isLocalApex(apex) || apex.endsWith('.localhost');
+  return isLocalLoopback(apex);
 }
 
 /** Origin for a tenant on the current apex (preserves protocol + port in local). */
@@ -70,6 +106,11 @@ export function tenantOrigin(
     opts?.protocol ?? (typeof window !== 'undefined' ? window.location.protocol : 'https:');
   const port = opts?.port ?? (typeof window !== 'undefined' ? window.location.port : '');
   const apex = apexHostFrom(hostname);
+  if (protocol !== 'https:' && isLocalLoopback(apex)) {
+    const localHost = isLocalApex(apex) ? apex : 'localhost';
+    const suffix = shouldKeepPort(localHost, port) ? `:${port}` : '';
+    return `${protocol}//${localHost}${suffix}`;
+  }
   const host = tenant === 'apex' ? apex : `${tenant}.${apex}`;
   const suffix = shouldKeepPort(apex, port) ? `:${port}` : '';
   return `${protocol}//${host}${suffix}`;
@@ -93,6 +134,37 @@ export function adminHref(): string {
   if (isLocalApex(host)) return '/admin';
   if (getAppTenant() === 'admin') return '/admin';
   return `${tenantOrigin('admin')}/admin`;
+}
+
+/** After TikTok/Instagram Connect, land on the creator profile Account tab. */
+export function socialCallbackLandingPath(platform: 'tiktok' | 'instagram'): string {
+  return `/creator/profile?tab=account&connected=${platform}`;
+}
+
+export function bookMeHref(
+  slug: string,
+  opts?: { hostname?: string; protocol?: string; port?: string },
+): string {
+  const path = `/@${slug.replace(/^@+/, '')}`;
+  const hostname =
+    opts?.hostname ?? (typeof window !== 'undefined' ? window.location.hostname : 'twen.app');
+  const protocol =
+    opts?.protocol ?? (typeof window !== 'undefined' ? window.location.protocol : 'https:');
+  const port = opts?.port ?? (typeof window !== 'undefined' ? window.location.port : '');
+  const apex = apexHostFrom(hostname);
+  const suffix = port && isLocalLoopback(apex) ? `:${port}` : '';
+  if (isLocalLoopback(apex)) {
+    return `${protocol}//localhost${suffix}${path}`;
+  }
+  return `${protocol}//${apex}${path}`;
+}
+
+/** Brand-facing marketplace profile URL for a creator. */
+export function publicCreatorHref(
+  creatorId: string,
+  opts?: { hostname?: string; protocol?: string; port?: string },
+): string {
+  return `${tenantOrigin('brand', opts)}/brand/creators/${creatorId}`;
 }
 
 /** Which subdomain a signed-in role should live on. */
@@ -165,7 +237,7 @@ export async function goToAppPath(
 export function authStartHref(role: 'creator' | 'brand'): string | null {
   if (typeof window === 'undefined') return null;
   const host = getHostname();
-  if (isLocalApex(host)) return null;
+  if (isLocalApex(host) || isLocalLoopback(host)) return null;
   if (getAppTenant() === role) return null;
   return `${tenantOrigin(role)}/signin?role=${role}`;
 }

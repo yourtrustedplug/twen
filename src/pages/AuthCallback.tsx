@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_AUTHED_ROUTE, SIGNED_OUT_ROUTE } from "@/lib/auth-routes";
+import { DEFAULT_AUTHED_ROUTE, signedOutPath } from "@/lib/auth-routes";
+import { ErrorPoster } from "@/components/ErrorPoster";
 
 /**
  * /auth/callback — residual handler for any Supabase session tokens that land
@@ -51,17 +52,15 @@ const AuthCallback = () => {
 
   if (failed) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-muted-foreground">
-          We couldn&apos;t finish signing you in. Please try again.
-        </p>
-        <button
-          onClick={() => navigate(SIGNED_OUT_ROUTE, { replace: true })}
-          className="text-sm font-medium underline underline-offset-4"
-        >
-          Back to sign in
-        </button>
-      </div>
+      <ErrorPoster
+        logoHref={signedOutPath()}
+        documentTitle="Sign in failed | Twen"
+        watermark="401"
+        eyebrow="Sign in"
+        title="We couldn't finish signing you in."
+        description="Try again from the start. If this keeps happening, write hello@twen.app."
+        actions={[{ label: 'Back to home', href: signedOutPath() }]}
+      />
     );
   }
 

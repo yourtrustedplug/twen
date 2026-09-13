@@ -1,5 +1,6 @@
 import { PrivyProvider } from '@privy-io/react-auth';
 import { ReactNode } from 'react';
+import { localHttpTenantRewrite } from '@/lib/hosts';
 
 const appId = import.meta.env.VITE_PRIVY_APP_ID as string | undefined;
 const googleEnabled = import.meta.env.VITE_PRIVY_GOOGLE_ENABLED === 'true';
@@ -13,6 +14,14 @@ const privyLogo = (
 );
 
 export function AppPrivyProvider({ children }: { children: ReactNode }) {
+  if (typeof window !== 'undefined') {
+    const next = localHttpTenantRewrite(window.location);
+    if (next) {
+      window.location.replace(next);
+      return null;
+    }
+  }
+
   if (!appId) {
     console.error('Missing VITE_PRIVY_APP_ID');
     return <>{children}</>;

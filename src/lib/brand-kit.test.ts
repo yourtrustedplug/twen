@@ -3,10 +3,12 @@ import {
   hasAnySocial,
   kitFromCampaign,
   kitFromProfile,
+  campaignLogoPath,
   normalizeHex,
   normalizeWebsite,
   socialUrl,
   socialsFromUrls,
+  websiteLabel,
 } from '@/lib/brand-kit';
 
 describe('normalizeHex', () => {
@@ -46,12 +48,33 @@ describe('kitFromProfile', () => {
       brand_primary_color: '112233',
       website: 'acme.com',
       brand_socials: { tiktok: '@acme' },
+      company_name: 'Acme',
+      bio: 'Sells soap.',
+      city: 'Nairobi',
+      country: 'Kenya',
     });
     expect(kit.logo).toBe('u/logo.png');
     expect(kit.primary).toBe('#112233');
     expect(kit.website).toBe('https://acme.com/');
     expect(kit.socials.tiktok).toBe('https://www.tiktok.com/@acme');
+    expect(kit.company).toBe('Acme');
+    expect(kit.bio).toBe('Sells soap.');
+    expect(kit.city).toBe('Nairobi');
     expect(hasAnySocial(kit.socials)).toBe(true);
+  });
+});
+
+describe('campaignLogoPath', () => {
+  it('reads logo from the campaign kit', () => {
+    expect(campaignLogoPath({ brand_kit: { logo: 'brands/logo.png' } })).toBe('brands/logo.png');
+  });
+
+  it('falls back to avatar_url if that is how the kit was stored', () => {
+    expect(campaignLogoPath({ brand_kit: { avatar_url: 'brands/mark.png' } })).toBe('brands/mark.png');
+  });
+
+  it('does not invent a letter from the brand name', () => {
+    expect(campaignLogoPath({ brand_kit: {} })).toBeNull();
   });
 });
 
@@ -63,6 +86,36 @@ describe('kitFromCampaign', () => {
     });
     expect(kit.website).toBe('https://acme.com');
     expect(kit.socials.instagram).toBe('https://www.instagram.com/acme');
+  });
+
+  it('keeps website and company when the kit only has a logo', () => {
+    const kit = kitFromCampaign({
+      brand_kit: { logo: 'brands/logo.png' },
+      brand_name: 'Acme',
+      links: ['https://acme.com'],
+      socials: ['https://www.instagram.com/acme'],
+    });
+    expect(kit.logo).toBe('brands/logo.png');
+    expect(kit.website).toBe('https://acme.com');
+    expect(kit.company).toBe('Acme');
+    expect(kit.socials.instagram).toBe('https://www.instagram.com/acme');
+  });
+
+  it('prefers kit website over campaign links', () => {
+    const kit = kitFromCampaign({
+      brand_kit: { website: 'https://kit.example', company: 'Kit Co' },
+      brand_name: 'Fallback',
+      links: ['https://acme.com'],
+    });
+    expect(kit.website).toBe('https://kit.example');
+    expect(kit.company).toBe('Kit Co');
+  });
+});
+
+describe('websiteLabel', () => {
+  it('strips protocol and trailing slash', () => {
+    expect(websiteLabel('https://www.acme.com/')).toBe('acme.com');
+    expect(websiteLabel('https://acme.com/shop')).toBe('acme.com/shop');
   });
 });
 

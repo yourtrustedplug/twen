@@ -1,5 +1,6 @@
 import SignedImage from '@/components/SignedImage';
-import { BRAND_SOCIALS, kitHasAssets, type BrandKit } from '@/lib/brand-kit';
+import { BRAND_SOCIALS, kitHasAssets, websiteLabel, type BrandKit } from '@/lib/brand-kit';
+import { formatPlace } from '@/lib/geo';
 import { ExternalLink } from 'lucide-react';
 
 const ColorSwatch = ({ hex, label }: { hex: string; label: string }) => {
@@ -19,56 +20,53 @@ const ColorSwatch = ({ hex, label }: { hex: string; label: string }) => {
   );
 };
 
-export function BrandKitCard({ kit, className }: { kit: BrandKit; className?: string }) {
+export function BrandKitCard({
+  kit,
+  className,
+  title = 'Brand kit',
+}: {
+  kit: BrandKit;
+  className?: string;
+  title?: string;
+}) {
   if (!kitHasAssets(kit)) return null;
 
   const socials = BRAND_SOCIALS.filter(({ id }) => kit.socials[id]);
+  const place = formatPlace(kit.city, kit.country);
+  const name = kit.company || 'Brand';
+  const mark = kit.logo || kit.logo_dark;
 
   return (
-    <div className={className ?? 'bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6 mb-6'}>
-      <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground">Brand kit</p>
+    <div className={className ?? 'bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 flex flex-col gap-6 mb-6'}>
+      <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground">{title}</p>
 
-      {(kit.logo || kit.logo_dark) && (
-        <div className="flex flex-wrap gap-6">
-          {kit.logo && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Logo</p>
-              <div className="h-16 w-16 rounded-[14px] overflow-hidden bg-white border border-[#e9e9e9]">
-                <SignedImage path={kit.logo} alt="Brand logo" className="h-full w-full object-contain p-1" />
-              </div>
-            </div>
-          )}
-          {kit.logo_dark && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Logo on dark</p>
-              <div className="h-16 w-16 rounded-[14px] overflow-hidden bg-[#111] border border-[#111]">
-                <SignedImage path={kit.logo_dark} alt="Brand logo on dark" className="h-full w-full object-contain p-1" />
-              </div>
-            </div>
-          )}
+      <div className="flex items-center gap-3 min-w-0">
+        {mark ? (
+          <div className="h-12 w-12 rounded-[14px] overflow-hidden bg-white border border-[#e9e9e9] shrink-0">
+            <SignedImage path={mark} alt={`${name} logo`} className="h-full w-full object-contain p-1" />
+          </div>
+        ) : null}
+        <div className="min-w-0">
+          <p className="font-display text-lg font-bold leading-tight truncate">{name}</p>
+          {place ? <p className="text-sm text-muted-foreground mt-0.5">{place}</p> : null}
         </div>
-      )}
+      </div>
 
-      {(kit.primary || kit.secondary) && (
-        <div className="flex flex-wrap gap-6">
-          <ColorSwatch hex={kit.primary} label="Primary" />
-          <ColorSwatch hex={kit.secondary} label="Secondary" />
-        </div>
-      )}
+      {kit.bio ? <p className="text-sm leading-relaxed whitespace-pre-wrap">{kit.bio}</p> : null}
 
-      {kit.website && (
+      {kit.website ? (
         <div>
           <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">Website</p>
           <a
             href={kit.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-primary underline underline-offset-2 break-all"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary underline underline-offset-2 break-all"
           >
-            {kit.website} <ExternalLink className="h-3 w-3 shrink-0" />
+            {websiteLabel(kit.website)} <ExternalLink className="h-3 w-3 shrink-0" />
           </a>
         </div>
-      )}
+      ) : null}
 
       {socials.length > 0 && (
         <div>
@@ -85,6 +83,40 @@ export function BrandKitCard({ kit, className }: { kit: BrandKit; className?: st
                 {label} <ExternalLink className="h-3 w-3 shrink-0" />
               </a>
             ))}
+          </div>
+        </div>
+      )}
+
+      {(kit.logo || kit.logo_dark) && (
+        <div>
+          <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-3">Logos</p>
+          <div className="flex flex-wrap gap-6">
+            {kit.logo && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Logo</p>
+                <div className="h-16 w-16 rounded-[14px] overflow-hidden bg-white border border-[#e9e9e9]">
+                  <SignedImage path={kit.logo} alt={`${name} logo`} className="h-full w-full object-contain p-1" />
+                </div>
+              </div>
+            )}
+            {kit.logo_dark && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Logo on dark</p>
+                <div className="h-16 w-16 rounded-[14px] overflow-hidden bg-[#111] border border-[#111]">
+                  <SignedImage path={kit.logo_dark} alt={`${name} logo on dark`} className="h-full w-full object-contain p-1" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {(kit.primary || kit.secondary) && (
+        <div>
+          <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-3">Colors</p>
+          <div className="flex flex-wrap gap-6">
+            <ColorSwatch hex={kit.primary} label="Primary" />
+            <ColorSwatch hex={kit.secondary} label="Secondary" />
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
@@ -11,9 +11,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { ProfileRow } from '@/types/unignored';
 import type { Json } from '@/integrations/supabase/types';
+import FilterSelect from '@/components/creator/FilterSelect';
 import { formatPlace, CONTINENTS, countriesIn, continentOf } from '@/lib/geo';
 import { joinName, splitName } from '@/lib/name';
 import { isPro } from '@/lib/plan';
+import { deliverPendingBookAndGo } from '@/lib/hire';
+import { mergePendingBook, peekPendingBook, pendingBookFromSearch, setPendingBook } from '@/lib/pending-signup';
+import { usePlanCheckout } from '@/hooks/use-plan-checkout';
+import ProfilePlanPanel from '@/components/ProfilePlanPanel';
 import { uploadAsset } from '@/lib/storage';
 import {
   BRAND_SOCIALS,
@@ -24,11 +29,15 @@ import {
   type BrandSocials,
 } from '@/lib/brand-kit';
 import { OnboardingBanner } from '@/components/OnboardingRequired';
+import { focusOnboardingField } from '@/lib/onboarding';
+import DeleteAccountCard from '@/components/DeleteAccountCard';
 import { Loader2, Upload, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { id: 'company', label: 'Company' },
+  { id: 'plan', label: 'Plan' },
+  { id: 'billing', label: 'Billing' },
   { id: 'branding', label: 'Branding' },
   { id: 'contact', label: 'Contact' },
 ] as const;
@@ -38,9 +47,7 @@ type BrandTab = (typeof TABS)[number]['id'];
 const isBrandTab = (value: string | null): value is BrandTab =>
   TABS.some((tab) => tab.id === value);
 
-const card = 'bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-5 mb-6';
-const selectClass =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const card = 'bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 flex flex-col gap-5 mb-6';
 
 const emptySocials = (): BrandSocials =>
   Object.fromEntries(BRAND_SOCIALS.map(({ id }) => [id, ''])) as BrandSocials;
@@ -131,17 +138,24 @@ const LogoSlot = ({
 );
 
 const BrandProfile = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { startPlanCheckout, busy: upgrading } = usePlanCheckout();
+  const navigate = useNavigate();
   const logoRef = useRef<HTMLInputElement>(null);
   const logoDarkRef = useRef<HTMLInputElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
-  const tab: BrandTab = isBrandTab(requestedTab) ? requestedTab : 'company';
+  const tab: BrandTab = isBrandTab(requestedTab)
+    ? requestedTab
+    : searchParams.get('upgraded') === 'pending'
+      ? 'plan'
+      : 'company';
   const brandIsPro = isPro(profile);
 
   const setTab = (next: BrandTab) => {
     const params = new URLSearchParams(searchParams);
+    params.delete('focus');
     if (next === 'company') params.delete('tab');
     else params.set('tab', next);
     setSearchParams(params, { replace: true });
@@ -201,6 +215,60 @@ const BrandProfile = () => {
         setLoading(false);
       });
   }, [user]);
+
+  useEffect(() => {
+    const fromUrl = pendingBookFromSearch(searchParams);
+    if (!fromUrl) return;
+    setPendingBook(mergePendingBook(peekPendingBook(), fromUrl));
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (authLoading || !profile || searchParams.get('upgrade') !== '1' || brandIsPro) return;
+    const params = new URLSearchParams(searchParams);
+    params.delete('upgrade');
+    params.delete('book');
+    params.delete('note');
+    params.delete('who');
+    params.delete('rate');
+    params.delete('role');
+    params.set('tab', 'plan');
+    setSearchParams(params, { replace: true });
+    startPlanCheckout('brand');
+  }, [authLoading, profile, searchParams, setSearchParams, brandIsPro, startPlanCheckout]);
+
+  useEffect(() => {
+    if (searchParams.get('upgraded') !== 'pending') return;
+    toast({
+      title: 'Payment received',
+      description: 'Twen Plus unlocks in a few seconds once NardoPay confirms.',
+    });
+    const params = new URLSearchParams(searchParams);
+    params.delete('upgraded');
+    params.set('tab', 'plan');
+    setSearchParams(params, { replace: true });
+    const t = window.setTimeout(() => {
+      void refreshProfile();
+    }, 2500);
+    return () => window.clearTimeout(t);
+  }, [searchParams, setSearchParams, toast, refreshProfile]);
+
+  useEffect(() => {
+    if (!user || !brandIsPro || !peekPendingBook()) return;
+    void deliverPendingBookAndGo({
+      brandId: user.id,
+      brandName: profile?.company_name || profile?.full_name || 'Brand',
+      isPro: true,
+      navigate,
+    });
+  }, [user, brandIsPro, profile?.company_name, profile?.full_name, navigate]);
+
+  useEffect(() => {
+    if (loading) return;
+    const focus = searchParams.get('focus');
+    if (!focus) return;
+    const t = window.setTimeout(() => focusOnboardingField(focus), 50);
+    return () => window.clearTimeout(t);
+  }, [loading, searchParams, tab]);
 
   const set = (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -295,29 +363,15 @@ const BrandProfile = () => {
     );
   }
 
-  const countryOptions = form.continent
-    ? countriesIn(form.continent)
-    : CONTINENTS.flatMap((c) => countriesIn(c.id));
+  const countryOptions = form.continent ? countriesIn(form.continent) : CONTINENTS.flatMap((c) => countriesIn(c.id));
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-3xl mx-auto px-5 md:px-10 py-12">
-        <h1 className="font-display text-4xl font-bold mb-2">My Profile</h1>
-        <p className="text-muted-foreground mb-2">
+      <main className="max-w-3xl mx-auto px-5 md:px-10 py-8 md:py-12">
+        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">My Profile</h1>
+        <p className="text-muted-foreground mb-8">
           This is how your brand appears on campaigns and messages.
-        </p>
-        <p className="text-sm text-muted-foreground mb-8">
-          {brandIsPro ? (
-            'You are on Twen Plus.'
-          ) : (
-            <>
-              Free plan.{' '}
-              <Link to="/pricing" className="font-semibold text-primary underline">
-                See Twen Plus
-              </Link>
-            </>
-          )}
         </p>
 
         <OnboardingBanner />
@@ -325,7 +379,7 @@ const BrandProfile = () => {
         <div
           role="tablist"
           aria-label="Profile sections"
-          className="flex w-full sm:inline-flex p-1 rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-10"
+          className="flex w-full overflow-x-auto scrollbar-none sm:inline-flex p-1 rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-8 md:mb-10"
         >
           {TABS.map((item) => {
             const selected = tab === item.id;
@@ -350,6 +404,18 @@ const BrandProfile = () => {
             );
           })}
         </div>
+
+        {(tab === 'plan' || tab === 'billing') && (
+          <ProfilePlanPanel
+            audience="brand"
+            isPro={brandIsPro}
+            pending={searchParams.get('upgraded') === 'pending'}
+            upgrading={upgrading}
+            renewsAt={profile?.plan_renews_at}
+            focus={tab === 'billing' ? 'billing' : 'plan'}
+            onUpgrade={() => startPlanCheckout('brand')}
+          />
+        )}
 
         {tab === 'company' && (
           <div role="tabpanel" id="brand-panel-company" aria-labelledby="brand-tab-company">
@@ -497,49 +563,46 @@ const BrandProfile = () => {
               <div className="grid md:grid-cols-3 gap-5">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="continent">Continent</Label>
-                  <select
+                  <FilterSelect
                     id="continent"
-                    className={selectClass}
                     value={form.continent}
-                    onChange={(e) => {
-                      const continent = e.target.value;
+                    onChange={(continent) => {
                       setForm((f) => ({
                         ...f,
                         continent,
                         country: continentOf(f.country) === continent ? f.country : '',
                       }));
                     }}
-                  >
-                    <option value="">Select</option>
-                    {CONTINENTS.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    ariaLabel="Continent"
+                    inactiveValue=""
+                    placeholder="Select"
+                    variant="field"
+                    options={[
+                      { value: '', label: 'Select' },
+                      ...CONTINENTS.map((c) => ({ value: c.id, label: c.label })),
+                    ]}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="country">Country</Label>
-                  <select
+                  <FilterSelect
                     id="country"
-                    className={selectClass}
                     value={form.country}
-                    onChange={(e) => {
-                      const country = e.target.value;
+                    onChange={(country) => {
                       setForm((f) => ({
                         ...f,
                         country,
                         continent: continentOf(country) || f.continent,
                       }));
                     }}
-                  >
-                    <option value="">Select</option>
-                    {countryOptions.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                    ariaLabel="Country"
+                    inactiveValue=""
+                    placeholder="Select"
+                    variant="field"
+                    searchable
+                    searchPlaceholder="Filter countries"
+                    options={countryOptions.map((name) => ({ value: name, label: name }))}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="city">City</Label>
@@ -550,7 +613,8 @@ const BrandProfile = () => {
           </div>
         )}
 
-        <Button variant="invofy" size="invofy" onClick={save} disabled={saving}>
+        {tab !== 'plan' && tab !== 'billing' && (
+          <Button variant="invofy" size="invofy" onClick={save} disabled={saving}>
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : saved ? (
@@ -558,6 +622,9 @@ const BrandProfile = () => {
           ) : null}
           {saved ? 'Saved' : 'Save profile'}
         </Button>
+        )}
+
+        {tab === 'company' && <DeleteAccountCard />}
       </main>
     </div>
   );

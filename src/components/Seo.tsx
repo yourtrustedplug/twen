@@ -5,6 +5,7 @@ import {
   SITE_NAME,
   absoluteUrl,
   breadcrumbJsonLd,
+  ogImageType,
   organizationJsonLd,
   resolvePageSeo,
   softwareApplicationJsonLd,
@@ -83,15 +84,16 @@ export function Seo() {
     upsertMeta('property', 'og:description', page.description);
     upsertMeta('property', 'og:url', url);
     upsertMeta('property', 'og:image', image);
+    upsertMeta('property', 'og:image:type', ogImageType(image));
     upsertMeta('property', 'og:image:width', '1200');
     upsertMeta('property', 'og:image:height', '630');
-    upsertMeta('property', 'og:image:alt', page.title);
+    upsertMeta('property', 'og:image:alt', page.images?.[0]?.title ?? page.title);
 
     upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertMeta('name', 'twitter:title', page.title);
     upsertMeta('name', 'twitter:description', page.description);
     upsertMeta('name', 'twitter:image', image);
-    upsertMeta('name', 'twitter:image:alt', page.title);
+    upsertMeta('name', 'twitter:image:alt', page.images?.[0]?.title ?? page.title);
 
     upsertLink('canonical', url);
 

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { getRememberedAudience } from '@/lib/audience';
 import { useStartAuth } from '@/hooks/use-start-auth';
+import { payoutRailsSummary } from '@/lib/payout-methods';
 import waveBg from '@/assets/about/wave-bg-values.png';
 import valuesBg from '@/assets/about/values-bg.jpg';
 import valuesImage from '@/assets/about/values-image.jpg';
@@ -32,7 +33,7 @@ const valuesData = [
     icon: valueIcon04,
     number: 4,
     title: 'Built for This Region',
-    description: 'Payout lands on mobile money — MTN MoMo or Airtel Money. Local creators, local languages, local formats.',
+    description: `Payout lands on mobile money — ${payoutRailsSummary()}. Local creators, local languages, local formats.`,
   },
 ];
 
@@ -44,8 +45,8 @@ interface ValueCardProps {
 }
 
 const ValueCard = ({ icon, number, title, description }: ValueCardProps) => (
-  <div className="bg-white border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6">
-    <img src={icon} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" />
+  <div className="bg-white border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-6 md:p-8 flex flex-col gap-5 md:gap-6">
+    <img src={icon} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" aria-hidden="true" />
     <div className="flex flex-col gap-3">
       <h3 className="text-2xl max-[991px]:text-xl leading-[1.4] font-bold">
         {number}. {title}
@@ -73,6 +74,7 @@ const AboutValues = () => {
             loading="lazy"
             decoding="async"
             className="absolute inset-0 w-full h-full object-cover opacity-20 z-[1] pointer-events-none"
+            aria-hidden="true"
           />
 
           {/* Content */}
@@ -108,7 +110,7 @@ const AboutValues = () => {
                 >
                   <img
                     src={valuesImage}
-                    alt="Team member"
+                    alt="Twen teammate standing for the values behind the platform"
                     width={400}
                     height={500}
                     loading="lazy"

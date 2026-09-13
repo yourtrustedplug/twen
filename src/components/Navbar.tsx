@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -65,8 +65,15 @@ const Navbar = ({ compact = false }: NavbarProps) => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 bg-transparent pt-3 max-xs:pt-2">
+    <nav className="fixed inset-x-0 top-0 z-50 bg-transparent pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="w-full h-full px-5 md:px-10">
         <div
           className={
@@ -130,8 +137,9 @@ const Navbar = ({ compact = false }: NavbarProps) => {
             {/* Menu Button — always shown in compact (home) mode */}
             <button
               onClick={toggleMenu}
-              className={`${compact ? '' : 'lg:hidden'} z-10 flex justify-center items-center w-16 h-16 max-lg:w-[3.75rem] max-lg:h-[3.75rem] max-xs:w-[3.75rem] max-xs:h-[3.75rem] bg-primary rounded-full transition-colors`}
-              aria-label="Toggle menu"
+              className={`${compact ? '' : 'lg:hidden'} relative z-20 flex justify-center items-center h-11 w-11 md:h-14 md:w-14 lg:h-16 lg:w-16 bg-primary rounded-full transition-colors`}
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMenuOpen}
             >
               <div className="relative flex justify-center items-center w-6 h-full">
                 <div className="flex flex-col justify-center items-center gap-[6px] w-6 h-4 overflow-hidden">
@@ -160,14 +168,18 @@ const Navbar = ({ compact = false }: NavbarProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className={`${compact ? '' : 'lg:hidden'} fixed inset-0 z-[5] bg-transparent flex justify-center items-center`}
+            className={`${compact ? '' : 'lg:hidden'} fixed inset-0 z-10 bg-background pointer-events-none flex flex-col`}
           >
+            <div
+              className="h-[calc(5.25rem+env(safe-area-inset-top))] shrink-0"
+              aria-hidden
+            />
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="flex flex-col items-center justify-start gap-8 w-full h-full overflow-y-auto bg-background pt-48 max-xs:pt-40"
+              className="pointer-events-auto flex flex-col items-center justify-start gap-8 w-full flex-1 overflow-y-auto px-5 pb-10"
             >
               {navLinks.map((link, index) => (
                 <motion.div

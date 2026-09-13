@@ -58,17 +58,17 @@ interface TestimonialCardProps {
 const TestimonialCard = ({ avatar, name, role, quote, isStaggered }: TestimonialCardProps) => (
   <div
     className={cn(
-      'bg-white border border-[#f1f1f1] rounded-[30px] p-8 flex flex-col gap-6 w-[380px] max-lg:w-[340px] max-md:w-[300px] shrink-0',
-      isStaggered && 'mt-16'
+      'bg-white border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-6 md:p-8 flex flex-col gap-5 md:gap-6 w-[min(20rem,calc(100vw-2.5rem))] md:w-[340px] lg:w-[380px] shrink-0',
+      isStaggered && 'md:mt-16'
     )}
   >
-    <img src={quoteIcon} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" />
+    <img src={quoteIcon} alt="" width={40} height={40} loading="lazy" decoding="async" className="w-10 h-10" aria-hidden="true" />
     <p className="text-lg leading-[1.5] text-muted-foreground font-sans font-normal">{quote}</p>
     <div className="flex items-center gap-4">
       <div className="w-14 h-14 rounded-full border border-[#f1f1f1] p-[3px]">
         <img
           src={avatar}
-          alt={name}
+          alt={`${name}, ${role}`}
           width={56}
           height={56}
           loading="lazy"
@@ -142,7 +142,7 @@ const Testimonials = ({ className, ...props }: TestimonialsProps) => {
       {...props}
     >
       <div className="max-w-[100rem] mx-auto">
-        <div className="relative bg-[#fafafa] rounded-[4rem] max-xs:rounded-[3rem] overflow-hidden">
+        <div className="relative bg-[#fafafa] rounded-[2.5rem] md:rounded-[4rem] overflow-hidden">
           <img
             src={waveBg}
             alt=""
@@ -151,15 +151,16 @@ const Testimonials = ({ className, ...props }: TestimonialsProps) => {
             loading="lazy"
             decoding="async"
             className="absolute inset-0 w-full h-full object-cover opacity-20 z-[1] pointer-events-none"
+            aria-hidden="true"
           />
 
-          <div className="relative z-[2] py-32 max-lg:py-24 max-xs:py-20">
-            <div className="flex flex-col gap-12 max-md:gap-8">
-              <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center px-12 max-lg:px-10 max-md:px-8 max-xs:px-4">
+          <div className="relative z-[2] py-16 md:py-24 lg:py-32">
+            <div className="flex flex-col gap-8 md:gap-12">
+              <div className="flex flex-col gap-4 max-w-[50rem] mx-auto text-center px-5 sm:px-8 lg:px-12">
                 <span className="text-xs tracking-[1px] uppercase font-semibold">
                   Creators & Brands
                 </span>
-                <h2 className="text-[4.5rem] max-lg:text-[3rem] max-md:text-[2rem] leading-[1.2] font-bold font-display">
+                <h2 className="text-[clamp(2rem,6vw,4.5rem)] leading-[1.15] font-bold font-display">
                   What Both Sides Say
                 </h2>
                 <div className="w-full">

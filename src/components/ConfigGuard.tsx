@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { hasSupabaseConfig } from '@/integrations/supabase/client';
+import { ErrorPoster } from '@/components/ErrorPoster';
 
 type Status = 'checking' | 'ok' | 'bad' | 'missing';
 
@@ -48,14 +49,50 @@ export function ConfigGuard({ children }: { children: React.ReactNode }) {
       !hasPrivyConfig && 'PRIVY_APP_ID',
     ].filter(Boolean);
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center bg-background text-foreground">
-        <h1 className="text-xl font-semibold">Missing deploy environment</h1>
-        <p className="text-sm text-muted-foreground max-w-lg">
-          This build is missing <code className="font-mono">{missing.join(', ')}</code>. Add those
-          names in Vercel → Settings → Environment Variables (no <code className="font-mono">VITE_</code>{' '}
-          prefix — use Secret), then <strong>redeploy</strong>.
-        </p>
-      </div>
+      <ErrorPoster
+        plainAnchors
+        logoHref="/"
+        documentTitle="Missing environment | Twen"
+        watermark="503"
+        eyebrow="Configuration"
+        title="This build can't start."
+        description={
+          <>
+            This build is missing{' '}
+            <code className="font-['DM_Mono',ui-monospace,monospace] text-[0.9em] text-foreground">
+              {missing.join(', ')}
+            </code>
+            .
+            {import.meta.env.DEV ? (
+              <>
+                {' '}
+                Local: copy{' '}
+                <code className="font-['DM_Mono',ui-monospace,monospace] text-[0.9em] text-foreground">
+                  .env.production
+                </code>{' '}
+                to{' '}
+                <code className="font-['DM_Mono',ui-monospace,monospace] text-[0.9em] text-foreground">
+                  .env
+                </code>{' '}
+                (or fill those names) and restart{' '}
+                <code className="font-['DM_Mono',ui-monospace,monospace] text-[0.9em] text-foreground">
+                  npm run dev
+                </code>
+                . Live Vercel is separate — it already has these keys at build time.
+              </>
+            ) : (
+              <>
+                {' '}
+                Add those names in Vercel → Settings → Environment Variables (no{' '}
+                <code className="font-['DM_Mono',ui-monospace,monospace] text-[0.9em] text-foreground">
+                  VITE_
+                </code>{' '}
+                prefix — use Secret), then <strong className="text-foreground">redeploy</strong>.
+              </>
+            )}
+          </>
+        }
+      />
     );
   }
 

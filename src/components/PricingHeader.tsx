@@ -4,6 +4,7 @@ import PricingCards from '@/components/PricingCards';
 import PricingAudienceSwitch from '@/components/PricingAudienceSwitch';
 import pricingHeaderBg from '@/assets/pricing/pricing-header-bg.jpg';
 import type { Audience } from '@/lib/audience';
+import { PageBreadcrumbs } from '@/components/PageBreadcrumbs';
 
 interface PricingHeaderProps extends ComponentProps<'section'> {
   audience: Audience;
@@ -27,6 +28,7 @@ const PricingHeader = ({ className, audience, onAudienceChange, ...props }: Pric
       <div className="relative z-10 w-full px-10 max-[767px]:px-6 max-[479px]:px-5">
         <div className="w-full max-w-[1440px] mx-auto">
           <div className="flex flex-col items-center text-center pt-48 max-[991px]:pt-40 max-[767px]:pt-36 max-[479px]:pt-32 pb-16 max-[767px]:pb-12 max-[479px]:pb-10">
+            <PageBreadcrumbs className="mb-4" />
             <span className="text-foreground text-xs tracking-[1px] uppercase font-semibold mb-4">
               Pricing
             </span>

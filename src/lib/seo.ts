@@ -1,5 +1,8 @@
 /** Site-wide SEO constants and per-route meta for Twen. */
 
+import { isBookMePath } from '@/lib/book-me';
+import { httpErrorCopy, httpErrorPath } from '@/lib/http-errors';
+
 /** Must match the live canonical host (Vercel 308s apex → www). */
 export const SITE_URL = 'https://www.twen.app';
 export const SITE_NAME = 'Twen';
@@ -129,8 +132,10 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   '/terms': {
     path: '/terms',
     title: 'Terms of Service | Twen',
-    description: 'Terms of service for using Twen — campaigns, payouts, and platform rules.',
+    description:
+      'Read Twen terms for creator and brand accounts, escrow-funded campaigns, verified-view payouts, and platform rules across East Africa.',
     robots: INDEX,
+    image: DEFAULT_OG_IMAGE,
     breadcrumbs: [
       { name: 'Home', path: '/' },
       { name: 'Terms', path: '/terms' },
@@ -139,8 +144,10 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   '/privacy': {
     path: '/privacy',
     title: 'Privacy Policy | Twen',
-    description: 'How Twen collects, uses, and protects your data.',
+    description:
+      'How Twen collects, uses, and protects account, campaign, and payout data. Contact hello@twen.app to request access, correction, or deletion.',
     robots: INDEX,
+    image: DEFAULT_OG_IMAGE,
     breadcrumbs: [
       { name: 'Home', path: '/' },
       { name: 'Privacy', path: '/privacy' },
@@ -149,8 +156,10 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   '/licenses': {
     path: '/licenses',
     title: 'Licenses | Twen',
-    description: 'Third-party licenses and attributions used by Twen.',
+    description:
+      'Fonts, images, and third-party attributions used on Twen, including Inter Tight and the visual assets on this site.',
     robots: INDEX,
+    image: DEFAULT_OG_IMAGE,
     breadcrumbs: [
       { name: 'Home', path: '/' },
       { name: 'Licenses', path: '/licenses' },
@@ -190,6 +199,45 @@ export function resolvePageSeo(pathname: string): PageSeo {
   const exact = PAGE_SEO[pathname];
   if (exact) return exact;
 
+  if (isBookMePath(pathname)) {
+    return {
+      path: pathname,
+      title: `Book me | ${SITE_NAME}`,
+      description: 'Hire this creator on Twen. Put this page in a TikTok or Instagram bio.',
+      robots: INDEX,
+      image: DEFAULT_OG_IMAGE,
+      breadcrumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Book me', path: pathname },
+      ],
+    };
+  }
+
+  const errorCode = httpErrorPath(pathname);
+  if (errorCode) {
+    const copy = httpErrorCopy(errorCode);
+    return {
+      path: pathname,
+      title: copy.documentTitle,
+      description: copy.description,
+      robots: NOINDEX,
+      image: DEFAULT_OG_IMAGE,
+      breadcrumbs: [
+        { name: 'Home', path: '/' },
+        { name: String(errorCode), path: pathname },
+      ],
+    };
+  }
+
+  if (pathname.startsWith('/dev/')) {
+    return {
+      path: pathname,
+      title: `DEV | ${SITE_NAME}`,
+      description: DEFAULT_DESCRIPTION,
+      robots: NOINDEX,
+    };
+  }
+
   if (PRIVATE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return {
       path: pathname,
@@ -202,9 +250,21 @@ export function resolvePageSeo(pathname: string): PageSeo {
   return {
     path: pathname,
     title: `Page not found | ${SITE_NAME}`,
-    description: DEFAULT_DESCRIPTION,
+    description: 'That Twen page is missing. Head home to find creator and brand campaigns.',
     robots: NOINDEX,
+    image: DEFAULT_OG_IMAGE,
+    breadcrumbs: [
+      { name: 'Home', path: '/' },
+      { name: 'Not found', path: pathname },
+    ],
   };
+}
+
+export function ogImageType(url: string): string {
+  if (/\.jpe?g(\?|$)/i.test(url)) return 'image/jpeg';
+  if (/\.webp(\?|$)/i.test(url)) return 'image/webp';
+  if (/\.gif(\?|$)/i.test(url)) return 'image/gif';
+  return 'image/png';
 }
 
 export function absoluteUrl(path: string): string {
@@ -272,6 +332,7 @@ export function breadcrumbJsonLd(page: PageSeo) {
 
 export function webPageJsonLd(page: PageSeo) {
   const url = absoluteUrl(page.path);
+  const primary = page.image ?? page.images?.[0]?.url;
   return {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -279,9 +340,10 @@ export function webPageJsonLd(page: PageSeo) {
     description: page.description,
     url,
     isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL },
-    primaryImageOfPage: page.image
-      ? { '@type': 'ImageObject', url: page.image }
+    primaryImageOfPage: primary
+      ? { '@type': 'ImageObject', url: primary, caption: page.title }
       : undefined,
+    image: page.images?.map((image) => image.url),
     inLanguage: 'en',
   };
 }

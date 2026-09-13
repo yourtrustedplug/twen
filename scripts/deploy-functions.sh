@@ -20,6 +20,7 @@ supabase functions deploy connect-social --project-ref "$REF"
 supabase functions deploy social-oauth-callback --project-ref "$REF" --no-verify-jwt
 supabase functions deploy verify-id --project-ref "$REF"
 supabase functions deploy verify-submission --project-ref "$REF"
+supabase functions deploy delete-account --project-ref "$REF"
 
 cat <<'EOF'
 
@@ -29,14 +30,15 @@ supabase secrets set --project-ref utzkityhzxpzipvmdmxz \
   PRIVY_APP_ID="…" \
   PRIVY_APP_SECRET="…" \
   RESEND_API_KEY="…" \
-  RESEND_FROM_EMAIL="Twen <onboarding@resend.dev>" \
-  CONTACT_TO_EMAIL="hello@twen.app" \
-  PAYOUT_OPS_EMAIL="hello@twen.app" \
+  RESEND_FROM_EMAIL="Twen <hello@twen.app>" \
+  CONTACT_TO_EMAIL="your-inbox@gmail.com" \
+  PAYOUT_OPS_EMAIL="your-inbox@gmail.com" \
   NARDOPAY_API_KEY="np_live_…" \
   NARDOPAY_API_URL="https://mczqwqsvumfsneoknlep.supabase.co/functions/v1/create-payment-link-api" \
   NARDOPAY_WEBHOOK_SECRET="long-random-shared-with-nardopay" \
   PUBLIC_APP_URL="https://YOUR_DOMAIN" \
   PRO_PLAN_AMOUNT="49" \
+  CREATOR_PRO_AMOUNT="9" \
   CRON_SECRET="…" \
           TIKTOK_ACCESS_TOKEN="…" \
   TIKTOK_CLIENT_KEY="…" \

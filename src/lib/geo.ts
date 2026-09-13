@@ -110,6 +110,8 @@ export const continentOf = (country: string): ContinentId | '' =>
 export const countriesIn = (continent: string) =>
   COUNTRIES.filter((c) => c.continent === continent).map((c) => c.name);
 
+export const allCountryNames = () => COUNTRIES.map((c) => c.name);
+
 export const formatPlace = (city?: string | null, country?: string | null, fallback = '') => {
   const parts = [city, country].map((s) => (s ?? '').trim()).filter(Boolean);
   return parts.length ? parts.join(', ') : fallback;

@@ -2,21 +2,42 @@
 
 export type SocialPlatform = 'tiktok' | 'instagram'
 
+const TIKTOK_HOSTS = new Set(['tiktok.com', 'm.tiktok.com', 'vm.tiktok.com', 'vt.tiktok.com'])
+
+export function coerceHttpUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return trimmed
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (
+    /^(www\.)?(tiktok\.com|m\.tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com|instagram\.com|instagr\.am)\b/i.test(
+      trimmed,
+    )
+  ) {
+    return `https://${trimmed}`
+  }
+  return trimmed
+}
+
 export function extractTikTokVideoId(url: string): string | null {
-  const m = url.match(/\/video\/(\d+)/) ?? url.match(/[?&]item_id=(\d+)/)
+  const raw = coerceHttpUrl(url)
+  const m =
+    raw.match(/\/(?:video|photo)\/(\d+)/) ??
+    raw.match(/[?&](?:item_id|aweme_id)=(\d+)/) ??
+    raw.match(/tiktok\.com\/v\/(\d+)/i)
   return m?.[1] ?? null
 }
 
 export function extractTikTokHandle(url: string): string | null {
-  const m = url.match(/tiktok\.com\/@([^/?#]+)/i)
+  const m = coerceHttpUrl(url).match(/tiktok\.com\/@([^/?#]+)/i)
   if (!m?.[1]) return null
   return `@${decodeURIComponent(m[1]).replace(/^@/, '').toLowerCase()}`
 }
 
 export function extractInstagramShortcode(url: string): string | null {
+  const raw = coerceHttpUrl(url)
   const m =
-    url.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i) ??
-    url.match(/instagr\.am\/(?:p|reel)\/([A-Za-z0-9_-]+)/i)
+    raw.match(/instagram\.com\/(?:share\/)?(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i) ??
+    raw.match(/instagr\.am\/(?:p|reel)\/([A-Za-z0-9_-]+)/i)
   return m?.[1] ?? null
 }
 
@@ -31,11 +52,13 @@ export function detectPlatform(
   return 'unknown'
 }
 
-/** Strict host + path shape for the chosen platform (blocks random sites). */
+const isTikTokSharePath = (pathname: string) => /^\/t\/[A-Za-z0-9_-]+/i.test(pathname)
+
+/** Host + path shape for the chosen platform (blocks random sites). Share links are allowed. */
 export function isValidPlatformUrl(platform: SocialPlatform, url: string): boolean {
   let parsed: URL
   try {
-    parsed = new URL(url.trim())
+    parsed = new URL(coerceHttpUrl(url))
   } catch {
     return false
   }
@@ -43,13 +66,14 @@ export function isValidPlatformUrl(platform: SocialPlatform, url: string): boole
   const host = parsed.hostname.replace(/^www\./, '').toLowerCase()
 
   if (platform === 'tiktok') {
+    if (!TIKTOK_HOSTS.has(host)) return false
     if (host === 'vm.tiktok.com' || host === 'vt.tiktok.com') return parsed.pathname.length > 1
-    if (host !== 'tiktok.com') return false
-    return Boolean(extractTikTokVideoId(url) || /\/@[^/]+\/video\/\d+/i.test(url))
+    if (isTikTokSharePath(parsed.pathname)) return true
+    return Boolean(extractTikTokVideoId(parsed.toString()))
   }
 
   if (host !== 'instagram.com' && host !== 'instagr.am') return false
-  return Boolean(extractInstagramShortcode(url))
+  return Boolean(extractInstagramShortcode(parsed.toString()))
 }
 
 export function normalizeHandle(handle: string | null | undefined): string {
@@ -57,7 +81,7 @@ export function normalizeHandle(handle: string | null | undefined): string {
 }
 
 export async function resolveRedirectUrl(url: string, maxHops = 5): Promise<string> {
-  let current = url.trim()
+  let current = coerceHttpUrl(url)
   for (let i = 0; i < maxHops; i++) {
     const host = (() => {
       try {
@@ -66,10 +90,8 @@ export async function resolveRedirectUrl(url: string, maxHops = 5): Promise<stri
         return ''
       }
     })()
-    if (host !== 'vm.tiktok.com' && host !== 'vt.tiktok.com' && host !== 'tiktok.com') {
-      return current
-    }
-    if (host === 'tiktok.com' && extractTikTokVideoId(current)) return current
+    if (!TIKTOK_HOSTS.has(host)) return current
+    if (extractTikTokVideoId(current)) return current
 
     try {
       const res = await fetch(current, {
@@ -78,7 +100,14 @@ export async function resolveRedirectUrl(url: string, maxHops = 5): Promise<stri
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TwenBot/1.0)' },
       })
       const loc = res.headers.get('location')
-      if (!loc || (res.status !== 301 && res.status !== 302 && res.status !== 303 && res.status !== 307 && res.status !== 308)) {
+      if (
+        !loc ||
+        (res.status !== 301 &&
+          res.status !== 302 &&
+          res.status !== 303 &&
+          res.status !== 307 &&
+          res.status !== 308)
+      ) {
         return current
       }
       current = new URL(loc, current).toString()

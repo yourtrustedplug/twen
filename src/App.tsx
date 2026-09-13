@@ -22,6 +22,7 @@ import CreatorBrowse from "./pages/CreatorBrowse";
 import CreatorCampaignDetail from "./pages/CreatorCampaignDetail";
 import CreatorSubmissions from "./pages/CreatorSubmissions";
 import CreatorEarnings from "./pages/CreatorEarnings";
+import CreatorPayoutAccount from "./pages/CreatorPayoutAccount";
 import CreatorProfile from "./pages/CreatorProfile";
 import CreatorWatchlist from "./pages/CreatorWatchlist";
 import BrandCreatorMarketplace from "./pages/BrandCreatorMarketplace";
@@ -40,7 +41,13 @@ import SocialCallback from "./pages/SocialCallback";
 import Licenses from "./pages/Licenses";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import SomethingWentWrong from "./pages/SomethingWentWrong";
+import HttpErrorPage from "./pages/HttpError";
 import NotFound from "./pages/NotFound";
+import DevErrors from "./pages/DevErrors";
+import { BookMeRedirect } from "./pages/BookMe";
+import PublicFallback from "./pages/PublicFallback";
+import { HTTP_ERROR_CODES } from "./lib/http-errors";
 import ScrollToTop from "./components/ScrollToTop";
 import { Seo } from "./components/Seo";
 
@@ -114,6 +121,9 @@ const App = () => (
                 <Route path="/creator/earnings" element={
                   <ProtectedRoute role="creator"><CreatorEarnings /></ProtectedRoute>
                 } />
+                <Route path="/creator/earnings/account" element={
+                  <ProtectedRoute role="creator"><CreatorPayoutAccount /></ProtectedRoute>
+                } />
                 <Route path="/creator/profile" element={
                   <ProtectedRoute role="creator"><CreatorProfile /></ProtectedRoute>
                 } />
@@ -137,8 +147,23 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/auth/social-callback" element={<SocialCallback />} />
+                <Route path="/book/:slug" element={<BookMeRedirect />} />
 
-                <Route path="*" element={<NotFound />} />
+                {HTTP_ERROR_CODES.map((code) => (
+                  <Route
+                    key={code}
+                    path={`/${code}`}
+                    element={code === 404 ? <NotFound /> : <HttpErrorPage code={code} />}
+                  />
+                ))}
+
+                {import.meta.env.DEV ? (
+                  <>
+                    <Route path="/dev/crash" element={<SomethingWentWrong />} />
+                    <Route path="/dev/errors" element={<DevErrors />} />
+                  </>
+                ) : null}
+                <Route path="*" element={<PublicFallback />} />
               </Routes>
             </AuthProvider>
           </AppPrivyProvider>

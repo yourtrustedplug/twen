@@ -7,11 +7,11 @@ import pronatureLogo from "@/assets/logos/pronature.png";
 import sitemarkLogo from "@/assets/logos/sitemark.png";
 
 const logos = [
-  { src: springfieldLogo, alt: "Springfield" },
-  { src: wavelessLogo, alt: "Waveless" },
-  { src: umbrellaLogo, alt: "Umbrella" },
-  { src: pronatureLogo, alt: "ProNature" },
-  { src: sitemarkLogo, alt: "Sitemark" },
+  { src: springfieldLogo, alt: "Springfield logo" },
+  { src: wavelessLogo, alt: "Waveless logo" },
+  { src: umbrellaLogo, alt: "Umbrella logo" },
+  { src: pronatureLogo, alt: "ProNature logo" },
+  { src: sitemarkLogo, alt: "Sitemark logo" },
 ];
 
 interface LogoCloudProps extends React.ComponentProps<"section"> {}

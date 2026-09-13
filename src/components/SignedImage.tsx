@@ -24,7 +24,7 @@ const SignedImage = ({ path, alt, className, bucket = ASSET_BUCKET }: Props) => 
   }, [path, bucket]);
 
   if (!url) return <div className={cn('bg-[#f1f1f1] animate-pulse', className)} aria-hidden />;
-  return <img src={url} alt={alt} loading="lazy" decoding="async" className={className} />;
+  return <img src={url} alt={alt} loading="lazy" decoding="async" className={cn('block', className)} />;
 };
 
 export default SignedImage;

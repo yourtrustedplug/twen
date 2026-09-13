@@ -7,6 +7,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
+import { roleScopedAppUrl } from '../_shared/hosts.ts'
 import { suggestRatePerVideo } from '../_shared/suggest-rate.ts'
 
 function adminClient() {
@@ -22,6 +23,9 @@ type TokenResult = {
   refreshToken?: string
   expiresAt?: string
   handle: string
+  displayName: string
+  bio: string
+  avatarUrl: string
   followerCount: number
   avgViews: number
   engagementRate: number
@@ -30,6 +34,38 @@ type TokenResult = {
 function expiryFromSeconds(seconds?: number) {
   if (!seconds) return undefined
   return new Date(Date.now() + seconds * 1000).toISOString()
+}
+
+function splitName(full: string): { first: string; last: string } {
+  const trimmed = full.trim()
+  if (!trimmed) return { first: '', last: '' }
+  const space = trimmed.indexOf(' ')
+  if (space < 0) return { first: trimmed, last: '' }
+  return { first: trimmed.slice(0, space), last: trimmed.slice(space + 1).trim() }
+}
+
+async function persistAvatar(
+  admin: ReturnType<typeof adminClient>,
+  userId: string,
+  platform: Platform,
+  sourceUrl: string,
+): Promise<string | null> {
+  if (!sourceUrl) return null
+  try {
+    const res = await fetch(sourceUrl)
+    if (!res.ok) return sourceUrl
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    const contentType = (res.headers.get('content-type') ?? 'image/jpeg').split(';')[0]
+    const ext = contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg'
+    const path = `${userId}/social/${platform}.${ext}`
+    const { error } = await admin.storage.from('campaign-assets').upload(path, bytes, {
+      upsert: true,
+      contentType,
+    })
+    return error ? sourceUrl : path
+  } catch {
+    return sourceUrl
+  }
 }
 
 async function exchangeTikTok(code: string, verifier: string, redirectUri: string): Promise<TokenResult> {
@@ -52,7 +88,7 @@ async function exchangeTikTok(code: string, verifier: string, redirectUri: strin
   }
 
   const infoRes = await fetch(
-    'https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,username,follower_count,likes_count,video_count',
+    'https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,username,bio_description,avatar_url,follower_count,likes_count,video_count',
     { headers: { Authorization: `Bearer ${access}` } },
   )
   const info = await infoRes.json()
@@ -94,6 +130,9 @@ async function exchangeTikTok(code: string, verifier: string, redirectUri: strin
     refreshToken: json.refresh_token,
     expiresAt: expiryFromSeconds(json.expires_in),
     handle,
+    displayName: typeof user.display_name === 'string' ? user.display_name : '',
+    bio: typeof user.bio_description === 'string' ? user.bio_description : '',
+    avatarUrl: typeof user.avatar_url === 'string' ? user.avatar_url : '',
     followerCount,
     avgViews,
     engagementRate,
@@ -130,7 +169,7 @@ async function exchangeInstagram(code: string, redirectUri: string): Promise<Tok
   const access = (longJson.access_token as string | undefined) ?? shortToken
 
   const meUrl = new URL('https://graph.instagram.com/v21.0/me')
-  meUrl.searchParams.set('fields', 'user_id,username,followers_count,media_count')
+  meUrl.searchParams.set('fields', 'user_id,username,name,profile_picture_url,followers_count,media_count')
   meUrl.searchParams.set('access_token', access)
   const meRes = await fetch(meUrl)
   const me = await meRes.json()
@@ -140,6 +179,9 @@ async function exchangeInstagram(code: string, redirectUri: string): Promise<Tok
     accessToken: access,
     expiresAt: expiryFromSeconds(longJson.expires_in),
     handle,
+    displayName: typeof me.name === 'string' && me.name.trim() ? me.name.trim() : handle.replace(/^@/, ''),
+    bio: '',
+    avatarUrl: typeof me.profile_picture_url === 'string' ? me.profile_picture_url : '',
     followerCount: Number(me.followers_count) || 0,
     avgViews: 0,
     engagementRate: 0,
@@ -209,12 +251,15 @@ Deno.serve(async (req) => {
   const platforms = Array.isArray(profile?.platforms) ? [...profile.platforms] : []
   if (!platforms.includes(platform)) platforms.push(platform)
 
-  const followerCount = Math.max(Number(profile?.follower_count) || 0, result.followerCount)
-  const avgViews = result.avgViews || Number(profile?.avg_views) || 0
-  const engagementRate = result.engagementRate || Number(profile?.engagement_rate) || 0
+  const followerCount =
+    result.followerCount > 0 ? result.followerCount : Number(profile?.follower_count) || 0
+  const avgViews = result.avgViews > 0 ? result.avgViews : Number(profile?.avg_views) || 0
+  const engagementRate =
+    result.engagementRate > 0 ? result.engagementRate : Number(profile?.engagement_rate) || 0
   const suggested = suggestRatePerVideo({ followerCount, avgViews, engagementRate })
   const overridden = Boolean(profile?.rate_overridden)
   const now = new Date().toISOString()
+  const avatarPath = await persistAvatar(admin, row.user_id, platform, result.avatarUrl)
 
   const patch: Record<string, unknown> = {
     platforms,
@@ -227,13 +272,46 @@ Deno.serve(async (req) => {
   if (platform === 'tiktok') {
     patch.tiktok_handle = result.handle || profile?.tiktok_handle
     patch.tiktok_connected_at = now
+    if (avatarPath) patch.tiktok_avatar_url = avatarPath
   } else {
     patch.instagram_handle = result.handle || profile?.instagram_handle
     patch.instagram_connected_at = now
+    if (avatarPath) patch.instagram_avatar_url = avatarPath
+  }
+
+  if (!String(profile?.first_name ?? '').trim() && result.displayName) {
+    const names = splitName(result.displayName)
+    if (names.first) {
+      patch.first_name = names.first
+      if (names.last && !String(profile?.last_name ?? '').trim()) patch.last_name = names.last
+      const full = [names.first, names.last || profile?.last_name].filter(Boolean).join(' ')
+      if (full && !String(profile?.full_name ?? '').trim()) patch.full_name = full
+    }
+  }
+  if (!String(profile?.bio ?? '').trim() && result.bio.trim()) {
+    patch.bio = result.bio.trim()
   }
 
   const { error: updateError } = await admin.from('profiles').update(patch).eq('id', row.user_id)
-  if (updateError) return jsonResponseFor(req, { error: updateError.message }, 500)
+  if (updateError) {
+    const fallback = { ...patch }
+    delete fallback.tiktok_avatar_url
+    delete fallback.instagram_avatar_url
+    const retry = await admin.from('profiles').update(fallback).eq('id', row.user_id)
+    if (retry.error) return jsonResponseFor(req, { error: retry.error.message }, 500)
+  }
 
-  return jsonResponseFor(req, { ok: true, platform, handle: result.handle })
+  const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://twen.app').replace(/\/$/, '')
+  const next = `${roleScopedAppUrl(appUrl, 'creator')}/creator/profile?tab=account&connected=${platform}`
+
+  return jsonResponseFor(req, {
+    ok: true,
+    platform,
+    handle: result.handle,
+    followerCount,
+    avgViews,
+    engagementRate,
+    rateSuggested: suggested,
+    next,
+  })
 })

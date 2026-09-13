@@ -1,14 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import footerBg from '@/assets/footer-bg.jpg';
-import xIcon from '@/assets/icons/x-icon.png';
-import instagramIcon from '@/assets/icons/instagram-icon.png';
-import linkedinIcon from '@/assets/icons/linkedin-icon.png';
-import facebookIcon from '@/assets/icons/facebook-icon.png';
 import { Logo } from '@/logos';
 import { getRememberedAudience } from '@/lib/audience';
 import { audienceHref } from '@/lib/hosts';
 import { useStartAuth } from '@/hooks/use-start-auth';
+import { SupportMailButton } from '@/components/SupportMailButton';
 
 const footerNavLinks = () => [
   { label: 'Home', href: '/' },
@@ -19,13 +16,6 @@ const footerNavLinks = () => [
   { label: 'Contact', href: '/contact' },
   { label: 'Terms', href: '/terms' },
   { label: 'Privacy', href: '/privacy' },
-];
-
-const socialLinks = [
-  { icon: xIcon, href: 'https://www.x.com/', alt: 'Twen on X' },
-  { icon: instagramIcon, href: 'https://www.instagram.com/', alt: 'Twen on Instagram' },
-  { icon: linkedinIcon, href: 'https://www.linkedin.com/', alt: 'Twen on LinkedIn' },
-  { icon: facebookIcon, href: 'https://www.facebook.com/', alt: 'Twen on Facebook' },
 ];
 
 const prefetchAbout = () => {
@@ -82,22 +72,6 @@ const SlideUpLink = ({
   );
 };
 
-const SocialIcon = ({ icon, href, alt }: { icon: string; href: string; alt: string }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group flex items-center justify-center w-11 h-11 bg-foreground rounded-full transition-transform duration-300 hover:scale-110"
-  >
-    <div className="relative w-5 h-5 overflow-hidden">
-      <div className="flex flex-col items-center w-full transition-transform duration-300 group-hover:-translate-y-5">
-        <img src={icon} alt={alt} width={20} height={20} loading="lazy" decoding="async" className="w-5 h-5" />
-        <img src={icon} alt={alt} width={20} height={20} loading="lazy" decoding="async" className="w-5 h-5" />
-      </div>
-    </div>
-  </a>
-);
-
 const Footer = () => {
   const startAuth = useStartAuth();
 
@@ -111,13 +85,14 @@ const Footer = () => {
         loading="lazy"
         decoding="async"
         className="absolute inset-0 w-full h-full object-cover opacity-90"
+        aria-hidden="true"
       />
 
-      <div className="relative z-10 w-full h-full px-10 max-md:px-6 max-xs:px-5">
+      <div className="relative z-10 w-full h-full px-5 md:px-6 lg:px-10">
         <div className="w-full max-w-[100rem] h-full mx-auto">
-          <div className="pt-32 pb-80 max-lg:pb-64 max-md:pt-24 max-md:pb-56 max-xs:pt-20 max-xs:pb-32 2xl:pb-[22rem] 3xl:pb-[25rem]">
-            <div className="relative z-[5] grid grid-cols-2 gap-8 w-full max-xs:grid-cols-1">
-              <div className="flex flex-col gap-5 items-start justify-start max-xs:col-span-1">
+          <div className="pt-16 pb-40 md:pt-24 md:pb-56 lg:pt-32 lg:pb-80">
+            <div className="relative z-[5] grid grid-cols-1 sm:grid-cols-2 gap-10 w-full">
+              <div className="flex flex-col gap-5 items-start justify-start">
                 <Link to="/" className="relative z-10 flex items-center gap-2 no-underline">
                   <Logo
                     variant="full"
@@ -133,13 +108,11 @@ const Footer = () => {
                 </div>
 
                 <div className="flex items-center gap-5">
-                  {socialLinks.map((social) => (
-                    <SocialIcon key={social.alt} {...social} />
-                  ))}
+                  <SupportMailButton />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-6 items-end justify-start max-xs:items-start max-xs:row-start-2">
+              <div className="flex flex-col gap-5 items-start sm:items-end justify-start">
                 <span className="text-[#3f3f3f] text-[1.125rem]">Pages</span>
 
                 {footerNavLinks().map((link) => (
@@ -147,7 +120,7 @@ const Footer = () => {
                     key={link.label}
                     label={link.label}
                     href={link.href}
-                    alignEnd
+                    alignEnd={false}
                     onMouseEnter={
                       link.href === '/about'
                         ? prefetchAbout
@@ -162,7 +135,7 @@ const Footer = () => {
                   />
                 ))}
 
-                <Button variant="invofy" size="invofy" onClick={() => startAuth(getRememberedAudience())}>
+                <Button variant="invofy" size="invofy" className="max-sm:w-full" onClick={() => startAuth(getRememberedAudience())}>
                   Sign Up
                 </Button>
               </div>
@@ -181,7 +154,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <h2 className="absolute z-[2] bottom-[-10vw] left-0 right-0 text-center text-[28vw] 3xl:text-[30rem] font-bold font-display leading-none m-0">
+      <h2 className="absolute z-[2] bottom-[-6vw] left-0 right-0 text-center text-[22vw] sm:text-[28vw] 3xl:text-[30rem] font-bold font-display leading-none m-0 pointer-events-none">
         Twen
       </h2>
     </footer>

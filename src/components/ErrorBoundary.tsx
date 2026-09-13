@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import SomethingWentWrong from '@/pages/SomethingWentWrong';
 
 interface Props {
   children: ReactNode;
@@ -21,21 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <h1 className="text-xl font-semibold">Something went wrong</h1>
-          <p className="text-sm text-muted-foreground max-w-md">
-            Refresh the page to continue. If this keeps happening, contact hello@twen.app.
-          </p>
-          <button
-            type="button"
-            className="text-sm font-medium underline underline-offset-4"
-            onClick={() => window.location.assign('/')}
-          >
-            Go home
-          </button>
-        </div>
-      );
+      return <SomethingWentWrong />;
     }
     return this.props.children;
   }

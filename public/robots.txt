@@ -24,10 +24,23 @@ Disallow: /signin
 Disallow: /signup
 Disallow: /reset-password
 
+# Social crawlers need the Open Graph image on every public URL.
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: WhatsApp
 Allow: /
 
 User-agent: *
@@ -43,6 +56,7 @@ Disallow: /signin
 Disallow: /signup
 Disallow: /reset-password
 
+Host: https://www.twen.app
 Sitemap: https://www.twen.app/sitemap-index.xml
 Sitemap: https://www.twen.app/sitemap.xml
 Sitemap: https://www.twen.app/sitemap-images.xml

@@ -5,6 +5,10 @@ import {
   tenantOrigin,
   tenantForRole,
   isAppPath,
+  socialCallbackLandingPath,
+  publicCreatorHref,
+  bookMeHref,
+  localHttpTenantRewrite,
 } from './hosts';
 
 describe('hosts', () => {
@@ -32,7 +36,7 @@ describe('hosts', () => {
     ).toBe('https://brand.twen.app');
     expect(
       tenantOrigin('creator', { hostname: 'localhost', protocol: 'http:', port: '8080' }),
-    ).toBe('http://creator.localhost:8080');
+    ).toBe('http://localhost:8080');
   });
 
   it('scopes PUBLIC_APP_URL by role', () => {
@@ -49,5 +53,61 @@ describe('hosts', () => {
     expect(tenantForRole('admin')).toBe('admin');
     expect(isAppPath('/creator/profile')).toBe(true);
     expect(isAppPath('/creators')).toBe(false);
+  });
+
+  it('sends social OAuth back to the creator profile Account tab', () => {
+    expect(socialCallbackLandingPath('tiktok')).toBe('/creator/profile?tab=account&connected=tiktok');
+    expect(socialCallbackLandingPath('instagram')).toBe('/creator/profile?tab=account&connected=instagram');
+  });
+
+  it('builds the public creator URL on the brand host', () => {
+    expect(
+      publicCreatorHref('abc-123', { hostname: 'creator.twen.app', protocol: 'https:', port: '' }),
+    ).toBe('https://brand.twen.app/brand/creators/abc-123');
+    expect(
+      publicCreatorHref('abc-123', { hostname: 'localhost', protocol: 'http:', port: '8080' }),
+    ).toBe('http://localhost:8080/brand/creators/abc-123');
+  });
+
+  it('builds a Book me URL on the apex host', () => {
+    expect(
+      bookMeHref('amina', { hostname: 'creator.twen.app', protocol: 'https:', port: '' }),
+    ).toBe('https://twen.app/@amina');
+  });
+
+  it('rewrites HTTP *.localhost onto localhost paths so Privy can boot', () => {
+    expect(
+      localHttpTenantRewrite({
+        hostname: 'creator.localhost',
+        protocol: 'http:',
+        port: '8080',
+        pathname: '/',
+      }),
+    ).toBe('http://localhost:8080/creator');
+    expect(
+      localHttpTenantRewrite({
+        hostname: 'brand.localhost',
+        protocol: 'http:',
+        port: '8080',
+        pathname: '/signin',
+        search: '?role=brand',
+      }),
+    ).toBe('http://localhost:8080/signin?role=brand');
+    expect(
+      localHttpTenantRewrite({
+        hostname: 'creator.twen.app',
+        protocol: 'https:',
+        port: '',
+        pathname: '/',
+      }),
+    ).toBeNull();
+    expect(
+      localHttpTenantRewrite({
+        hostname: 'localhost',
+        protocol: 'http:',
+        port: '8080',
+        pathname: '/',
+      }),
+    ).toBeNull();
   });
 });

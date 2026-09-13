@@ -4,22 +4,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
 import CreatorCard from '@/components/CreatorCard';
+import FilterSelect from '@/components/creator/FilterSelect';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { ProfileRow } from '@/types/unignored';
 import { PLATFORMS, PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { allCountryNames } from '@/lib/geo';
 import { isPro } from '@/lib/plan';
+import { usePlanCheckout } from '@/hooks/use-plan-checkout';
 import { Loader2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const BrandCreatorMarketplace = () => {
   const { profile } = useAuth();
+  const { startPlanCheckout, busy } = usePlanCheckout();
   const pro = isPro(profile);
 
   const [creators, setCreators] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [platform, setPlatform] = useState('all');
+  const [country, setCountry] = useState('all');
+  const countryOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Any country' },
+      ...allCountryNames().map((name) => ({ value: name, label: name })),
+    ],
+    [],
+  );
 
   useEffect(() => {
     if (!pro) {
@@ -43,6 +55,7 @@ const BrandCreatorMarketplace = () => {
     return creators.filter((c) => {
       const platforms = parseStringArray(c.platforms);
       if (platform !== 'all' && !platforms.includes(platform)) return false;
+      if (country !== 'all' && (c.country ?? '') !== country) return false;
       if (!q) return true;
       return (
         (c.full_name ?? '').toLowerCase().includes(q) ||
@@ -54,22 +67,23 @@ const BrandCreatorMarketplace = () => {
         (c.bio ?? '').toLowerCase().includes(q)
       );
     });
-  }, [creators, query, platform]);
+  }, [creators, query, platform, country]);
 
   if (!pro) {
     return (
       <div className="min-h-screen bg-background">
         <AppHeader />
         <main className="max-w-2xl mx-auto px-5 md:px-10 py-20 text-center">
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-6 md:p-12">
             <Lock className="h-8 w-8 mx-auto mb-5 text-muted-foreground" />
             <h1 className="font-display text-3xl font-bold mb-3">Browse creators is Twen Plus</h1>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               Free brands run open bounty campaigns. Twen Plus lets you search creators, filter by niche and platform, and hire directly.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Button variant="invofy" size="invofy" asChild>
-                <Link to="/pricing">See Twen Plus</Link>
+              <Button variant="invofy" size="invofy" disabled={busy} onClick={() => startPlanCheckout('brand')}>
+                {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Get Twen Plus
               </Button>
               <Button variant="invofyOutline" size="invofy" asChild>
                 <Link to="/brand">Back to campaigns</Link>
@@ -98,6 +112,14 @@ const BrandCreatorMarketplace = () => {
             className="md:max-w-sm"
           />
           <div className="flex flex-wrap gap-2">
+            <FilterSelect
+              value={country}
+              onChange={setCountry}
+              ariaLabel="Country"
+              searchable
+              searchPlaceholder="Filter countries"
+              options={countryOptions}
+            />
             {['all', ...PLATFORMS].map((p) => (
               <button
                 key={p}

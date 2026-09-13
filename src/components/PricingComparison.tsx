@@ -3,8 +3,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import checkIcon from '@/assets/icons/check-icon.png';
 import { useStartAuth } from '@/hooks/use-start-auth';
+import { usePlanCheckout } from '@/hooks/use-plan-checkout';
+import { BRAND_PLUS_MONTHLY_USD, CREATOR_PRO_MONTHLY_USD, formatUsd } from '@/lib/plan';
 import type { Audience } from '@/lib/audience';
 import PricingAudienceSwitch from '@/components/PricingAudienceSwitch';
+import { Loader2 } from 'lucide-react';
 
 interface ComparisonRow {
   name: string;
@@ -17,8 +20,8 @@ type ColumnKey = 'free' | 'brandsPro' | 'creatorPro';
 
 const allColumns: { name: string; price: string; period: string; featured: boolean; key: ColumnKey }[] = [
   { name: 'Free', price: '$0', period: 'forever', featured: false, key: 'free' },
-  { name: 'Twen Plus', price: '$49', period: '/mo', featured: true, key: 'brandsPro' },
-  { name: 'Creator Pro', price: '$49', period: '/mo', featured: true, key: 'creatorPro' },
+  { name: 'Twen Plus', price: formatUsd(BRAND_PLUS_MONTHLY_USD), period: '/mo', featured: true, key: 'brandsPro' },
+  { name: 'Creator Pro', price: formatUsd(CREATOR_PRO_MONTHLY_USD), period: '/mo', featured: true, key: 'creatorPro' },
 ];
 
 const comparisonData: { category: string; features: ComparisonRow[] }[] = [
@@ -75,12 +78,15 @@ const MobileComparisonCard = ({
   column,
   columnKey,
   audience,
+  busy,
+  onCta,
 }: {
   column: (typeof allColumns)[0];
   columnKey: ColumnKey;
   audience: Audience;
+  busy: boolean;
+  onCta: (columnKey: ColumnKey) => void;
 }) => {
-  const startAuth = useStartAuth();
   const paidKey: ColumnKey = audience === 'brand' ? 'brandsPro' : 'creatorPro';
 
   return (
@@ -124,7 +130,7 @@ const MobileComparisonCard = ({
                   return (
                     <li key={featureIndex} className="flex items-start gap-3">
                       {included ? (
-                        <img src={checkIcon} alt="" width={16} height={16} loading="lazy" decoding="async" className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <img src={checkIcon} alt="" width={16} height={16} loading="lazy" decoding="async" className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
                       ) : (
                         <span className="w-4 h-4 flex items-center justify-center text-muted-foreground flex-shrink-0">—</span>
                       )}
@@ -145,7 +151,14 @@ const MobileComparisonCard = ({
       </div>
 
       <div className="px-6 pb-6">
-        <Button variant="invofy" size="invofy" className="w-full" onClick={() => startAuth(audience)}>
+        <Button
+          variant="invofy"
+          size="invofy"
+          className="w-full"
+          disabled={columnKey !== 'free' && busy}
+          onClick={() => onCta(columnKey)}
+        >
+          {columnKey !== 'free' && busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
           {ctaForColumn(columnKey)}
         </Button>
       </div>
@@ -163,6 +176,12 @@ const PricingComparison = ({ className, audience = 'creator', onAudienceChange }
   const paidKey: ColumnKey = audience === 'brand' ? 'brandsPro' : 'creatorPro';
   const columns = allColumns.filter((column) => column.key === 'free' || column.key === paidKey);
   const startAuth = useStartAuth();
+  const { startPlanCheckout, busy } = usePlanCheckout();
+
+  const onCta = (columnKey: ColumnKey) => {
+    if (columnKey === 'free') startAuth(audience);
+    else void startPlanCheckout(audience);
+  };
 
   return (
     <section className={cn('px-5 md:px-10 max-[479px]:px-5', className)}>
@@ -195,6 +214,8 @@ const PricingComparison = ({ className, audience = 'creator', onAudienceChange }
                       column={column}
                       columnKey={column.key}
                       audience={audience}
+                      busy={busy}
+                      onCta={onCta}
                     />
                   ))}
                 </div>
@@ -278,8 +299,10 @@ const PricingComparison = ({ className, audience = 'creator', onAudienceChange }
                                 variant={column.featured ? 'invofy' : 'invofyOutline'}
                                 size="invofy"
                                 className="w-full max-w-[160px]"
-                                onClick={() => startAuth(audience)}
+                                disabled={column.key !== 'free' && busy}
+                                onClick={() => onCta(column.key)}
                               >
+                                {column.key !== 'free' && busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                                 {ctaForColumn(column.key)}
                               </Button>
                             </td>

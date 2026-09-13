@@ -105,7 +105,7 @@ const ContactLocation = ({ className, ...props }: ContactLocationProps) => {
               <div className="w-1/2 max-[991px]:w-full relative">
                 <img
                   src={officeImage}
-                  alt="Our office"
+                  alt="Twen office in East Africa"
                   width={600}
                   height={400}
                   loading="lazy"

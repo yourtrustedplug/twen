@@ -2,7 +2,7 @@
  * CORS helpers for edge functions.
  * Allows PUBLIC_APP_URL, sibling subdomains (creators/brands/admin),
  * optional CORS_ALLOWED_ORIGINS (comma-separated),
- * and any localhost / 127.0.0.1 origin so Vite (8080) is not blocked when
+ * and any localhost / 127.0.0.1 / *.localhost origin so Vite (8080) is not blocked when
  * PUBLIC_APP_URL is production or another local port.
  */
 import { isAllowedAppOrigin } from './hosts.ts'
@@ -22,7 +22,9 @@ export function resolveAllowOrigin(
   if (appUrl && isAllowedAppOrigin(origin, appUrl)) return origin
   try {
     const host = new URL(origin).hostname
-    if (host === 'localhost' || host === '127.0.0.1') return origin
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost')) {
+      return origin
+    }
   } catch {
     /* ignore invalid Origin */
   }

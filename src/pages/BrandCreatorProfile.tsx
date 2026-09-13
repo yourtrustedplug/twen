@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppHeader from '@/components/AppHeader';
-import SignedImage from '@/components/SignedImage';
+import { CreatorPhoto } from '@/components/CreatorCard';
 import { MetricTile } from '@/components/MetricTile';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -14,18 +14,24 @@ import { formatPlace } from '@/lib/geo';
 import { formatPercent, engagement } from '@/lib/metrics';
 import { campaignImage } from '@/lib/campaign-image';
 import { isPro } from '@/lib/plan';
+import { startBrandCreatorChat } from '@/lib/hire';
+import { usePlanCheckout } from '@/hooks/use-plan-checkout';
+import { ErrorPoster } from '@/components/ErrorPoster';
 import { Loader2, ArrowLeft, MessageSquare, Handshake, Lock } from 'lucide-react';
 
 const BrandCreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { startPlanCheckout, busy: upgrading } = usePlanCheckout();
   const navigate = useNavigate();
   const [creator, setCreator] = useState<ProfileRow | null>(null);
   const [work, setWork] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const pro = isPro(profile);
+  const hireOnce = useRef(false);
 
   useEffect(() => {
     if (!pro || !id) {
@@ -42,6 +48,35 @@ const BrandCreatorProfile = () => {
     });
   }, [id, pro]);
 
+  const startChat = async (hire: boolean) => {
+    if (!user || !creator) return;
+    setBusy(true);
+    const result = await startBrandCreatorChat({
+      brandId: user.id,
+      creatorId: creator.id,
+      brandName: profile?.company_name || profile?.full_name || 'Brand',
+      creatorName: creator.full_name ?? 'Creator',
+      ratePerVideo: creator.rate_per_video,
+      hire,
+    });
+    setBusy(false);
+    if ('error' in result) {
+      toast({ title: 'Could not open the chat', description: result.error, variant: 'destructive' });
+      return;
+    }
+    navigate(`/messages?c=${result.conversationId}`);
+  };
+
+  useEffect(() => {
+    if (!pro || loading || !creator || hireOnce.current) return;
+    if (searchParams.get('hire') !== '1') return;
+    hireOnce.current = true;
+    const next = new URLSearchParams(searchParams);
+    next.delete('hire');
+    setSearchParams(next, { replace: true });
+    void startChat(true);
+  }, [pro, loading, creator, searchParams, setSearchParams]);
+
   if (!pro) {
     return (
       <div className="min-h-screen bg-background">
@@ -51,46 +86,15 @@ const BrandCreatorProfile = () => {
             <Lock className="h-8 w-8 mx-auto mb-5 text-muted-foreground" />
             <h1 className="font-display text-3xl font-bold mb-3">Creator profiles are Twen Plus</h1>
             <p className="text-muted-foreground mb-8">Upgrade to browse creators, view rate cards, and hire directly.</p>
-            <Button variant="invofy" size="invofy" asChild>
-              <Link to="/pricing">See Twen Plus</Link>
+            <Button variant="invofy" size="invofy" disabled={upgrading} onClick={() => startPlanCheckout('brand')}>
+              {upgrading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Get Twen Plus
             </Button>
           </div>
         </main>
       </div>
     );
   }
-
-  const startChat = async (hire: boolean) => {
-    if (!user || !creator) return;
-    setBusy(true);
-    const { data, error } = await supabase
-      .from('conversations')
-      .upsert(
-        {
-          brand_id: user.id,
-          creator_id: creator.id,
-          brand_name: profile?.company_name || profile?.full_name || 'Brand',
-          creator_name: creator.full_name ?? 'Creator',
-        },
-        { onConflict: 'brand_id,creator_id' }
-      )
-      .select('id')
-      .maybeSingle();
-    if (error || !data) {
-      setBusy(false);
-      toast({ title: 'Could not open the chat', description: error?.message, variant: 'destructive' });
-      return;
-    }
-    if (hire) {
-      await supabase.from('messages').insert({
-        conversation_id: (data as { id: string }).id,
-        sender_id: user.id,
-        body: `We'd like to hire you for a paid video at your rate of ${formatMoney(creator.rate_per_video)}. Are you available?`,
-      });
-    }
-    setBusy(false);
-    navigate(`/messages?c=${(data as { id: string }).id}`);
-  };
 
   if (loading) {
     return (
@@ -102,14 +106,17 @@ const BrandCreatorProfile = () => {
 
   if (!creator) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <AppHeader />
-        <main className="max-w-3xl mx-auto px-5 py-24 text-center">
-          <h1 className="font-display text-3xl font-bold mb-4">Creator not found</h1>
-          <Button variant="invofy" size="invofy" asChild>
-            <Link to="/brand/creators">Back to creators</Link>
-          </Button>
-        </main>
+        <ErrorPoster
+          underChrome
+          documentTitle="Creator not found | Twen"
+          watermark="404"
+          eyebrow="Creator"
+          title="This creator isn't in the marketplace."
+          description="They may have hidden their profile, or this link is wrong."
+          actions={[{ label: 'Back to creators', href: '/brand/creators' }]}
+        />
       </div>
     );
   }
@@ -119,7 +126,7 @@ const BrandCreatorProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-[80rem] mx-auto px-5 md:px-10 py-12">
+      <main className="max-w-[80rem] mx-auto px-5 md:px-10 py-8 md:py-12">
         <Link to="/brand/creators" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="h-4 w-4" /> Creators
         </Link>
@@ -127,24 +134,25 @@ const BrandCreatorProfile = () => {
         <div className="grid lg:grid-cols-[380px_1fr] gap-10">
           <div>
             <div className="rounded-[34px] overflow-hidden aspect-[4/5] mb-5">
-              {creator.avatar_url ? (
-                <SignedImage path={creator.avatar_url} alt={creator.full_name ?? 'Creator'} className="w-full h-full object-cover" />
-              ) : (
-                <img src={campaignImage(creator.id)} alt={creator.full_name ?? 'Creator'} className="w-full h-full object-cover" />
-              )}
+              <CreatorPhoto
+                id={creator.id}
+                avatarUrl={creator.avatar_url}
+                alt={creator.full_name ?? 'Creator'}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex flex-col gap-3">
-              <Button variant="invofy" size="invofy" onClick={() => startChat(true)} disabled={busy}>
+              <Button variant="invofy" size="invofy" className="max-md:w-full" onClick={() => startChat(true)} disabled={busy}>
                 <Handshake className="h-4 w-4 mr-2" /> Hire at {formatMoney(creator.rate_per_video)}
               </Button>
-              <Button variant="invofyOutline" size="invofy" onClick={() => startChat(false)} disabled={busy}>
+              <Button variant="invofyOutline" size="invofy" className="max-md:w-full" onClick={() => startChat(false)} disabled={busy}>
                 <MessageSquare className="h-4 w-4 mr-2" /> Message
               </Button>
             </div>
           </div>
 
           <div>
-            <h1 className="font-display text-4xl font-bold mb-1">{creator.full_name ?? 'Creator'}</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-1">{creator.full_name ?? 'Creator'}</h1>
             <p className="text-muted-foreground mb-6">
               {[creator.tiktok_handle, creator.instagram_handle].filter(Boolean).join(' · ')}
               {formatPlace(creator.city, creator.country, creator.location)
@@ -187,7 +195,7 @@ const BrandCreatorProfile = () => {
                     >
                       <img
                         src={campaignImage(s.id)}
-                        alt="Creator video"
+                        alt={`${creator.full_name ?? 'Creator'} video — ${formatViews(s.verified_views)} verified views`}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />

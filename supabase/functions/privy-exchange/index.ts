@@ -175,6 +175,11 @@ Deno.serve(async (req) => {
         full_name: fullName,
         tiktok_handle: body.tiktokHandle ?? null,
         company_name: body.companyName ?? null,
+        ...(role === 'creator'
+          ? {
+              avatar_url: `https://api.dicebear.com/9.x/adventurer/png?seed=${encodeURIComponent(userId)}&size=512&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
+            }
+          : {}),
       })
     }
 

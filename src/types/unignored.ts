@@ -4,6 +4,7 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row'];
 export type Submission = Database['public']['Tables']['submissions']['Row'];
 export type Earning = Database['public']['Tables']['earnings']['Row'];
 export type Payout = Database['public']['Tables']['payouts']['Row'];
+export type WithdrawalAccount = Database['public']['Tables']['withdrawal_accounts']['Row'];
 export type WalletTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
 export type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 export type Conversation = Database['public']['Tables']['conversations']['Row'];

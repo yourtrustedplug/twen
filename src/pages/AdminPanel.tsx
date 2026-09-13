@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Payout, ProfileRow, Submission } from '@/types/unignored';
+import { formatPayoutDestination } from '@/lib/payout-methods';
 import { PLATFORM_LABELS, parseChecklistResults } from '@/types/unignored';
 import { formatDate, formatMoney } from '@/lib/format';
 import { ID_BUCKET } from '@/lib/storage';
@@ -160,10 +161,10 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-4xl mx-auto px-5 md:px-10 py-12">
-        <h1 className="font-display text-4xl font-bold mb-2">Admin panel</h1>
+      <main className="max-w-4xl mx-auto px-5 md:px-10 py-8 md:py-12">
+        <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Admin panel</h1>
         <p className="text-muted-foreground mb-8">
-          Moderators and admins share this panel. Review submissions and process MoMo payouts.
+          Moderators and admins share this panel. Review submissions and process mobile money payouts.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-10">
@@ -184,8 +185,8 @@ const AdminPanel = () => {
 
         <h2 className="font-display text-2xl font-bold mb-4">Payout queue</h2>
         {loading ? null : payouts.length === 0 ? (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 text-center text-muted-foreground mb-10">
-            No payouts waiting. After you send MoMo, mark requests completed here.
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 text-center text-muted-foreground mb-10">
+            No payouts waiting. After you send mobile money, mark requests completed here.
           </div>
         ) : (
           <div className="flex flex-col gap-4 mb-10">
@@ -197,8 +198,12 @@ const AdminPanel = () => {
                 <div>
                   <p className="font-display text-lg font-bold">{formatMoney(p.amount)}</p>
                   <p className="text-sm text-muted-foreground">
-                    {p.provider === 'mtn_momo' ? 'MTN MoMo' : 'Airtel Money'} · {p.phone} ·{' '}
-                    {formatDate(p.created_at)}
+                    {formatPayoutDestination({
+                      country: p.country,
+                      method: p.provider,
+                      accountNumber: p.phone,
+                    })}{' '}
+                    · {formatDate(p.created_at)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 font-mono">{p.creator_id}</p>
                 </div>
@@ -232,7 +237,7 @@ const AdminPanel = () => {
 
         <h2 className="font-display text-2xl font-bold mb-4">ID verification</h2>
         {loading ? null : idQueue.length === 0 ? (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-8 text-center text-muted-foreground mb-10">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8 text-center text-muted-foreground mb-10">
             No identity documents waiting.
           </div>
         ) : (

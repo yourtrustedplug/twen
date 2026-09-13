@@ -9,6 +9,10 @@ import { signedUrl } from '@/lib/storage';
 
 const covers = [campaign01, campaign02, campaign03, campaign04, campaign05, campaign06];
 
+const signedCoverCache = new Map<string, string>();
+
+const isAbsoluteUrl = (path: string) => /^https?:\/\//.test(path);
+
 /** Stable fallback visual for a campaign, derived from its id. */
 export const campaignImage = (id: string): string => {
   let hash = 0;
@@ -16,17 +20,34 @@ export const campaignImage = (id: string): string => {
   return covers[hash % covers.length];
 };
 
+/** Sync src for this render: real cover if already known, else stock only when there is no cover. */
+export const immediateCampaignCover = (id: string, coverImage?: string | null) => {
+  if (!coverImage) return campaignImage(id);
+  if (isAbsoluteUrl(coverImage)) return coverImage;
+  return signedCoverCache.get(coverImage) ?? '';
+};
+
 /** Resolves cover_image storage path, else falls back to a stock cover. */
 export const useCampaignCover = (id: string, coverImage?: string | null) => {
-  const [src, setSrc] = useState(() => campaignImage(id));
+  const key = `${id}:${coverImage ?? ''}`;
+  const next = immediateCampaignCover(id, coverImage);
+  const [src, setSrc] = useState(next);
+  const [seen, setSeen] = useState(key);
+  if (key !== seen) {
+    setSeen(key);
+    setSrc(next);
+  }
 
   useEffect(() => {
     let active = true;
-    if (!coverImage) {
-      setSrc(campaignImage(id));
+    if (!coverImage || isAbsoluteUrl(coverImage)) return;
+    const cached = signedCoverCache.get(coverImage);
+    if (cached) {
+      setSrc(cached);
       return;
     }
     signedUrl(coverImage).then((url) => {
+      if (url) signedCoverCache.set(coverImage, url);
       if (active) setSrc(url || campaignImage(id));
     });
     return () => {

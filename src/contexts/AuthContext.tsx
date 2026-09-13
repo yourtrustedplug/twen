@@ -18,10 +18,11 @@ export interface Profile {
   instagram_handle?: string | null;
   tiktok_connected_at?: string | null;
   instagram_connected_at?: string | null;
-  payout_provider: 'mtn_momo' | 'airtel_money' | null;
+  payout_provider: string | null;
   payout_number: string | null;
   id_verification_status: string;
   company_name: string | null;
+  bio?: string | null;
   city?: string | null;
   country?: string | null;
   continent?: string | null;
@@ -32,6 +33,9 @@ export interface Profile {
   brand_secondary_color?: string | null;
   brand_socials?: Record<string, string> | null;
   plan?: string;
+  plan_renews_at?: string | null;
+  nardopay_checkout_url?: string | null;
+  nardopay_checkout_amount?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -128,8 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select()
         .maybeSingle();
       if (!error && created) setProfile(created as Profile);
+      void supabase.rpc('ensure_twen_welcome');
     } else {
       setProfile(existing as Profile);
+      void supabase.rpc('ensure_twen_welcome');
     }
   }, []);
 
@@ -154,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        return { error: new Error(edgeFunctionErrorMessage(error, data)) };
+        return { error: new Error(await edgeFunctionErrorMessage(error, data)) };
       }
       if (data?.error) {
         return { error: new Error(String(data.error)) };
@@ -301,7 +307,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('profiles')
       .update(safe)
       .eq('id', user.id);
-    if (!error) await refreshProfile();
+    if (!error) {
+      await refreshProfile();
+      void supabase.rpc('ensure_twen_welcome');
+    }
     return { error: error as Error | null };
   };
 

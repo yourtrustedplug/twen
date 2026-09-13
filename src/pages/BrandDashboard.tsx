@@ -8,23 +8,9 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import type { Campaign } from '@/types/unignored';
 import { formatMoney, formatDate, formatRate, formatViews } from '@/lib/format';
-import { useCampaignCover } from '@/lib/campaign-image';
+import { brandAnalyticsPath } from '@/lib/brand-analytics';
+import CampaignCover from '@/components/CampaignCover';
 import { Loader2, Plus, Eye } from 'lucide-react';
-
-const CampaignCover = ({ id, coverImage, alt }: { id: string; coverImage?: string | null; alt: string }) => {
-  const src = useCampaignCover(id, coverImage);
-  return (
-    <img
-      src={src}
-      alt={alt}
-      width={768}
-      height={576}
-      loading="lazy"
-      decoding="async"
-      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-    />
-  );
-};
 
 const BrandDashboard = () => {
   const { user } = useAuth();
@@ -51,13 +37,13 @@ const BrandDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-8 md:py-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 mb-8 md:mb-10">
           <div>
-            <h1 className="font-display text-4xl font-bold mb-2">My campaigns</h1>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">My campaigns</h1>
             <p className="text-muted-foreground">Funded distribution. Pay only for verified views.</p>
           </div>
-          <Button variant="invofy" size="invofy" asChild>
+          <Button variant="invofy" size="invofy" className="max-md:w-full" asChild>
             <Link to="/brand/campaigns/new">
               <Plus className="h-4 w-4 mr-2" /> New Campaign
             </Link>
@@ -73,11 +59,11 @@ const BrandDashboard = () => {
             { label: 'Remaining', value: formatMoney(funded - spent) },
             { label: 'Live campaigns', value: String(live) },
           ].map((stat) => (
-            <div key={stat.label} className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-7">
-              <p className="text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-3">
+            <div key={stat.label} className="bg-[#fafafa] border border-[#f1f1f1] rounded-[22px] md:rounded-[30px] p-4 md:p-7">
+              <p className="text-[11px] md:text-xs uppercase tracking-[1px] font-semibold text-muted-foreground mb-2 md:mb-3">
                 {stat.label}
               </p>
-              <p className="font-display text-3xl font-bold">{stat.value}</p>
+              <p className="font-display text-xl md:text-3xl font-bold break-words">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -87,12 +73,12 @@ const BrandDashboard = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : campaigns.length === 0 ? (
-          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-12 text-center">
+          <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-8 md:p-12 text-center">
             <h2 className="font-display text-2xl font-bold mb-3">No campaigns yet</h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               Write a brief, set a rate, fund it. Creators see it instantly.
             </p>
-            <Button variant="invofy" size="invofy" asChild>
+            <Button variant="invofy" size="invofy" className="max-md:w-full" asChild>
               <Link to="/brand/campaigns/new">Create your first campaign</Link>
             </Button>
           </div>
@@ -103,11 +89,16 @@ const BrandDashboard = () => {
               return (
                 <Link
                   key={c.id}
-                  to={`/brand/campaigns/${c.id}`}
+                  to={brandAnalyticsPath(c.id)}
                   className="group bg-white border border-[#f1f1f1] rounded-[30px] overflow-hidden flex flex-col hover:border-[#dcdcdc] transition-colors"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <CampaignCover id={c.id} coverImage={c.cover_image} alt={`${c.title} campaign`} />
+                    <CampaignCover
+                      id={c.id}
+                      coverImage={c.cover_image}
+                      alt={`${c.title} campaign`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
                     <div className="absolute top-4 right-4">
                       <StatusBadge status={c.status} />
                     </div>
@@ -120,11 +111,11 @@ const BrandDashboard = () => {
                     <div className="h-2 rounded-full bg-[#efefef] overflow-hidden mb-2">
                       <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-muted-foreground min-w-0">
                         {formatMoney(c.spent_amount)} of {formatMoney(c.funded_amount)} spent
                       </span>
-                      <span className="flex items-center gap-1 font-semibold">
+                      <span className="flex items-center gap-1 font-semibold shrink-0">
                         <Eye className="h-3.5 w-3.5" />{' '}
                         {formatViews(
                           Number(c.rate_per_1k) === 0
