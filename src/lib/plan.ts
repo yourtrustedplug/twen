@@ -34,7 +34,7 @@ export const CREATOR_PRO_PERKS = [
 ] as const;
 
 export const BRAND_FREE_PERKS = [
-  'Fund a campaign and pay per 1,000 views',
+  'Fund a campaign from $1 per 1,000 views',
   'Any creator can join',
   'When the campaign ends, unused escrow is returned',
   'No commission. No per-campaign fee.',

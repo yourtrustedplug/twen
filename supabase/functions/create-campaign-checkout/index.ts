@@ -46,15 +46,18 @@ Deno.serve(async (req) => {
 
   const { data: campaign, error: campError } = await admin
     .from('campaigns')
-    .select('id, brand_id, title, budget, status, brand_name')
+    .select('id, brand_id, title, budget, status, brand_name, rate_per_1k')
     .eq('id', campaignId)
     .maybeSingle()
 
   if (campError || !campaign) return jsonResponseFor(req, { error: 'Campaign not found' }, 404)
   if (campaign.brand_id !== user.id) return jsonResponseFor(req, { error: 'Not your campaign' }, 403)
   if (campaign.status !== 'draft') return jsonResponseFor(req, { error: 'Campaign is not draft' }, 400)
-  if (!campaign.budget || Number(campaign.budget) <= 0) {
-    return jsonResponseFor(req, { error: 'Budget must be positive' }, 400)
+  if (!campaign.budget || Number(campaign.budget) < 10) {
+    return jsonResponseFor(req, { error: 'Budget is too low' }, 400)
+  }
+  if (!campaign.rate_per_1k || Number(campaign.rate_per_1k) < 1) {
+    return jsonResponseFor(req, { error: 'Rate must be at least $1.00 per 1,000 views' }, 400)
   }
 
   const budget = Number(campaign.budget)

@@ -30,6 +30,7 @@ describe('plan', () => {
 
   it('sells unused escrow after the deadline, not CPC or competitor hiding', () => {
     expect(BRAND_FREE_PERKS.join(' ')).toMatch(/when the campaign ends/i);
+    expect(BRAND_FREE_PERKS.join(' ')).toMatch(/\$1 per 1,000 views/i);
     expect(BRAND_FREE_PERKS.join(' ')).not.toMatch(/comes back/i);
     expect(BRAND_PLUS_PERKS.join(' ')).toMatch(/Search creators/i);
     expect(BRAND_PLUS_PERKS.join(' ')).toMatch(/Message them/i);
