@@ -22,7 +22,7 @@ import { joinName, splitName } from '@/lib/name';
 import { formatPercent } from '@/lib/metrics';
 import { suggestRatePerVideo } from '@/lib/suggest-rate';
 import {
-  accountStatList,
+  connectedAccountRows,
   combineAccountStats,
   parseAccountStats,
   type AccountStats,
@@ -334,7 +334,11 @@ const CreatorProfile = () => {
       }),
     [combinedReach],
   );
-  const accountBreakdown = accountStatList(form.account_stats);
+  const accountBreakdown = connectedAccountRows({
+    stats: form.account_stats,
+    tiktok: Boolean(form.tiktok_connected_at || form.tiktok_handle),
+    instagram: Boolean(form.instagram_connected_at || form.instagram_handle),
+  });
 
   const accountConnected = (platform: SocialPlatform) =>
     Boolean(
@@ -714,7 +718,7 @@ const CreatorProfile = () => {
             <div className={card}>
               <h2 className="font-display text-base font-bold">Rate card</h2>
               <p className="text-xs text-muted-foreground -mt-1">
-                Totals add every connected TikTok and Instagram account.
+                Each connected account is listed. Totals add them together.
                 {creatorIsPro
                   ? ' You can set your price per video.'
                   : ' Price per video can be edited on Creator Pro.'}
@@ -727,61 +731,53 @@ const CreatorProfile = () => {
                   {' '}to fill followers, views, and engagement.
                 </p>
               )}
-              {connectedAccounts.length > 0 && !combinedReach.avgViews && (
-                <p className="text-xs text-muted-foreground">
-                  Views are still empty.{' '}
-                  <button type="button" className="font-semibold text-foreground underline underline-offset-2" onClick={() => setTab('account')}>
-                    Reconnect
-                  </button>
-                  {' '}each account to pull them from recent videos.
-                </p>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                <MetricTile compact label="Followers" value={combinedReach.followerCount ? formatViews(combinedReach.followerCount) : '—'} />
-                <MetricTile compact label="Average views" value={combinedReach.avgViews ? formatViews(combinedReach.avgViews) : '—'} />
-                <MetricTile
-                  compact
-                  label="Engagement"
-                  value={combinedReach.engagementRate ? formatPercent(combinedReach.engagementRate) : '—'}
-                />
-              </div>
               {accountBreakdown.length > 0 && (
-                <div className="bg-white border border-[#f1f1f1] rounded-[14px] overflow-hidden">
-                  <div className="grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                    <p>Account</p>
-                    <p className="text-right">Followers</p>
-                    <p className="text-right">Views</p>
-                    <p className="text-right">Eng.</p>
-                  </div>
-                  {accountBreakdown.map(({ platform, reach }, index) => {
+                <div className={cn('grid gap-2', accountBreakdown.length > 1 ? 'sm:grid-cols-2' : 'grid-cols-1')}>
+                  {accountBreakdown.map(({ platform, reach }) => {
                     const handle = platform === 'tiktok' ? form.tiktok_handle : form.instagram_handle;
                     return (
-                      <div
-                        key={platform}
-                        className={cn(
-                          'grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 items-center px-3 py-2.5 text-xs',
-                          index > 0 && 'border-t border-[#f1f1f1]',
-                        )}
-                      >
-                        <p className="font-semibold truncate">
+                      <div key={platform} className="bg-white border border-[#f1f1f1] rounded-[14px] p-3 flex flex-col gap-2">
+                        <p className="text-xs font-semibold truncate">
                           {PLATFORM_LABELS[platform]}
                           {handle ? ` · ${handle}` : ''}
                         </p>
-                        <p className="text-right tabular-nums">{reach.followerCount ? formatViews(reach.followerCount) : '—'}</p>
-                        <p className="text-right tabular-nums">{reach.avgViews ? formatViews(reach.avgViews) : '—'}</p>
-                        <p className="text-right tabular-nums">{reach.engagementRate ? formatPercent(reach.engagementRate) : '—'}</p>
+                        {reach ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            <MetricTile compact label="Followers" value={formatViews(reach.followerCount)} />
+                            <MetricTile compact label="Avg views" value={reach.avgViews ? formatViews(reach.avgViews) : '—'} />
+                            <MetricTile compact label="Engagement" value={reach.engagementRate ? formatPercent(reach.engagementRate) : '—'} />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            <button type="button" className="font-semibold text-foreground underline underline-offset-2" onClick={() => setTab('account')}>
+                              Reconnect
+                            </button>
+                            {' '}to pull followers and views.
+                          </p>
+                        )}
                       </div>
                     );
                   })}
-                  {accountBreakdown.length > 1 && (
-                    <div className="grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 items-center px-3 py-2.5 text-xs border-t border-[#f1f1f1] bg-[#fafafa] font-semibold">
-                      <p>All accounts</p>
-                      <p className="text-right tabular-nums">{formatViews(combinedReach.followerCount)}</p>
-                      <p className="text-right tabular-nums">{formatViews(combinedReach.avgViews)}</p>
-                      <p className="text-right tabular-nums">{formatPercent(combinedReach.engagementRate)}</p>
-                    </div>
-                  )}
                 </div>
+              )}
+              {accountBreakdown.length > 1 && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.12em] font-semibold text-muted-foreground mb-2">All accounts</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <MetricTile compact label="Followers" value={combinedReach.followerCount ? formatViews(combinedReach.followerCount) : '—'} />
+                    <MetricTile compact label="Average views" value={combinedReach.avgViews ? formatViews(combinedReach.avgViews) : '—'} />
+                    <MetricTile
+                      compact
+                      label="Engagement"
+                      value={combinedReach.engagementRate ? formatPercent(combinedReach.engagementRate) : '—'}
+                    />
+                  </div>
+                </div>
+              )}
+              {connectedAccounts.length > 1 && accountBreakdown.some((row) => !row.reach) && (
+                <p className="text-xs text-muted-foreground">
+                  Reconnect the missing account so both follower counts are included.
+                </p>
               )}
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="rate_per_video">Price per video (USD)</Label>

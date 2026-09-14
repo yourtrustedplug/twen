@@ -187,7 +187,7 @@ const BookMe = () => {
     </Button>
   ) : (
     <form
-      className="border-t border-[#ececec] pt-4"
+      className="border-t border-[#ececec] pt-6"
       onSubmit={(e) => {
         e.preventDefault();
         void send();

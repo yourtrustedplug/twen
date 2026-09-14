@@ -9,7 +9,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
 import { roleScopedAppUrl } from '../_shared/hosts.ts'
 import { suggestRatePerVideo } from '../_shared/suggest-rate.ts'
-import { combineAccountStats, parseAccountStats, upsertAccountStats } from '../_shared/account-stats.ts'
+import {
+  combineAccountStats,
+  parseAccountStats,
+  seedSiblingStats,
+  upsertAccountStats,
+} from '../_shared/account-stats.ts'
 
 function adminClient() {
   const url = Deno.env.get('SUPABASE_URL')!
@@ -359,8 +364,24 @@ Deno.serve(async (req) => {
     avgViews: result.avgViews,
     engagementRate: result.engagementRate,
   }
-  const keepPrevious = !sampled.followerCount && !sampled.avgViews && previousStats[platform]
-  const accountStats = upsertAccountStats(previousStats, platform, keepPrevious ? previousStats[platform]! : sampled)
+  const otherConnected = Boolean(
+    platform === 'tiktok'
+      ? profile?.instagram_connected_at || profile?.instagram_handle
+      : profile?.tiktok_connected_at || profile?.tiktok_handle,
+  )
+  const seeded = seedSiblingStats(
+    previousStats,
+    platform,
+    otherConnected,
+    {
+      followerCount: Number(profile?.follower_count) || 0,
+      avgViews: Number(profile?.avg_views) || 0,
+      engagementRate: Number(profile?.engagement_rate) || 0,
+    },
+    sampled,
+  )
+  const keepPrevious = !sampled.followerCount && !sampled.avgViews && seeded[platform]
+  const accountStats = upsertAccountStats(seeded, platform, keepPrevious ? seeded[platform]! : sampled)
   const combined = combineAccountStats(accountStats)
   const followerCount = combined.followerCount
   const avgViews = combined.avgViews
@@ -418,12 +439,18 @@ Deno.serve(async (req) => {
 
   const { error: updateError } = await admin.from('profiles').update(patch).eq('id', row.user_id)
   if (updateError) {
-    const fallback = { ...patch }
-    delete fallback.tiktok_avatar_url
-    delete fallback.instagram_avatar_url
-    delete fallback.account_stats
-    const retry = await admin.from('profiles').update(fallback).eq('id', row.user_id)
-    if (retry.error) return jsonResponseFor(req, { error: retry.error.message }, 500)
+    console.error('profile update', updateError.message)
+    const withoutAvatars = { ...patch }
+    delete withoutAvatars.tiktok_avatar_url
+    delete withoutAvatars.instagram_avatar_url
+    const retry = await admin.from('profiles').update(withoutAvatars).eq('id', row.user_id)
+    if (retry.error) {
+      console.error('profile update without avatars', retry.error.message)
+      const last = { ...withoutAvatars }
+      delete last.account_stats
+      const finalTry = await admin.from('profiles').update(last).eq('id', row.user_id)
+      if (finalTry.error) return jsonResponseFor(req, { error: finalTry.error.message }, 500)
+    }
   }
 
   const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://twen.app').replace(/\/$/, '')

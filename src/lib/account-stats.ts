@@ -23,19 +23,31 @@ function clampRate(value: number): number {
   return Math.min(Math.max(Number(value) || 0, 0), 1);
 }
 
+export function otherPlatform(platform: SocialPlatform): SocialPlatform {
+  return platform === 'tiktok' ? 'instagram' : 'tiktok';
+}
+
 export function parsePlatformReach(raw: unknown): PlatformReach | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const row = raw as Record<string, unknown>;
-  const followerCount = Math.max(0, Number(row.followerCount) || 0);
-  const avgViews = Math.max(0, Number(row.avgViews) || 0);
-  const engagementRate = clampRate(Number(row.engagementRate) || 0);
+  const followerCount = Math.max(0, Number(row.followerCount ?? row.follower_count) || 0);
+  const avgViews = Math.max(0, Number(row.avgViews ?? row.avg_views) || 0);
+  const engagementRate = clampRate(Number(row.engagementRate ?? row.engagement_rate) || 0);
   if (!followerCount && !avgViews && !engagementRate) return undefined;
   return { followerCount, avgViews, engagementRate };
 }
 
 export function parseAccountStats(raw: unknown): AccountStats {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
-  const row = raw as Record<string, unknown>;
+  let value = raw;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const row = value as Record<string, unknown>;
   const stats: AccountStats = {};
   const tiktok = parsePlatformReach(row.tiktok);
   const instagram = parsePlatformReach(row.instagram);
@@ -59,10 +71,41 @@ export function upsertAccountStats(
   };
 }
 
+/**
+ * When account_stats is empty and the other network is already connected,
+ * the profile totals belong to that other network — keep them instead of replacing.
+ */
+export function seedSiblingStats(
+  existing: AccountStats,
+  connecting: SocialPlatform,
+  otherConnected: boolean,
+  currentTotals: PlatformReach,
+  sampled: PlatformReach,
+): AccountStats {
+  const other = otherPlatform(connecting);
+  if (!otherConnected || existing[other] || existing[connecting]) return existing;
+  if (!currentTotals.followerCount && !currentTotals.avgViews) return existing;
+  const same =
+    currentTotals.followerCount === sampled.followerCount && currentTotals.avgViews === sampled.avgViews;
+  if (same) return existing;
+  return upsertAccountStats(existing, other, currentTotals);
+}
+
 export function accountStatList(stats: AccountStats): Array<{ platform: SocialPlatform; reach: PlatformReach }> {
   const rows: Array<{ platform: SocialPlatform; reach: PlatformReach }> = [];
   if (stats.tiktok) rows.push({ platform: 'tiktok', reach: stats.tiktok });
   if (stats.instagram) rows.push({ platform: 'instagram', reach: stats.instagram });
+  return rows;
+}
+
+export function connectedAccountRows(input: {
+  stats: AccountStats;
+  tiktok?: boolean;
+  instagram?: boolean;
+}): Array<{ platform: SocialPlatform; reach: PlatformReach | null }> {
+  const rows: Array<{ platform: SocialPlatform; reach: PlatformReach | null }> = [];
+  if (input.tiktok) rows.push({ platform: 'tiktok', reach: input.stats.tiktok ?? null });
+  if (input.instagram) rows.push({ platform: 'instagram', reach: input.stats.instagram ?? null });
   return rows;
 }
 
