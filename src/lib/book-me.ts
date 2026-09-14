@@ -1,5 +1,7 @@
 /** Public “Book me” portfolio: short slug in a social bio, page at /@slug. */
 
+import { parseAccountStats, type AccountStats } from '@/lib/account-stats';
+
 export const BOOK_SLUG_MIN = 3;
 export const BOOK_SLUG_MAX = 24;
 
@@ -62,6 +64,7 @@ export type BookMeProfile = {
   tiktok_handle: string | null;
   instagram_handle: string | null;
   book_slug: string;
+  account_stats: AccountStats;
   work: BookMeWork[];
 };
 
@@ -178,6 +181,7 @@ export function parseBookMeProfile(data: unknown): BookMeProfile | null {
     tiktok_handle: typeof row.tiktok_handle === 'string' ? row.tiktok_handle : null,
     instagram_handle: typeof row.instagram_handle === 'string' ? row.instagram_handle : null,
     book_slug: slug,
+    account_stats: parseAccountStats(row.account_stats),
     work: parseBookMeWork(row.work),
   };
 }

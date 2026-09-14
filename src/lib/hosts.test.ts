@@ -55,9 +55,9 @@ describe('hosts', () => {
     expect(isAppPath('/creators')).toBe(false);
   });
 
-  it('sends social OAuth back to the creator profile Account tab', () => {
-    expect(socialCallbackLandingPath('tiktok')).toBe('/creator/profile?tab=account&connected=tiktok');
-    expect(socialCallbackLandingPath('instagram')).toBe('/creator/profile?tab=account&connected=instagram');
+  it('sends social OAuth back to the creator profile Rate card tab', () => {
+    expect(socialCallbackLandingPath('tiktok')).toBe('/creator/profile?tab=rate&connected=tiktok');
+    expect(socialCallbackLandingPath('instagram')).toBe('/creator/profile?tab=rate&connected=instagram');
   });
 
   it('builds the public creator URL on the brand host', () => {

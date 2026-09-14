@@ -136,9 +136,9 @@ export function adminHref(): string {
   return `${tenantOrigin('admin')}/admin`;
 }
 
-/** After TikTok/Instagram Connect, land on the creator profile Account tab. */
+/** After TikTok/Instagram Connect, land on the creator profile Rate card tab. */
 export function socialCallbackLandingPath(platform: 'tiktok' | 'instagram'): string {
-  return `/creator/profile?tab=account&connected=${platform}`;
+  return `/creator/profile?tab=rate&connected=${platform}`;
 }
 
 export function bookMeHref(

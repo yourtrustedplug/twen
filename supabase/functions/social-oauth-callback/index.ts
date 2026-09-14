@@ -9,6 +9,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
 import { roleScopedAppUrl } from '../_shared/hosts.ts'
 import { suggestRatePerVideo } from '../_shared/suggest-rate.ts'
+import { combineAccountStats, parseAccountStats, upsertAccountStats } from '../_shared/account-stats.ts'
 
 function adminClient() {
   const url = Deno.env.get('SUPABASE_URL')!
@@ -169,23 +170,124 @@ async function exchangeInstagram(code: string, redirectUri: string): Promise<Tok
   const access = (longJson.access_token as string | undefined) ?? shortToken
 
   const meUrl = new URL('https://graph.instagram.com/v21.0/me')
-  meUrl.searchParams.set('fields', 'user_id,username,name,profile_picture_url,followers_count,media_count')
+  meUrl.searchParams.set(
+    'fields',
+    'user_id,username,name,biography,profile_picture_url,followers_count,media_count',
+  )
   meUrl.searchParams.set('access_token', access)
   const meRes = await fetch(meUrl)
   const me = await meRes.json()
   const handle = me.username ? `@${String(me.username).replace(/^@/, '')}` : ''
+  const sampled = await sampleInstagramReach(access)
 
   return {
     accessToken: access,
     expiresAt: expiryFromSeconds(longJson.expires_in),
     handle,
     displayName: typeof me.name === 'string' && me.name.trim() ? me.name.trim() : handle.replace(/^@/, ''),
-    bio: '',
+    bio: typeof me.biography === 'string' ? me.biography : '',
     avatarUrl: typeof me.profile_picture_url === 'string' ? me.profile_picture_url : '',
     followerCount: Number(me.followers_count) || 0,
-    avgViews: 0,
-    engagementRate: 0,
+    avgViews: sampled.avgViews,
+    engagementRate: sampled.engagementRate,
   }
+}
+
+async function instagramInsightMap(
+  access: string,
+  mediaId: string,
+  metrics: string[],
+): Promise<Record<string, number>> {
+  const insightsUrl = new URL(`https://graph.instagram.com/v21.0/${mediaId}/insights`)
+  insightsUrl.searchParams.set('metric', metrics.join(','))
+  insightsUrl.searchParams.set('access_token', access)
+  const insightsRes = await fetch(insightsUrl)
+  if (!insightsRes.ok) {
+    await insightsRes.text()
+    return {}
+  }
+  const insights = await insightsRes.json()
+  const out: Record<string, number> = {}
+  for (const row of (insights?.data ?? []) as Array<{ name?: string; values?: Array<{ value?: number }> }>) {
+    const name = typeof row.name === 'string' ? row.name : ''
+    const value = row.values?.[0]?.value
+    if (name && typeof value === 'number') out[name] = value
+  }
+  return out
+}
+
+/** Last ~20 Reels/videos → avg views + (likes+comments)/views, same as TikTok video.list. */
+async function sampleInstagramReach(access: string): Promise<{ avgViews: number; engagementRate: number }> {
+  try {
+    const mediaUrl = new URL('https://graph.instagram.com/v21.0/me/media')
+    mediaUrl.searchParams.set('fields', 'id,media_type,media_product_type,like_count,comments_count')
+    mediaUrl.searchParams.set('limit', '25')
+    mediaUrl.searchParams.set('access_token', access)
+    let mediaRes = await fetch(mediaUrl)
+    if (!mediaRes.ok) {
+      mediaUrl.searchParams.set('fields', 'id,media_type,media_product_type')
+      mediaRes = await fetch(mediaUrl)
+    }
+    if (!mediaRes.ok) {
+      console.error('instagram me/media sample', mediaRes.status, await mediaRes.text())
+      return { avgViews: 0, engagementRate: 0 }
+    }
+    const mediaJson = await mediaRes.json()
+    const items = (mediaJson?.data ?? []) as Array<{
+      id?: string
+      media_type?: string
+      media_product_type?: string
+      like_count?: number
+      comments_count?: number
+    }>
+    const videos = items.filter(
+      (item) => item.id && (item.media_type === 'VIDEO' || item.media_product_type === 'REELS'),
+    )
+    const pool = (videos.length ? videos : items).filter((item) => item.id).slice(0, 20)
+    const rows = await Promise.all(
+      pool.map(async (item) => {
+        let map = await instagramInsightMap(access, item.id!, ['views', 'likes', 'comments'])
+        if (!(map.views > 0)) {
+          map = { ...map, ...(await instagramInsightMap(access, item.id!, ['views'])) }
+        }
+        if (!(map.views > 0)) {
+          const plays = await instagramInsightMap(access, item.id!, ['plays'])
+          if (plays.plays > 0) map = { ...map, views: plays.plays }
+        }
+        const views = map.views || 0
+        if (views <= 0) return null
+        const eng =
+          (Number(item.like_count) || map.likes || 0) + (Number(item.comments_count) || map.comments || 0)
+        return { views, eng }
+      }),
+    )
+    let viewsTotal = 0
+    let viewsN = 0
+    let engTotal = 0
+    for (const row of rows) {
+      if (!row) continue
+      viewsTotal += row.views
+      viewsN += 1
+      engTotal += row.eng
+    }
+    if (!viewsN) return { avgViews: 0, engagementRate: 0 }
+    return {
+      avgViews: Math.round(viewsTotal / viewsN),
+      engagementRate: viewsTotal > 0 ? Math.min(engTotal / viewsTotal, 1) : 0,
+    }
+  } catch (e) {
+    console.error('sampleInstagramReach', e)
+    return { avgViews: 0, engagementRate: 0 }
+  }
+}
+
+function bookSlugFromHandle(handle: string): string {
+  return handle
+    .replace(/^@+/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24)
 }
 
 Deno.serve(async (req) => {
@@ -251,11 +353,18 @@ Deno.serve(async (req) => {
   const platforms = Array.isArray(profile?.platforms) ? [...profile.platforms] : []
   if (!platforms.includes(platform)) platforms.push(platform)
 
-  const followerCount =
-    result.followerCount > 0 ? result.followerCount : Number(profile?.follower_count) || 0
-  const avgViews = result.avgViews > 0 ? result.avgViews : Number(profile?.avg_views) || 0
-  const engagementRate =
-    result.engagementRate > 0 ? result.engagementRate : Number(profile?.engagement_rate) || 0
+  const previousStats = parseAccountStats(profile?.account_stats)
+  const sampled = {
+    followerCount: result.followerCount,
+    avgViews: result.avgViews,
+    engagementRate: result.engagementRate,
+  }
+  const keepPrevious = !sampled.followerCount && !sampled.avgViews && previousStats[platform]
+  const accountStats = upsertAccountStats(previousStats, platform, keepPrevious ? previousStats[platform]! : sampled)
+  const combined = combineAccountStats(accountStats)
+  const followerCount = combined.followerCount
+  const avgViews = combined.avgViews
+  const engagementRate = combined.engagementRate
   const suggested = suggestRatePerVideo({ followerCount, avgViews, engagementRate })
   const overridden = Boolean(profile?.rate_overridden)
   const now = new Date().toISOString()
@@ -263,6 +372,7 @@ Deno.serve(async (req) => {
 
   const patch: Record<string, unknown> = {
     platforms,
+    account_stats: accountStats,
     follower_count: followerCount,
     avg_views: avgViews,
     engagement_rate: engagementRate,
@@ -292,17 +402,32 @@ Deno.serve(async (req) => {
     patch.bio = result.bio.trim()
   }
 
+  const existingSlug = typeof profile?.book_slug === 'string' ? profile.book_slug.trim() : ''
+  if (!existingSlug && result.handle) {
+    const slug = bookSlugFromHandle(result.handle)
+    if (slug.length >= 3) {
+      const { data: taken } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('book_slug', slug)
+        .neq('id', row.user_id)
+        .maybeSingle()
+      if (!taken) patch.book_slug = slug
+    }
+  }
+
   const { error: updateError } = await admin.from('profiles').update(patch).eq('id', row.user_id)
   if (updateError) {
     const fallback = { ...patch }
     delete fallback.tiktok_avatar_url
     delete fallback.instagram_avatar_url
+    delete fallback.account_stats
     const retry = await admin.from('profiles').update(fallback).eq('id', row.user_id)
     if (retry.error) return jsonResponseFor(req, { error: retry.error.message }, 500)
   }
 
   const appUrl = (Deno.env.get('PUBLIC_APP_URL') || 'https://twen.app').replace(/\/$/, '')
-  const next = `${roleScopedAppUrl(appUrl, 'creator')}/creator/profile?tab=account&connected=${platform}`
+  const next = `${roleScopedAppUrl(appUrl, 'creator')}/creator/profile?tab=rate&connected=${platform}`
 
   return jsonResponseFor(req, {
     ok: true,

@@ -8,6 +8,7 @@ import { Logo } from '@/logos';
 import BookMeCard from '@/components/creator/BookMeCard';
 import { ErrorPoster } from '@/components/ErrorPoster';
 import { formatMissingPath } from '@/lib/not-found';
+import { formatMoney } from '@/lib/format';
 import {
   bookMePath,
   bookMeSlugFromPath,
@@ -104,7 +105,7 @@ const BookMe = () => {
       toast({ title: 'Write a message first', description: 'Say what you want them to post, and when.' });
       return;
     }
-    if (profile?.role === 'creator' && user?.id === creator.id) {
+    if (user?.id === creator.id) {
       navigate('/creator/profile?tab=public');
       return;
     }
@@ -146,7 +147,7 @@ const BookMe = () => {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-[#f6f6f6] flex items-center justify-center">
+      <div className="h-dvh bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -172,75 +173,64 @@ const BookMe = () => {
 
   const ownPage = Boolean(user && creator.id === user.id);
   const firstName = (creator.full_name || 'them').trim().split(/\s+/)[0];
+  const bookLabel = user && profile?.role === 'brand' && !isPro(profile)
+    ? 'Get Twen Plus'
+    : `Book ${firstName} · ${formatMoney(creator.rate_per_video)}`;
+
+  const action = ownPage ? (
+    <Button
+      variant="invofy"
+      className="w-full h-12 rounded-full"
+      onClick={() => navigate('/creator/profile?tab=public')}
+    >
+      Edit Book me
+    </Button>
+  ) : (
+    <form
+      className="border-t border-[#ececec] pt-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send();
+      }}
+    >
+      <label htmlFor="book-me-note" className="sr-only">
+        Message {firstName}
+      </label>
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+        <textarea
+          id="book-me-note"
+          rows={2}
+          maxLength={BOOK_NOTE_MAX}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={`Hi ${firstName}, we’d like to book you for a paid video…`}
+          className="w-full resize-none h-[4.35rem] rounded-[18px] bg-[#f6f6f6] border border-[#ececec] px-4 py-3 text-sm leading-snug placeholder:text-[#8e8e93] focus:outline-none focus:border-[#c7c7cc]"
+        />
+        <Button
+          type="submit"
+          disabled={busy}
+          className="h-12 shrink-0 rounded-full px-6 bg-[#0A101D] text-white font-semibold hover:bg-[#0A101D]/90 hover:text-white"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {busy
+            ? user && profile?.role === 'brand' && !isPro(profile)
+              ? 'Opening checkout…'
+              : 'Sending…'
+            : bookLabel}
+        </Button>
+      </div>
+    </form>
+  );
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6]">
-      <div className="max-w-[28rem] mx-auto px-4 pt-8 pb-10">
-        <Link to="/" className="flex justify-center mb-6">
-          <Logo variant="full" className="h-7" />
-        </Link>
-        <BookMeCard profile={creator} />
-
-        {ownPage ? (
-          <div className="mt-5">
-            <Button
-              variant="invofy"
-              size="invofy"
-              className="w-full"
-              onClick={() => navigate('/creator/profile?tab=public')}
-            >
-              Edit Book me
-            </Button>
-          </div>
-        ) : (
-          <form
-            className="mt-5 rounded-[28px] border border-[#f1f1f1] bg-white p-4 shadow-[0_1px_2px_rgba(10,16,29,0.04)]"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void send();
-            }}
-          >
-            <label htmlFor="book-me-note" className="block font-display font-bold text-lg mb-1">
-              Message {firstName}
-            </label>
-            <p className="text-xs text-muted-foreground mb-3">
-              {user && profile?.role === 'brand'
-                ? isPro(profile)
-                  ? 'Sent straight to their Twen inbox.'
-                  : 'Twen Plus is required to message this creator. We’ll open checkout next.'
-                : 'Write the brief first. You’ll create a brand account next so we can deliver it.'}
-            </p>
-            <textarea
-              id="book-me-note"
-              rows={4}
-              maxLength={BOOK_NOTE_MAX}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={`Hi ${firstName}, we’d like to book you for a paid video. Here’s the brief…`}
-              className="w-full resize-none rounded-[20px] bg-[#f6f6f6] border border-[#ececec] px-4 py-3 text-[15px] leading-snug placeholder:text-[#8e8e93] focus:outline-none focus:border-[#c7c7cc] min-h-[7.5rem]"
-            />
-            <div className="flex items-center justify-between gap-3 mt-2 mb-4">
-              <p className="text-[11px] text-muted-foreground tabular-nums">
-                {note.trim().length}/{BOOK_NOTE_MAX}
-              </p>
-            </div>
-            <Button
-              type="submit"
-              disabled={busy}
-              className="w-full h-12 rounded-full bg-[#0A101D] text-white font-semibold hover:bg-[#0A101D]/90 hover:text-white"
-            >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {busy
-                ? user && profile?.role === 'brand' && !isPro(profile)
-                  ? 'Opening checkout…'
-                  : 'Sending…'
-                : user && profile?.role === 'brand' && !isPro(profile)
-                  ? 'Get Twen Plus'
-                  : 'Send'}
-            </Button>
-          </form>
-        )}
-      </div>
+    <div className="relative h-dvh overflow-hidden bg-white">
+      <Link
+        to="/"
+        className="absolute z-20 top-4 left-4 lg:top-6 lg:left-6 rounded-full bg-white/90 px-3 py-1.5 shadow-[0_1px_2px_rgba(10,16,29,0.08)]"
+      >
+        <Logo variant="full" className="h-6" iconClassName="h-6 w-6" />
+      </Link>
+      <BookMeCard profile={creator} action={action} />
     </div>
   );
 };

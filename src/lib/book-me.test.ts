@@ -29,6 +29,10 @@ describe('book-me slugs', () => {
     ).toBe('aminake');
   });
 
+  it('falls back to the Instagram handle', () => {
+    expect(suggestBookSlug({ instagramHandle: '@amina.ke' })).toBe('amina-ke');
+  });
+
   it('builds bio paths', () => {
     expect(bookMePath('Amina Ke')).toBe('/@amina-ke');
     expect(bookMeDisplay('amina-ke')).toBe('twen.app/@amina-ke');
@@ -58,6 +62,7 @@ describe('book-me slugs', () => {
     expect(parsed?.rate_per_video).toBe(120);
     expect(parsed?.platforms).toEqual(['tiktok']);
     expect(parsed?.work).toEqual([]);
+    expect(parsed?.account_stats).toEqual({});
   });
 
   it('keeps approved work posts', () => {

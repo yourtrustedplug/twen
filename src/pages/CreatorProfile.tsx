@@ -21,6 +21,12 @@ import { formatPlace, CONTINENTS, countriesIn, continentOf } from '@/lib/geo';
 import { joinName, splitName } from '@/lib/name';
 import { formatPercent } from '@/lib/metrics';
 import { suggestRatePerVideo } from '@/lib/suggest-rate';
+import {
+  accountStatList,
+  combineAccountStats,
+  parseAccountStats,
+  type AccountStats,
+} from '@/lib/account-stats';
 import { isPro } from '@/lib/plan';
 import {
   bookMeDisplay,
@@ -99,7 +105,7 @@ const isProfileTab = (value: string | null): value is ProfileTab =>
 const resolveTab = (requested: string | null, connected: string | null, upgraded: string | null): ProfileTab => {
   if (isProfileTab(requested)) return requested;
   if (requested === 'platforms') return 'account';
-  if (connected === 'tiktok' || connected === 'instagram') return 'account';
+  if (connected === 'tiktok' || connected === 'instagram') return 'rate';
   if (upgraded === 'pending') return 'plan';
   return 'about';
 };
@@ -160,6 +166,7 @@ const CreatorProfile = () => {
     id_document_path: null as string | null,
     id_document_back_path: null as string | null,
     rate_overridden: false,
+    account_stats: {} as AccountStats,
   });
 
   const hydrate = (p: ProfileRow) => {
@@ -198,6 +205,7 @@ const CreatorProfile = () => {
       id_document_path: p.id_document_path,
       id_document_back_path: p.id_document_back_path,
       rate_overridden: p.rate_overridden ?? false,
+      account_stats: parseAccountStats(p.account_stats),
     });
   };
 
@@ -250,16 +258,35 @@ const CreatorProfile = () => {
 
     toast({
       title: `${PLATFORM_LABELS[connected]} connected`,
-      description: 'Followers, views, and rate card were filled from the account.',
+      description: 'Followers, views, and your rate card were filled from the account. Set your Book me link next.',
     });
     const params = new URLSearchParams(searchParams);
     params.delete('connected');
-    params.set('tab', 'account');
+    params.set('tab', 'rate');
     setSearchParams(params, { replace: true });
 
     void (async () => {
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      if (data) hydrate(data as ProfileRow);
+      if (!data) {
+        await refreshProfile();
+        return;
+      }
+      const row = data as ProfileRow;
+      let next = row;
+      if (!String(row.book_slug ?? '').trim()) {
+        const slug = suggestBookSlug({
+          tiktokHandle: row.tiktok_handle,
+          instagramHandle: row.instagram_handle,
+          firstName: row.first_name,
+          lastName: row.last_name,
+          id: row.id,
+        });
+        if (!bookSlugError(slug)) {
+          const saved = await supabase.from('profiles').update({ book_slug: slug }).eq('id', user.id);
+          if (!saved.error) next = { ...row, book_slug: slug };
+        }
+      }
+      hydrate(next);
       await refreshProfile();
     })();
   }, [searchParams, setSearchParams, toast, refreshProfile, user]);
@@ -288,15 +315,26 @@ const CreatorProfile = () => {
     return () => window.clearTimeout(t);
   }, [loading, searchParams, tab]);
 
+  const combinedReach = useMemo(() => {
+    const fromStats = combineAccountStats(form.account_stats);
+    if (fromStats.followerCount || fromStats.avgViews) return fromStats;
+    return {
+      followerCount: Number(form.follower_count) || 0,
+      avgViews: Number(form.avg_views) || 0,
+      engagementRate: Number(form.engagement_rate) || 0,
+    };
+  }, [form.account_stats, form.follower_count, form.avg_views, form.engagement_rate]);
+
   const suggested = useMemo(
     () =>
       suggestRatePerVideo({
-        followerCount: Number(form.follower_count) || 0,
-        avgViews: Number(form.avg_views) || 0,
-        engagementRate: Number(form.engagement_rate) || 0,
+        followerCount: combinedReach.followerCount,
+        avgViews: combinedReach.avgViews,
+        engagementRate: combinedReach.engagementRate,
       }),
-    [form.follower_count, form.avg_views, form.engagement_rate],
+    [combinedReach],
   );
+  const accountBreakdown = accountStatList(form.account_stats);
 
   const accountConnected = (platform: SocialPlatform) =>
     Boolean(
@@ -502,13 +540,13 @@ const CreatorProfile = () => {
     country: form.country,
     location: formatPlace(form.city, form.country),
     rate_per_video: Number(form.rate_per_video) || 0,
-    avg_views: Number(form.avg_views) || 0,
-    engagement_rate: Number(form.engagement_rate) || 0,
+    avg_views: combinedReach.avgViews,
+    engagement_rate: combinedReach.engagementRate,
     platforms: connectedPlatforms,
   };
   const impliedCpm =
-    Number(form.avg_views) > 0 && Number(form.rate_per_video) > 0
-      ? (Number(form.rate_per_video) / Number(form.avg_views)) * 1000
+    combinedReach.avgViews > 0 && Number(form.rate_per_video) > 0
+      ? (Number(form.rate_per_video) / combinedReach.avgViews) * 1000
       : 0;
 
   return (
@@ -676,7 +714,7 @@ const CreatorProfile = () => {
             <div className={card}>
               <h2 className="font-display text-base font-bold">Rate card</h2>
               <p className="text-xs text-muted-foreground -mt-1">
-                Followers, views, and engagement come from your connected account and cannot be edited.
+                Totals add every connected TikTok and Instagram account.
                 {creatorIsPro
                   ? ' You can set your price per video.'
                   : ' Price per video can be edited on Creator Pro.'}
@@ -689,15 +727,62 @@ const CreatorProfile = () => {
                   {' '}to fill followers, views, and engagement.
                 </p>
               )}
+              {connectedAccounts.length > 0 && !combinedReach.avgViews && (
+                <p className="text-xs text-muted-foreground">
+                  Views are still empty.{' '}
+                  <button type="button" className="font-semibold text-foreground underline underline-offset-2" onClick={() => setTab('account')}>
+                    Reconnect
+                  </button>
+                  {' '}each account to pull them from recent videos.
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-2">
-                <MetricTile compact label="Followers" value={form.follower_count ? formatViews(form.follower_count) : '—'} />
-                <MetricTile compact label="Average views" value={form.avg_views ? formatViews(form.avg_views) : '—'} />
+                <MetricTile compact label="Followers" value={combinedReach.followerCount ? formatViews(combinedReach.followerCount) : '—'} />
+                <MetricTile compact label="Average views" value={combinedReach.avgViews ? formatViews(combinedReach.avgViews) : '—'} />
                 <MetricTile
                   compact
                   label="Engagement"
-                  value={form.engagement_rate ? formatPercent(Number(form.engagement_rate)) : '—'}
+                  value={combinedReach.engagementRate ? formatPercent(combinedReach.engagementRate) : '—'}
                 />
               </div>
+              {accountBreakdown.length > 0 && (
+                <div className="bg-white border border-[#f1f1f1] rounded-[14px] overflow-hidden">
+                  <div className="grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    <p>Account</p>
+                    <p className="text-right">Followers</p>
+                    <p className="text-right">Views</p>
+                    <p className="text-right">Eng.</p>
+                  </div>
+                  {accountBreakdown.map(({ platform, reach }, index) => {
+                    const handle = platform === 'tiktok' ? form.tiktok_handle : form.instagram_handle;
+                    return (
+                      <div
+                        key={platform}
+                        className={cn(
+                          'grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 items-center px-3 py-2.5 text-xs',
+                          index > 0 && 'border-t border-[#f1f1f1]',
+                        )}
+                      >
+                        <p className="font-semibold truncate">
+                          {PLATFORM_LABELS[platform]}
+                          {handle ? ` · ${handle}` : ''}
+                        </p>
+                        <p className="text-right tabular-nums">{reach.followerCount ? formatViews(reach.followerCount) : '—'}</p>
+                        <p className="text-right tabular-nums">{reach.avgViews ? formatViews(reach.avgViews) : '—'}</p>
+                        <p className="text-right tabular-nums">{reach.engagementRate ? formatPercent(reach.engagementRate) : '—'}</p>
+                      </div>
+                    );
+                  })}
+                  {accountBreakdown.length > 1 && (
+                    <div className="grid grid-cols-[1fr_repeat(3,minmax(0,4.5rem))] gap-2 items-center px-3 py-2.5 text-xs border-t border-[#f1f1f1] bg-[#fafafa] font-semibold">
+                      <p>All accounts</p>
+                      <p className="text-right tabular-nums">{formatViews(combinedReach.followerCount)}</p>
+                      <p className="text-right tabular-nums">{formatViews(combinedReach.avgViews)}</p>
+                      <p className="text-right tabular-nums">{formatPercent(combinedReach.engagementRate)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="rate_per_video">Price per video (USD)</Label>
                 <Input
@@ -983,13 +1068,14 @@ const CreatorProfile = () => {
                       country: form.country,
                       location: formatPlace(form.city, form.country),
                       rate_per_video: Number(form.rate_per_video) || 0,
-                      avg_views: Number(form.avg_views) || 0,
-                      engagement_rate: Number(form.engagement_rate) || 0,
-                      follower_count: Number(form.follower_count) || 0,
+                      avg_views: combinedReach.avgViews,
+                      engagement_rate: combinedReach.engagementRate,
+                      follower_count: combinedReach.followerCount,
                       platforms: connectedPlatforms,
                       tiktok_handle: form.tiktok_handle,
                       instagram_handle: form.instagram_handle,
                       book_slug: normalizeBookSlug(form.book_slug) || 'your-name',
+                      account_stats: form.account_stats,
                       work: previewWork,
                     }}
                   />

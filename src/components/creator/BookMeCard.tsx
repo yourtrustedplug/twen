@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import { CreatorPhoto } from '@/components/CreatorCard';
-import { MetricTile } from '@/components/MetricTile';
 import { PlatformMark, type MarkPlatform } from '@/components/creator/PlatformMark';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { engagement, formatPercent } from '@/lib/metrics';
 import { campaignImage } from '@/lib/campaign-image';
+import { accountStatList, combineAccountStats } from '@/lib/account-stats';
 import type { BookMeProfile, BookMeWork } from '@/lib/book-me';
 import { socialProfileHref } from '@/lib/book-me';
 import { cn } from '@/lib/utils';
@@ -12,7 +13,7 @@ import { cn } from '@/lib/utils';
 const workPlatform = (value: string): MarkPlatform =>
   value === 'instagram' ? 'instagram' : 'tiktok';
 
-const BookMeWorkGrid = ({
+const BookMeWorkStrip = ({
   work,
   name,
   compact = false,
@@ -21,137 +22,192 @@ const BookMeWorkGrid = ({
   name: string;
   compact?: boolean;
 }) => {
-  if (work.length === 0) {
-    if (!compact) return null;
-    return <p className="text-xs text-muted-foreground">Approved campaign posts show here.</p>;
-  }
-  const items = compact ? work.slice(0, 3) : work;
+  if (work.length === 0) return null;
+  const items = work.slice(0, 3);
   return (
-    <div className="w-full text-left">
-      <h2 className={cn('font-display font-bold mb-3', compact ? 'text-sm' : 'text-lg')}>Previous work</h2>
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-        {items.map((post) => {
-          const rate = Number(post.engagement_rate) || engagement(post);
-          return (
-            <a
-              key={post.id}
-              href={post.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative rounded-[14px] overflow-hidden aspect-[9/12] bg-[#efefef]"
-            >
-              <img
-                src={campaignImage(post.id)}
-                alt={`${name} video — ${formatViews(post.verified_views)} views`}
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent text-white">
-                <p className="font-semibold text-[11px] leading-tight">{formatViews(post.verified_views)} views</p>
-                {rate > 0 ? <p className="text-[10px] text-white/80">{formatPercent(rate)}</p> : null}
-              </div>
-              <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/90 flex items-center justify-center">
-                <PlatformMark platform={workPlatform(post.platform)} className="w-3 h-3" />
-              </span>
-            </a>
-          );
-        })}
-      </div>
+    <div className={cn(
+      'grid-cols-3 min-h-0',
+      compact ? 'grid gap-1' : 'hidden gap-1.5 [@media(min-height:740px)]:grid lg:grid',
+    )}>
+      {items.map((post) => {
+        const rate = Number(post.engagement_rate) || engagement(post);
+        return (
+          <a
+            key={post.id}
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden bg-[#efefef] aspect-[3/4]"
+          >
+            <img
+              src={campaignImage(post.id)}
+              alt={`${name} video — ${formatViews(post.verified_views)} views`}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-x-0 bottom-0 px-1.5 py-1.5 bg-gradient-to-t from-black/75 to-transparent text-white">
+              <p className={cn('font-semibold leading-none', compact ? 'text-[9px]' : 'text-[11px]')}>
+                {formatViews(post.verified_views)}
+              </p>
+              {rate > 0 ? (
+                <p className={cn('text-white/75', compact ? 'text-[8px]' : 'text-[10px]')}>{formatPercent(rate)}</p>
+              ) : null}
+            </div>
+            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-white/90 flex items-center justify-center">
+              <PlatformMark platform={workPlatform(post.platform)} className="w-2.5 h-2.5" />
+            </span>
+          </a>
+        );
+      })}
     </div>
   );
 };
 
-const SocialChip = ({ href, platform, label }: { href: string; platform: MarkPlatform; label: string }) => (
+const SocialTextLink = ({
+  href,
+  platform,
+  handle,
+}: {
+  href: string;
+  platform: MarkPlatform;
+  handle: string;
+}) => (
   <a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 text-xs font-semibold bg-white border border-[#f1f1f1] rounded-full pl-2.5 pr-3.5 py-1.5 hover:border-[#dcdcdc] transition-colors"
-    aria-label={label}
+    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#0A101D]/70 hover:text-[#0A101D] transition-colors"
   >
-    <span className="w-6 h-6 rounded-full bg-[#f6f6f6] flex items-center justify-center">
-      <PlatformMark platform={platform} className="w-3.5 h-3.5" />
-    </span>
-    {label}
+    <PlatformMark platform={platform} className="w-3.5 h-3.5" />
+    {handle.replace(/^@/, '')}
   </a>
+);
+
+const Stat = ({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) => (
+  <div className="min-w-0">
+    <p className={cn('font-display font-bold tracking-tight leading-none tabular-nums whitespace-nowrap', compact ? 'text-base' : 'text-[1.35rem] md:text-[1.6rem]')}>
+      {value}
+    </p>
+    <p className={cn('uppercase tracking-[0.14em] text-[#8a8a8e] mt-1.5', compact ? 'text-[8px]' : 'text-[10px]')}>
+      {label}
+    </p>
+  </div>
 );
 
 const BookMeCard = ({
   profile,
   compact = false,
+  action,
 }: {
   profile: BookMeProfile;
   compact?: boolean;
+  action?: ReactNode;
 }) => {
   const name = profile.full_name?.trim() || 'Creator';
   const place = formatPlace(profile.city, profile.country, profile.location);
   const tiktok = socialProfileHref('tiktok', profile.tiktok_handle);
   const instagram = socialProfileHref('instagram', profile.instagram_handle);
+  const combined = combineAccountStats(profile.account_stats ?? {});
+  const followers = combined.followerCount || profile.follower_count;
+  const avgViews = combined.avgViews || profile.avg_views;
+  const engagementRate = combined.engagementRate || Number(profile.engagement_rate) || 0;
+  const breakdown = accountStatList(profile.account_stats ?? {});
+  const accounts = [tiktok && 'TikTok', instagram && 'Instagram'].filter(Boolean).join(' + ');
+
+  const identity = (
+    <div className={cn('min-w-0', compact ? 'space-y-1' : 'space-y-2')}>
+      <p className={cn('uppercase tracking-[0.22em] text-[#8a8a8e] font-semibold', compact ? 'text-[8px]' : 'text-[10px]')}>
+        Book me
+      </p>
+      <h1 className={cn('font-display font-bold tracking-tight leading-[0.95]', compact ? 'text-xl' : 'text-[2.35rem] md:text-[3.1rem]')}>
+        {name}
+      </h1>
+      <p className={cn('text-[#5c5c61]', compact ? 'text-xs' : 'text-sm')}>
+        @{profile.book_slug}
+        {place ? ` · ${place}` : ''}
+        {accounts ? ` · ${accounts}` : ''}
+      </p>
+      {profile.bio ? (
+        <p className={cn('text-[#3d3d3d] leading-snug', compact ? 'text-xs line-clamp-2' : 'text-[15px] line-clamp-2 max-w-[36rem]')}>
+          {profile.bio}
+        </p>
+      ) : null}
+      {(tiktok || instagram) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-0.5">
+          {tiktok && profile.tiktok_handle ? (
+            <SocialTextLink href={tiktok} platform="tiktok" handle={profile.tiktok_handle} />
+          ) : null}
+          {instagram && profile.instagram_handle ? (
+            <SocialTextLink href={instagram} platform="instagram" handle={profile.instagram_handle} />
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+
+  const stats = (
+    <div className="space-y-2">
+      <div className={cn('grid grid-cols-4', compact ? 'gap-2' : 'gap-4 md:gap-6')}>
+        <Stat compact={compact} label="Per video" value={formatMoney(profile.rate_per_video)} />
+        <Stat compact={compact} label="Followers" value={followers ? formatViews(followers) : '—'} />
+        <Stat compact={compact} label="Avg views" value={avgViews ? formatViews(avgViews) : '—'} />
+        <Stat compact={compact} label="Engagement" value={engagementRate ? formatPercent(engagementRate) : '—'} />
+      </div>
+      {breakdown.length > 1 && (
+        <p className={cn('text-[#8a8a8e]', compact ? 'text-[10px]' : 'text-xs')}>
+          {breakdown
+            .map(({ platform, reach }) => {
+              const handle = platform === 'tiktok' ? profile.tiktok_handle : profile.instagram_handle;
+              const label = platform === 'tiktok' ? 'TikTok' : 'Instagram';
+              const who = handle?.replace(/^@/, '') || label;
+              return `${who} ${formatViews(reach.followerCount)}`;
+            })
+            .join('  ·  ')}
+        </p>
+      )}
+    </div>
+  );
 
   if (compact) {
     return (
-      <div className="flex flex-col items-center text-center gap-3">
-        <div className="overflow-hidden bg-[#efefef] w-28 h-28 rounded-[22px]">
+      <div className="flex gap-3 text-left">
+        <div className="overflow-hidden bg-[#efefef] w-[5.5rem] h-[7.2rem] shrink-0">
           <CreatorPhoto id={profile.id} avatarUrl={profile.avatar_url} alt={name} className="w-full h-full object-cover" />
         </div>
-        <div>
-          <h1 className="font-display font-bold text-xl">{name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            @{profile.book_slug}
-            {place ? ` · ${place}` : ''}
-          </p>
+        <div className="min-w-0 flex-1 flex flex-col gap-2.5">
+          {identity}
+          {stats}
+          <BookMeWorkStrip work={profile.work} name={name} compact />
         </div>
-        {profile.bio ? <p className="text-sm leading-relaxed max-w-sm line-clamp-4">{profile.bio}</p> : null}
-        <div className="grid grid-cols-3 w-full gap-2">
-          <MetricTile compact label="Per video" value={formatMoney(profile.rate_per_video)} />
-          <MetricTile compact label="Avg views" value={profile.avg_views ? formatViews(profile.avg_views) : '—'} />
-          <MetricTile
-            compact
-            label="Engagement"
-            value={profile.engagement_rate ? formatPercent(Number(profile.engagement_rate)) : '—'}
-          />
-        </div>
-        <BookMeWorkGrid work={profile.work} name={name} compact />
       </div>
     );
   }
 
   return (
-    <article className="overflow-hidden rounded-[32px] border border-[#f1f1f1] bg-white shadow-[0_1px_2px_rgba(10,16,29,0.04)]">
-      <div className="relative aspect-[4/5] bg-[#efefef]">
+    <article className="h-dvh overflow-hidden bg-white text-[#0A101D] grid grid-rows-[minmax(0,34vh)_minmax(0,1fr)] lg:grid-rows-none lg:grid-cols-[minmax(280px,42vw)_minmax(0,1fr)]">
+      <div className="relative min-h-0 bg-[#efefef]">
         <CreatorPhoto
           id={profile.id}
           avatarUrl={profile.avatar_url}
           alt={name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/35 to-transparent text-white">
-          <p className="text-[11px] uppercase tracking-[1.4px] font-semibold text-white/70 mb-1.5">Book me</p>
-          <h1 className="font-display font-bold text-[2rem] leading-[1.05]">{name}</h1>
-          <p className="text-sm text-white/80 mt-1.5">
-            @{profile.book_slug}
-            {place ? ` · ${place}` : ''}
-          </p>
-        </div>
       </div>
-      <div className="p-5 sm:p-6 flex flex-col gap-5">
-        {profile.bio ? <p className="text-[15px] leading-relaxed text-[#3d3d3d]">{profile.bio}</p> : null}
-        <div className="grid grid-cols-3 gap-2">
-          <MetricTile compact label="Per video" value={formatMoney(profile.rate_per_video)} />
-          <MetricTile compact label="Avg views" value={profile.avg_views ? formatViews(profile.avg_views) : '—'} />
-          <MetricTile
-            compact
-            label="Engagement"
-            value={profile.engagement_rate ? formatPercent(Number(profile.engagement_rate)) : '—'}
-          />
+      <div className="min-h-0 flex flex-col px-5 py-4 sm:px-8 lg:px-12 lg:py-8">
+        <div className="flex flex-col justify-center gap-5 lg:gap-7 flex-1 min-h-0">
+          {identity}
+          {stats}
+          <BookMeWorkStrip work={profile.work} name={name} />
         </div>
-        {(tiktok || instagram) && (
-          <div className="flex flex-wrap gap-2">
-            {tiktok ? <SocialChip href={tiktok} platform="tiktok" label="TikTok" /> : null}
-            {instagram ? <SocialChip href={instagram} platform="instagram" label="Instagram" /> : null}
-          </div>
-        )}
-        <BookMeWorkGrid work={profile.work} name={name} />
+        {action ? <div className="shrink-0 pt-4">{action}</div> : null}
       </div>
     </article>
   );

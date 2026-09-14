@@ -508,6 +508,7 @@ export type Database = {
           updated_at: string
           website: string
           book_slug: string | null
+          account_stats: Json
         }
         Insert: {
           avatar_url?: string | null
@@ -558,6 +559,7 @@ export type Database = {
           updated_at?: string
           website?: string
           book_slug?: string | null
+          account_stats?: Json
         }
         Update: {
           avatar_url?: string | null
@@ -608,6 +610,7 @@ export type Database = {
           updated_at?: string
           website?: string
           book_slug?: string | null
+          account_stats?: Json
         }
         Relationships: []
       }
