@@ -21,7 +21,14 @@ import {
   Users,
   Shield,
 } from 'lucide-react';
-import { isStaff } from '@/lib/staff';
+import {
+  accessibleSurfaces,
+  activeSurface,
+  surfaceHome,
+  surfaceLabel,
+  type AppSurface,
+} from '@/lib/roles';
+import { getAppTenant, goToAppPath } from '@/lib/hosts';
 import { signedOutPath } from '@/lib/auth-routes';
 import { creatorHomePath, isCreatorHomeTab } from '@/lib/creator-home';
 import { Logo } from '@/logos';
@@ -29,21 +36,18 @@ import CreatorHomeTabs from '@/components/creator/CreatorHomeTabs';
 import { CreatorPhoto } from '@/components/CreatorCard';
 import BrandMark from '@/components/BrandMark';
 
-type Role = 'creator' | 'brand' | 'moderator' | 'admin';
-
-const menuFor = (role: Role, brandIsPro: boolean) => {
-  if (isStaff(role)) {
+const menuFor = (surface: AppSurface, brandIsPro: boolean) => {
+  if (surface === 'admin') {
     return [{ to: '/admin', label: 'Admin panel', icon: Shield }];
   }
-  if (role === 'brand') {
-    const items = [
+  if (surface === 'brand') {
+    return [
       { to: '/brand/profile', label: 'My profile', icon: UserRound },
       { to: '/brand/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/brand/campaigns/new', label: 'New campaign', icon: Plus },
       { to: '/brand/creators', label: brandIsPro ? 'Browse creators' : 'Browse creators · Pro', icon: Users },
       { to: '/messages', label: 'Messages', icon: MessageSquare },
     ];
-    return items;
   }
   return [
     { to: '/creator/profile', label: 'My profile', icon: UserRound },
@@ -53,10 +57,10 @@ const menuFor = (role: Role, brandIsPro: boolean) => {
   ];
 };
 
-const homeFor = (role: Role | undefined) => {
-  if (role === 'brand') return '/brand';
-  if (isStaff(role)) return '/admin';
-  return '/creator';
+const SWITCH_ICON: Record<AppSurface, typeof Shield> = {
+  creator: UserRound,
+  brand: Users,
+  admin: Shield,
 };
 
 /** Hamburger destinations get a focused header (no home tabs, Cancel back to home). */
@@ -81,10 +85,11 @@ const AppHeader = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  const role = profile?.role as Role | undefined;
-  const isCreator = role === 'creator';
+  const surface = activeSurface(location.pathname, getAppTenant(), profile);
+  const isCreator = surface === 'creator';
   const brandIsPro = profile?.plan === 'pro';
-  const menuItems = role ? menuFor(role, brandIsPro) : [];
+  const menuItems = menuFor(surface, brandIsPro);
+  const otherSurfaces = accessibleSurfaces(profile).filter((item) => item !== surface);
   const focused = isMenuExperience(location.pathname);
   const showHomeTabs = Boolean(user && isCreator && !focused);
   const requestedTab = searchParams.get('tab');
@@ -126,7 +131,7 @@ const AppHeader = () => {
           <button
             type="button"
             aria-label="Cancel"
-            onClick={() => navigate(onPayoutAccount ? '/creator/earnings' : homeFor(role))}
+            onClick={() => navigate(onPayoutAccount ? '/creator/earnings' : surfaceHome(surface))}
             className="h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-[#0A101D] hover:bg-[#f4f4f4] transition-colors"
           >
             <X className="h-5 w-5" strokeWidth={2} />
@@ -144,7 +149,7 @@ const AppHeader = () => {
       <div className="max-w-[100rem] mx-auto px-5 md:px-10">
         <div className="h-16 md:h-[88px] flex items-center justify-between gap-3 md:gap-6">
           <Link
-            to={user ? homeFor(role) : '/'}
+            to={user ? surfaceHome(surface) : '/'}
             className="shrink-0 no-underline"
           >
             <Logo
@@ -169,7 +174,7 @@ const AppHeader = () => {
                     className="flex items-center gap-2.5 md:gap-3 rounded-full border border-[#dddddd] pl-2.5 pr-1 py-1 md:pl-3 md:pr-1.5 md:py-1.5 bg-white hover:shadow-md transition-shadow min-h-11 overflow-hidden"
                   >
                     <Menu className="h-4 w-4 text-foreground shrink-0" />
-                    {role === 'brand' ? (
+                    {surface === 'brand' ? (
                       <BrandMark
                         name={profile?.company_name || profile?.full_name || 'Brand'}
                         color={profile?.brand_primary_color}
@@ -194,7 +199,7 @@ const AppHeader = () => {
                       {profile?.full_name || profile?.company_name || 'Account'}
                     </p>
                     <p className="text-xs text-muted-foreground font-normal capitalize">
-                      {isStaff(role) ? 'Admin' : role}
+                      {surfaceLabel(surface)}
                     </p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -208,6 +213,26 @@ const AppHeader = () => {
                       {item.label}
                     </DropdownMenuItem>
                   ))}
+                  {otherSurfaces.length ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      {otherSurfaces.map((item) => {
+                        const Icon = SWITCH_ICON[item];
+                        return (
+                          <DropdownMenuItem
+                            key={item}
+                            className="rounded-xl px-3 py-2.5 cursor-pointer gap-3"
+                            onSelect={() => {
+                              void goToAppPath(item, surfaceHome(item), navigate);
+                            }}
+                          >
+                            <Icon className="h-4 w-4" />
+                            Switch to {surfaceLabel(item)}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="rounded-xl px-3 py-2.5 cursor-pointer gap-3 text-muted-foreground"

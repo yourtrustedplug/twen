@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, roleHome, UserRole } from '@/contexts/AuthContext';
 import { signedOutPath } from '@/lib/auth-routes';
-import { isStaff } from '@/lib/staff';
+import { hasRole } from '@/lib/roles';
 import { AppNavigate } from '@/components/AppNavigate';
 import { Loader2 } from 'lucide-react';
 
@@ -33,11 +33,11 @@ export function ProtectedRoute({ children, role, staff }: ProtectedRouteProps) {
     return <Navigate to={signedOutPath()} state={{ from: location }} replace />;
   }
 
-  if (staff && profile && !isStaff(profile.role)) {
+  if (staff && profile && !hasRole(profile, 'admin')) {
     return <AppNavigate role={profile.role} path={roleHome(profile.role)} />;
   }
 
-  if (role && profile && profile.role !== role) {
+  if (role && profile && !hasRole(profile, role)) {
     return <AppNavigate role={profile.role} path={roleHome(profile.role)} />;
   }
 

@@ -18,6 +18,8 @@ export interface Profile {
   instagram_handle?: string | null;
   tiktok_connected_at?: string | null;
   instagram_connected_at?: string | null;
+  /** Extra app surfaces (creator / brand / admin). Staff always get all three. */
+  roles?: string[] | null;
   payout_provider: string | null;
   payout_number: string | null;
   id_verification_status: string;
@@ -300,8 +302,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (patch: Partial<Profile>) => {
     if (!user) return { error: new Error('Not signed in') };
     // Never allow client to escalate role/plan — DB trigger also blocks this
-    const { role: _r, plan: _p, id: _id, ...safe } = patch as Partial<Profile> & {
+    const { role: _r, plan: _p, id: _id, roles: _roles, ...safe } = patch as Partial<Profile> & {
       plan?: string;
+      roles?: string[];
     };
     const { error } = await supabase
       .from('profiles')

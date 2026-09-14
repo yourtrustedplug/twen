@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, roleHome } from '@/contexts/AuthContext';
 import { onboardingFor } from '@/lib/onboarding';
-import { goToAppPath } from '@/lib/hosts';
+import { goToAppPath, getAppTenant } from '@/lib/hosts';
+import { canAccessTenant } from '@/lib/roles';
 import { deliverPendingBookAndGo } from '@/lib/hire';
 import { BRAND_PLUS_UPGRADE_PATH, isPro } from '@/lib/plan';
 import { peekPendingBook, takeAuthRedirect } from '@/lib/pending-signup';
@@ -32,6 +33,8 @@ export function AuthRedirect() {
       }
       if (cancelled) return;
       if (window.location.pathname.startsWith('/signin')) return;
+      const tenant = getAppTenant();
+      if (tenant !== 'apex' && canAccessTenant(profile, tenant)) return;
       const onboarding = onboardingFor(profile);
       const path = onboarding.complete ? roleHome(profile.role) : onboarding.profilePath;
       void goToAppPath(profile.role, path, navigate);

@@ -10,6 +10,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsForRequest, jsonResponseFor } from '../_shared/cors.ts'
+import { profileHasRole } from '../_shared/roles.ts'
 import {
   detectPlatform,
   extractInstagramShortcode,
@@ -343,7 +344,7 @@ Deno.serve(async (req) => {
     .eq('id', authData.user.id)
     .maybeSingle()
   if (profileError || !profile) return jsonResponseFor(req, { error: 'Profile not found' }, 400)
-  if (profile.role !== 'creator') {
+  if (!profileHasRole(profile, 'creator')) {
     return jsonResponseFor(req, { error: 'Only creators can submit campaign links' }, 403)
   }
 

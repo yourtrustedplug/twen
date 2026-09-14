@@ -503,6 +503,7 @@ export type Database = {
           nardopay_link_code: string | null
           rate_per_video: number
           role: string
+          roles: string[]
           tiktok_handle: string | null
           updated_at: string
           website: string
@@ -552,6 +553,7 @@ export type Database = {
           nardopay_link_code?: string | null
           rate_per_video?: number
           role?: string
+          roles?: string[]
           tiktok_handle?: string | null
           updated_at?: string
           website?: string
@@ -601,6 +603,7 @@ export type Database = {
           nardopay_link_code?: string | null
           rate_per_video?: number
           role?: string
+          roles?: string[]
           tiktok_handle?: string | null
           updated_at?: string
           website?: string

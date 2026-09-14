@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, roleHome } from "@/contexts/AuthContext";
+import { canAccessTenant, roleFromTenant, surfaceHome } from "@/lib/roles";
+import { getAppTenant } from "@/lib/hosts";
 import { AppPrivyProvider } from "@/providers/PrivyProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppNavigate } from "@/components/AppNavigate";
@@ -57,6 +59,11 @@ const queryClient = new QueryClient();
 const DashboardRouter = () => {
   const { profile, isLoading } = useAuth();
   if (isLoading) return null;
+  const tenant = getAppTenant();
+  if (tenant !== 'apex' && canAccessTenant(profile, tenant)) {
+    const surface = roleFromTenant(tenant);
+    return <AppNavigate role={surface} path={surfaceHome(surface)} />;
+  }
   return <AppNavigate role={profile?.role} path={roleHome(profile?.role)} />;
 };
 

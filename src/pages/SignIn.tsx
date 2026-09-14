@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLogin } from '@privy-io/react-auth';
 import { useAuth, roleHome } from '@/contexts/AuthContext';
+import { canAccessTenant, hasRole, roleFromTenant, surfaceHome } from '@/lib/roles';
 import { getRememberedAudience, type Audience } from '@/lib/audience';
 import { deliverPendingBookAndGo } from '@/lib/hire';
 import { BRAND_PLUS_UPGRADE_PATH, isPro } from '@/lib/plan';
@@ -42,6 +43,15 @@ const SignIn = () => {
         isPro: true,
         navigate,
       });
+      return;
+    }
+    const tenant = getAppTenant();
+    if (tenant !== 'apex' && canAccessTenant(profile, tenant)) {
+      void goToAppPath(roleFromTenant(tenant), surfaceHome(roleFromTenant(tenant)), navigate);
+      return;
+    }
+    if (hasRole(profile, role)) {
+      void goToAppPath(role, surfaceHome(role), navigate);
       return;
     }
     void goToAppPath(profile.role, roleHome(profile.role), navigate);
