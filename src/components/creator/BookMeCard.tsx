@@ -8,7 +8,18 @@ import { campaignImage } from '@/lib/campaign-image';
 import { combineAccountStats, connectedAccountRows } from '@/lib/account-stats';
 import type { BookMeProfile, BookMeWork } from '@/lib/book-me';
 import { socialProfileHref } from '@/lib/book-me';
+import { DISCIPLINE_LABELS, parseDisciplines } from '@/types/unignored';
 import { cn } from '@/lib/utils';
+
+const portfolioLabel = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/$/, '');
+    return `${parsed.hostname.replace(/^www\./, '')}${path}`;
+  } catch {
+    return url;
+  }
+};
 
 const workPlatform = (value: string): MarkPlatform =>
   value === 'instagram' ? 'instagram' : 'tiktok';
@@ -142,6 +153,12 @@ const BookMeCard = ({
   const tiktokFollowers = profile.account_stats?.tiktok?.followerCount;
   const instagramFollowers = profile.account_stats?.instagram?.followerCount;
   const followerLabel = rows.length > 1 ? 'All followers' : 'Followers';
+  const disciplines = parseDisciplines(profile.disciplines);
+  const isModel = disciplines.includes('model');
+  const dayRate = Number(profile.rate_per_day) || 0;
+  const primaryRate = isModel && dayRate > 0 ? dayRate : Number(profile.rate_per_video) || 0;
+  const rateLabel = isModel && dayRate > 0 ? 'Per day' : 'Per video';
+  const portfolio = (profile.portfolio_urls ?? []).filter(Boolean);
 
   const identity = (
     <div className={cn('min-w-0 shrink-0', compact ? 'space-y-1.5' : 'space-y-3')}>
@@ -155,11 +172,44 @@ const BookMeCard = ({
         @{profile.book_slug}
         {place ? ` · ${place}` : ''}
       </p>
+      {disciplines.length > 0 && (
+        <div className={cn('flex flex-wrap gap-1.5', compact ? 'pt-0.5' : 'pt-1')}>
+          {disciplines.map((d) => (
+            <span
+              key={d}
+              className={cn(
+                'uppercase tracking-[0.14em] font-semibold rounded-full bg-[#0A101D] text-white',
+                compact ? 'text-[8px] px-2 py-0.5' : 'text-[10px] px-2.5 py-1',
+              )}
+            >
+              {DISCIPLINE_LABELS[d] ?? d}
+            </span>
+          ))}
+        </div>
+      )}
       {profile.bio ? (
         <p className={cn('text-[#3d3d3d] leading-relaxed', compact ? 'text-xs line-clamp-2' : 'text-[15px] line-clamp-2 max-w-[34rem]')}>
           {profile.bio}
         </p>
       ) : null}
+      {portfolio.length > 0 && (
+        <div className={cn('flex flex-wrap', compact ? 'gap-x-3 gap-y-1' : 'gap-x-5 gap-y-2 pt-1')}>
+          {portfolio.slice(0, compact ? 2 : 3).map((url) => (
+            <a
+              key={url}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                'text-[#0A101D]/70 hover:text-[#0A101D] transition-colors hover:underline underline-offset-2 truncate max-w-[16rem]',
+                compact ? 'text-xs' : 'text-[13px] font-medium',
+              )}
+            >
+              {portfolioLabel(url)}
+            </a>
+          ))}
+        </div>
+      )}
       {(tiktok || instagram) && (
         <div className={cn('flex flex-wrap', compact ? 'gap-x-3 gap-y-1' : 'gap-x-5 gap-y-2 pt-1')}>
           {tiktok && profile.tiktok_handle ? (
@@ -176,7 +226,7 @@ const BookMeCard = ({
   const stats = (
     <div className="shrink-0 space-y-3">
       <div className={cn('grid grid-cols-4', compact ? 'gap-2' : 'gap-5 md:gap-8')}>
-        <Stat compact={compact} label="Per video" value={formatMoney(profile.rate_per_video)} />
+        <Stat compact={compact} label={rateLabel} value={formatMoney(primaryRate)} />
         <Stat compact={compact} label={followerLabel} value={followers ? formatViews(followers) : '—'} />
         <Stat compact={compact} label="Avg views" value={avgViews ? formatViews(avgViews) : '—'} />
         <Stat compact={compact} label="Engagement" value={engagementRate ? formatPercent(engagementRate) : '—'} />

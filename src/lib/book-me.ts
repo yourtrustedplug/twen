@@ -57,6 +57,9 @@ export type BookMeProfile = {
   country: string;
   location: string;
   rate_per_video: number;
+  rate_per_day: number;
+  disciplines: string[];
+  portfolio_urls: string[];
   avg_views: number;
   engagement_rate: number;
   follower_count: number;
@@ -174,6 +177,13 @@ export function parseBookMeProfile(data: unknown): BookMeProfile | null {
     country: typeof row.country === 'string' ? row.country : '',
     location: typeof row.location === 'string' ? row.location : '',
     rate_per_video: Number(row.rate_per_video) || 0,
+    rate_per_day: Number(row.rate_per_day) || 0,
+    disciplines: Array.isArray(row.disciplines)
+      ? row.disciplines.filter((v): v is string => typeof v === 'string')
+      : ['creator'],
+    portfolio_urls: Array.isArray(row.portfolio_urls)
+      ? row.portfolio_urls.filter((v): v is string => typeof v === 'string')
+      : [],
     avg_views: Number(row.avg_views) || 0,
     engagement_rate: Number(row.engagement_rate) || 0,
     follower_count: Number(row.follower_count) || 0,

@@ -472,6 +472,7 @@ export type Database = {
           city: string
           continent: string
           country: string
+          disciplines: string[]
           first_name: string | null
           follower_count: number
           full_name: string | null
@@ -495,12 +496,14 @@ export type Database = {
           payout_provider: string | null
           phone: string | null
           platforms: Json
+          portfolio_urls: string[]
           plan: string
           plan_payment_ref: string | null
           plan_renews_at: string | null
           nardopay_checkout_url: string | null
           nardopay_checkout_amount: number | null
           nardopay_link_code: string | null
+          rate_per_day: number
           rate_per_video: number
           role: string
           roles: string[]
@@ -523,6 +526,7 @@ export type Database = {
           city?: string
           continent?: string
           country?: string
+          disciplines?: string[]
           first_name?: string | null
           follower_count?: number
           full_name?: string | null
@@ -546,12 +550,14 @@ export type Database = {
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
+          portfolio_urls?: string[]
           plan?: string
           plan_payment_ref?: string | null
           plan_renews_at?: string | null
           nardopay_checkout_url?: string | null
           nardopay_checkout_amount?: number | null
           nardopay_link_code?: string | null
+          rate_per_day?: number
           rate_per_video?: number
           role?: string
           roles?: string[]
@@ -574,6 +580,7 @@ export type Database = {
           city?: string
           continent?: string
           country?: string
+          disciplines?: string[]
           first_name?: string | null
           follower_count?: number
           full_name?: string | null
@@ -597,12 +604,14 @@ export type Database = {
           payout_provider?: string | null
           phone?: string | null
           platforms?: Json
+          portfolio_urls?: string[]
           plan?: string
           plan_payment_ref?: string | null
           plan_renews_at?: string | null
           nardopay_checkout_url?: string | null
           nardopay_checkout_amount?: number | null
           nardopay_link_code?: string | null
+          rate_per_day?: number
           rate_per_video?: number
           role?: string
           roles?: string[]

@@ -3,11 +3,18 @@ import { formatMoney } from '@/lib/format';
 import { goToAppPath } from '@/lib/hosts';
 import { BOOK_NOTE_MAX, peekPendingBook, takePendingBook } from '@/lib/pending-signup';
 
-export function defaultHireMessage(creatorName: string, ratePerVideo?: number): string {
+export function defaultHireMessage(creatorName: string, ratePerVideo?: number, ratePerDay?: number): string {
   const name = creatorName.trim() || 'you';
-  const rate = Number(ratePerVideo) || 0;
-  return rate
-    ? `Hi ${name}, we'd like to book you for a paid video at ${formatMoney(rate)}. Are you available?`
+  const video = Number(ratePerVideo) || 0;
+  const day = Number(ratePerDay) || 0;
+  if (day > 0 && video <= 0) {
+    return `Hi ${name}, we'd like to book you for a paid shoot at ${formatMoney(day)} per day. Are you available?`;
+  }
+  if (day > 0 && video > 0) {
+    return `Hi ${name}, we'd like to book you. Video ${formatMoney(video)}, shoot day ${formatMoney(day)}. Are you available?`;
+  }
+  return video
+    ? `Hi ${name}, we'd like to book you for a paid video at ${formatMoney(video)}. Are you available?`
     : `Hi ${name}, we'd like to book you. Are you available?`;
 }
 
@@ -16,10 +23,11 @@ export function hireMessage(input: {
   hire?: boolean;
   creatorName: string;
   ratePerVideo?: number;
+  ratePerDay?: number;
 }): string {
   const custom = (input.body ?? '').trim().slice(0, BOOK_NOTE_MAX);
   if (custom) return custom;
-  if (input.hire) return defaultHireMessage(input.creatorName, input.ratePerVideo);
+  if (input.hire) return defaultHireMessage(input.creatorName, input.ratePerVideo, input.ratePerDay);
   return '';
 }
 
@@ -30,6 +38,7 @@ export async function startBrandCreatorChat(input: {
   brandName: string;
   creatorName: string;
   ratePerVideo?: number;
+  ratePerDay?: number;
   hire?: boolean;
   body?: string;
 }): Promise<{ conversationId: string } | { error: string }> {

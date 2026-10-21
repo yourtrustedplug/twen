@@ -8,7 +8,7 @@ import { MetricTile } from '@/components/MetricTile';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { ProfileRow, Submission } from '@/types/unignored';
-import { PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { DISCIPLINE_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { formatPercent, engagement } from '@/lib/metrics';
@@ -17,7 +17,18 @@ import { isPro } from '@/lib/plan';
 import { startBrandCreatorChat } from '@/lib/hire';
 import { usePlanCheckout } from '@/hooks/use-plan-checkout';
 import { ErrorPoster } from '@/components/ErrorPoster';
+import { cn } from '@/lib/utils';
 import { Loader2, ArrowLeft, MessageSquare, Handshake, Lock } from 'lucide-react';
+
+const linkLabel = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/$/, '');
+    return `${parsed.hostname.replace(/^www\./, '')}${path}`;
+  } catch {
+    return url;
+  }
+};
 
 const BrandCreatorProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,12 +62,14 @@ const BrandCreatorProfile = () => {
   const startChat = async (hire: boolean) => {
     if (!user || !creator) return;
     setBusy(true);
+    const isModel = parseDisciplines(creator.disciplines).includes('model');
     const result = await startBrandCreatorChat({
       brandId: user.id,
       creatorId: creator.id,
       brandName: profile?.company_name || profile?.full_name || 'Brand',
       creatorName: creator.full_name ?? 'Creator',
       ratePerVideo: creator.rate_per_video,
+      ratePerDay: isModel ? creator.rate_per_day : 0,
       hire,
     });
     setBusy(false);
@@ -115,20 +128,27 @@ const BrandCreatorProfile = () => {
           eyebrow="Creator"
           title="This creator isn't in the marketplace."
           description="They may have hidden their profile, or this link is wrong."
-          actions={[{ label: 'Back to creators', href: '/brand/creators' }]}
+          actions={[{ label: 'Back to creators & models', href: '/brand/creators' }]}
         />
       </div>
     );
   }
 
   const platforms = parseStringArray(creator.platforms);
+  const disciplines = parseDisciplines(creator.disciplines);
+  const isModel = disciplines.includes('model');
+  const dayRate = Number(creator.rate_per_day) || 0;
+  const videoRate = Number(creator.rate_per_video) || 0;
+  const hireRate = isModel && dayRate > 0 ? dayRate : videoRate;
+  const hireUnit = isModel && dayRate > 0 ? ' / day' : '';
+  const portfolio = (creator.portfolio_urls ?? []).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="max-w-[80rem] mx-auto px-5 md:px-10 py-8 md:py-12">
         <Link to="/brand/creators" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
-          <ArrowLeft className="h-4 w-4" /> Creators
+          <ArrowLeft className="h-4 w-4" /> Creators &amp; models
         </Link>
 
         <div className="grid lg:grid-cols-[380px_1fr] gap-10">
@@ -143,7 +163,7 @@ const BrandCreatorProfile = () => {
             </div>
             <div className="flex flex-col gap-3">
               <Button variant="invofy" size="invofy" className="max-md:w-full" onClick={() => startChat(true)} disabled={busy}>
-                <Handshake className="h-4 w-4 mr-2" /> Hire at {formatMoney(creator.rate_per_video)}
+                <Handshake className="h-4 w-4 mr-2" /> Hire at {formatMoney(hireRate)}{hireUnit}
               </Button>
               <Button variant="invofyOutline" size="invofy" className="max-md:w-full" onClick={() => startChat(false)} disabled={busy}>
                 <MessageSquare className="h-4 w-4 mr-2" /> Message
@@ -161,23 +181,48 @@ const BrandCreatorProfile = () => {
             </p>
             {creator.bio && <p className="leading-relaxed mb-8 max-w-2xl">{creator.bio}</p>}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <MetricTile label="Price per video" value={formatMoney(creator.rate_per_video)} />
+            <div className={cn('grid grid-cols-2 gap-4 mb-8', isModel && dayRate > 0 ? 'md:grid-cols-5' : 'md:grid-cols-4')}>
+              <MetricTile label="Price per video" value={formatMoney(videoRate)} />
+              {isModel && dayRate > 0 && <MetricTile label="Day rate" value={formatMoney(dayRate)} />}
               <MetricTile label="Average views" value={formatViews(creator.avg_views)} />
               <MetricTile label="Engagement" value={formatPercent(Number(creator.engagement_rate))} />
               <MetricTile
                 label="Implied CPM"
-                value={`$${(Number(creator.avg_views) ? (Number(creator.rate_per_video) / Number(creator.avg_views)) * 1000 : 0).toFixed(2)}`}
+                value={`$${(Number(creator.avg_views) ? (videoRate / Number(creator.avg_views)) * 1000 : 0).toFixed(2)}`}
               />
             </div>
 
-            {platforms.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-10">
+            {(disciplines.length > 0 || platforms.length > 0) && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {disciplines.map((d) => (
+                  <span key={d} className="text-xs font-semibold bg-[#0A101D] text-white rounded-full px-4 py-2">
+                    {DISCIPLINE_LABELS[d] ?? d}
+                  </span>
+                ))}
                 {platforms.map((p) => (
                   <span key={p} className="text-xs font-semibold bg-[#fafafa] border border-[#f1f1f1] rounded-full px-4 py-2">
                     {PLATFORM_LABELS[p] ?? p}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {portfolio.length > 0 && (
+              <div className="mb-10">
+                <h2 className="font-display text-lg font-bold mb-3">Portfolio</h2>
+                <div className="flex flex-wrap gap-2">
+                  {portfolio.map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-semibold bg-[#fafafa] border border-[#f1f1f1] rounded-full px-4 py-2 hover:border-[#dcdcdc] transition-colors max-w-[18rem] truncate"
+                    >
+                      {linkLabel(url)}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 

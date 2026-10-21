@@ -135,6 +135,7 @@ const BookMe = () => {
       brandName: profile.company_name || profile.full_name || 'Brand',
       creatorName: creator.full_name ?? 'Creator',
       ratePerVideo: creator.rate_per_video,
+      ratePerDay: creator.rate_per_day,
       body: draft,
     });
     setBusy(false);

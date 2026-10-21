@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { ProfileRow } from '@/types/unignored';
-import { PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { DISCIPLINE_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { formatPercent } from '@/lib/metrics';
@@ -19,6 +19,8 @@ export type CreatorCardModel = Pick<
   | 'country'
   | 'location'
   | 'rate_per_video'
+  | 'rate_per_day'
+  | 'disciplines'
   | 'avg_views'
   | 'engagement_rate'
   | 'platforms'
@@ -62,6 +64,11 @@ const CreatorCard = ({
   preview?: boolean;
 }) => {
   const platforms = parseStringArray(creator.platforms);
+  const disciplines = parseDisciplines(creator.disciplines);
+  const isModel = disciplines.includes('model');
+  const dayRate = Number(creator.rate_per_day) || 0;
+  const primaryRate = isModel && dayRate > 0 ? dayRate : Number(creator.rate_per_video) || 0;
+  const rateLabel = isModel && dayRate > 0 ? 'per day' : 'per video';
   const body = (
     <>
       <div className="relative aspect-[4/5] overflow-hidden">
@@ -71,6 +78,11 @@ const CreatorCard = ({
           alt={creator.full_name ?? 'Creator'}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />
+        {isModel && (
+          <span className="absolute top-4 left-4 text-[10px] uppercase tracking-wide font-semibold bg-white/90 text-[#0A101D] rounded-full px-2.5 py-1">
+            Model
+          </span>
+        )}
         <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/75 to-transparent">
           <h3 className="font-display text-xl font-bold text-white leading-snug">
             {creator.full_name ?? 'Creator'}
@@ -85,8 +97,8 @@ const CreatorCard = ({
       </div>
       <div className="p-5 grid grid-cols-3 gap-3 text-center">
         <div>
-          <p className="font-display text-lg font-bold">{formatMoney(creator.rate_per_video)}</p>
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">per video</p>
+          <p className="font-display text-lg font-bold">{formatMoney(primaryRate)}</p>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{rateLabel}</p>
         </div>
         <div>
           <p className="font-display text-lg font-bold">{formatViews(creator.avg_views)}</p>
@@ -97,8 +109,13 @@ const CreatorCard = ({
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">engagement</p>
         </div>
       </div>
-      {platforms.length > 0 && (
+      {(disciplines.length > 0 || platforms.length > 0) && (
         <div className="px-5 pb-5 flex flex-wrap gap-2">
+          {disciplines.map((d) => (
+            <span key={d} className="text-[11px] font-semibold bg-[#0A101D] text-white rounded-full px-3 py-1">
+              {DISCIPLINE_LABELS[d] ?? d}
+            </span>
+          ))}
           {platforms.map((p) => (
             <span key={p} className="text-[11px] font-semibold bg-[#fafafa] border border-[#f1f1f1] rounded-full px-3 py-1">
               {PLATFORM_LABELS[p] ?? p}

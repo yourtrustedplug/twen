@@ -45,7 +45,7 @@ const menuFor = (surface: AppSurface, brandIsPro: boolean) => {
       { to: '/brand/profile', label: 'My profile', icon: UserRound },
       { to: '/brand/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/brand/campaigns/new', label: 'New campaign', icon: Plus },
-      { to: '/brand/creators', label: brandIsPro ? 'Browse creators' : 'Browse creators · Pro', icon: Users },
+      { to: '/brand/creators', label: brandIsPro ? 'Find creators & models' : 'Find creators & models · Pro', icon: Users },
       { to: '/messages', label: 'Messages', icon: MessageSquare },
     ];
   }

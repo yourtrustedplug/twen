@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import type { ProfileRow } from '@/types/unignored';
 import type { Json } from '@/integrations/supabase/types';
-import { PLATFORMS, PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { PLATFORMS, PLATFORM_LABELS, DISCIPLINES, DISCIPLINE_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import FilterSelect from '@/components/creator/FilterSelect';
 import { formatPlace, CONTINENTS, countriesIn, continentOf } from '@/lib/geo';
@@ -50,6 +50,17 @@ import { Loader2, Upload, CheckCircle2, ShieldCheck, Lock, Copy } from 'lucide-r
 import { cn } from '@/lib/utils';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const MAX_PORTFOLIO_LINKS = 6;
+
+/** One URL per line, with a bare domain accepted. Deduped and capped. */
+const parsePortfolioUrls = (value: string): string[] =>
+  value
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => (/^https?:\/\//i.test(entry) ? entry : `https://${entry}`))
+    .filter((entry, index, list) => list.indexOf(entry) === index)
+    .slice(0, MAX_PORTFOLIO_LINKS);
 
 const TABS = [
   { id: 'about', label: 'About' },
@@ -144,10 +155,13 @@ const CreatorProfile = () => {
     first_name: '',
     last_name: '',
     bio: '',
+    disciplines: ['creator'] as string[],
+    portfolio_urls: '',
     city: '',
     country: '',
     continent: '',
     rate_per_video: '',
+    rate_per_day: '',
     avg_views: '',
     engagement_rate: '',
     follower_count: '',
@@ -175,10 +189,13 @@ const CreatorProfile = () => {
       first_name: p.first_name ?? names.first,
       last_name: p.last_name ?? names.last,
       bio: p.bio ?? '',
+      disciplines: parseDisciplines(p.disciplines),
+      portfolio_urls: (p.portfolio_urls ?? []).join('\n'),
       city: p.city ?? '',
       country: p.country ?? '',
       continent: p.continent || continentOf(p.country ?? ''),
       rate_per_video: String(p.rate_per_video ?? ''),
+      rate_per_day: String(p.rate_per_day ?? ''),
       avg_views: String(p.avg_views ?? ''),
       engagement_rate: String(p.engagement_rate ?? ''),
       follower_count: String(p.follower_count ?? ''),
@@ -442,6 +459,10 @@ const CreatorProfile = () => {
 
   const save = async () => {
     if (!user) return;
+    if (form.disciplines.length === 0) {
+      toast({ title: 'Pick at least one', description: 'Choose whether you work as a creator, a model, or both.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     const fullName = joinName(form.first_name, form.last_name);
     const location = formatPlace(form.city, form.country);
@@ -450,6 +471,8 @@ const CreatorProfile = () => {
       last_name: form.last_name.trim() || null,
       full_name: fullName,
       bio: form.bio.trim(),
+      disciplines: form.disciplines,
+      portfolio_urls: parsePortfolioUrls(form.portfolio_urls),
       city: form.city.trim(),
       country: form.country.trim(),
       continent: form.continent,
@@ -460,6 +483,7 @@ const CreatorProfile = () => {
     };
     if (creatorIsPro) {
       patch.rate_per_video = Number(form.rate_per_video) || 0;
+      patch.rate_per_day = Number(form.rate_per_day) || 0;
       patch.rate_overridden = form.rate_overridden;
       patch.marketplace_visible = form.marketplace_visible;
     }
@@ -520,6 +544,17 @@ const CreatorProfile = () => {
     setForm((f) => ({ ...f, rate_per_video: String(suggested), rate_overridden: false }));
   };
 
+  const toggleDiscipline = (discipline: string) => {
+    setForm((f) => ({
+      ...f,
+      disciplines: f.disciplines.includes(discipline)
+        ? f.disciplines.filter((item) => item !== discipline)
+        : [...f.disciplines, discipline],
+    }));
+  };
+
+  const isModel = form.disciplines.includes('model');
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -544,6 +579,8 @@ const CreatorProfile = () => {
     country: form.country,
     location: formatPlace(form.city, form.country),
     rate_per_video: Number(form.rate_per_video) || 0,
+    rate_per_day: Number(form.rate_per_day) || 0,
+    disciplines: form.disciplines,
     avg_views: combinedReach.avgViews,
     engagement_rate: combinedReach.engagementRate,
     platforms: connectedPlatforms,
@@ -559,7 +596,7 @@ const CreatorProfile = () => {
       <main className={cn('mx-auto px-5 md:px-10 py-5 md:py-6', tab === 'public' ? 'max-w-6xl' : 'max-w-3xl')}>
         <h1 className="font-display text-2xl font-bold mb-1">My Profile</h1>
         <p className="text-sm text-muted-foreground mb-4">
-          This is what brands see when they browse the creator marketplace.
+          This is what brands see when they browse the creator and model marketplace.
         </p>
 
         <OnboardingBanner />
@@ -646,6 +683,49 @@ const CreatorProfile = () => {
                   placeholder="Tell brands what you create and who watches."
                 />
               </div>
+              <div className="flex flex-col gap-2">
+                <Label>What do you do?</Label>
+                <div className="flex flex-wrap gap-2">
+                  {DISCIPLINES.map((discipline) => {
+                    const selected = form.disciplines.includes(discipline);
+                    return (
+                      <button
+                        key={discipline}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => toggleDiscipline(discipline)}
+                        className={cn(
+                          'text-xs font-semibold rounded-full px-4 py-2 border transition-colors',
+                          selected
+                            ? 'bg-primary text-primary-foreground border-transparent'
+                            : 'border-[#f1f1f1] text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {DISCIPLINE_LABELS[discipline]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pick both if you create content and model.
+                </p>
+              </div>
+              {isModel && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="portfolio_urls">Portfolio links</Label>
+                  <Textarea
+                    id="portfolio_urls"
+                    rows={3}
+                    className="min-h-[80px]"
+                    value={form.portfolio_urls}
+                    onChange={set('portfolio_urls')}
+                    placeholder={'https://your-portfolio.com\nhttps://instagram.com/p/…'}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Up to {MAX_PORTFOLIO_LINKS} links to photos, reels, or an agency page. One per line.
+                  </p>
+                </div>
+              )}
               <div className="grid sm:grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="continent">Continent</Label>
@@ -720,8 +800,8 @@ const CreatorProfile = () => {
               <p className="text-xs text-muted-foreground -mt-1">
                 Each connected account is listed. Totals add them together.
                 {creatorIsPro
-                  ? ' You can set your price per video.'
-                  : ' Price per video can be edited on Creator Pro.'}
+                  ? ' You can set your price per video and, for models, a day rate.'
+                  : ' Prices can be edited on Creator Pro.'}
               </p>
               {connectedAccounts.length === 0 && (
                 <p className="text-xs text-muted-foreground">
@@ -798,6 +878,24 @@ const CreatorProfile = () => {
                   </p>
                 )}
               </div>
+              {isModel && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="rate_per_day">Day rate (USD)</Label>
+                  <Input
+                    id="rate_per_day"
+                    type="number"
+                    min="0"
+                    step="10"
+                    value={form.rate_per_day}
+                    disabled={!creatorIsPro}
+                    onChange={(e) => setForm((f) => ({ ...f, rate_per_day: e.target.value }))}
+                    placeholder="800"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    What you charge for a shoot day. Shown on your profile and Book me page.
+                  </p>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-[#f1f1f1] rounded-[14px] px-4 py-3">
                 <p className="text-xs text-muted-foreground">
                   Suggested: <span className="font-semibold text-foreground">{suggested ? formatMoney(suggested) : '—'}</span>
@@ -1020,7 +1118,7 @@ const CreatorProfile = () => {
                   <h2 className="font-display text-base font-bold mb-0.5">In brand search</h2>
                   <p className="text-xs text-muted-foreground">
                     {creatorIsPro
-                      ? 'When on, your profile also appears in the brand creator directory.'
+                      ? 'When on, your profile also appears in the brand creator and model directory.'
                       : 'Creator Pro lets brands find you in search. Your Book me link works either way.'}
                   </p>
                 </div>
@@ -1064,6 +1162,9 @@ const CreatorProfile = () => {
                       country: form.country,
                       location: formatPlace(form.city, form.country),
                       rate_per_video: Number(form.rate_per_video) || 0,
+                      rate_per_day: Number(form.rate_per_day) || 0,
+                      disciplines: form.disciplines,
+                      portfolio_urls: parsePortfolioUrls(form.portfolio_urls),
                       avg_views: combinedReach.avgViews,
                       engagement_rate: combinedReach.engagementRate,
                       follower_count: combinedReach.followerCount,

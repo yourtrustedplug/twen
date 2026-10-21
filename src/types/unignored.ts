@@ -26,6 +26,23 @@ export interface ChecklistResult extends ChecklistItem {
 export const PLATFORMS = ['tiktok', 'instagram'] as const;
 export type PlatformId = (typeof PLATFORMS)[number];
 
+/** What a creator does. Multi-select, so one account can be a creator and a model. */
+export const DISCIPLINES = ['creator', 'model'] as const;
+export type DisciplineId = (typeof DISCIPLINES)[number];
+
+export const DISCIPLINE_LABELS: Record<string, string> = {
+  creator: 'Content creator',
+  model: 'Model',
+};
+
+export const parseDisciplines = (value: unknown): DisciplineId[] => {
+  const list = Array.isArray(value) ? value : [];
+  const picked = list.filter((v): v is DisciplineId =>
+    (DISCIPLINES as readonly string[]).includes(v as string),
+  );
+  return picked.length > 0 ? picked : ['creator'];
+};
+
 /** Platforms a campaign can target (same as creator platforms). */
 export const CAMPAIGN_PLATFORMS = PLATFORMS;
 export type CampaignPlatformId = PlatformId;
