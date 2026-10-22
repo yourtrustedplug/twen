@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, Submission, ProfileRow } from '@/types/unignored';
-import { PLATFORM_LABELS, parseChecklist, parseChecklistResults, parseStringArray } from '@/types/unignored';
+import { PLATFORM_LABELS, campaignAudienceLabel, parseChecklist, parseChecklistResults, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatDate, formatViews, formatRate } from '@/lib/format';
 import { cartoonAvatar } from '@/lib/cartoon-avatar';
 import CampaignCover from '@/components/CampaignCover';
@@ -290,6 +290,7 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
                 {[
                   ['Topic', campaign.topic],
                   ['Angle', campaign.angle],
+                  ['Who can apply', campaignAudienceLabel(campaign.target_disciplines) ?? 'Everyone'],
                   ['Must include', campaign.must_include],
                   ['Avoid', campaign.avoid],
                   ['Hashtags', campaign.hashtags],

@@ -11,9 +11,13 @@ import type { Json } from '@/integrations/supabase/types';
 import {
   NICHE_LABELS,
   PLATFORM_LABELS,
+  DISCIPLINE_CHIP_LABELS,
+  campaignAudienceLabel,
+  creatorMatchesDisciplines,
   parseChecklist,
   parseStringArray,
   parseListText,
+  parseTargetDisciplines,
   type ChecklistResult,
 } from '@/types/unignored';
 import { formatMoney, formatDate, formatRate } from '@/lib/format';
@@ -92,7 +96,7 @@ const CreatorCampaignDetail = () => {
   useEffect(() => {
     if (!campaign) return;
     setPlatform(pickSubmitPlatform(parseStringArray(campaign.platforms), profile));
-  }, [campaign, profile?.tiktok_connected_at, profile?.instagram_connected_at]);
+  }, [campaign, profile, profile?.tiktok_connected_at, profile?.instagram_connected_at]);
 
   useEffect(() => {
     load();
@@ -117,6 +121,14 @@ const CreatorCampaignDetail = () => {
 
   const submit = async () => {
     if (!campaign || !user) return;
+    if (!creatorMatchesDisciplines(profile?.disciplines, campaign.target_disciplines)) {
+      toast({
+        title: 'Not the right fit',
+        description: `This campaign is only open to ${campaignAudienceLabel(campaign.target_disciplines) ?? 'other creator types'}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!isOnboardingComplete(profile)) {
       toast({
         title: 'Finish onboarding first',
@@ -225,11 +237,14 @@ const CreatorCampaignDetail = () => {
   const mustItems = parseListText(campaign.must_include);
   const avoidItems = parseListText(campaign.avoid);
   const openForApply = canApplyToCampaign(campaign.deadline);
+  const audienceLabel = campaignAudienceLabel(campaign.target_disciplines);
+  const targetDisciplines = parseTargetDisciplines(campaign.target_disciplines);
+  const matchesAudience = !profile || creatorMatchesDisciplines(profile.disciplines, campaign.target_disciplines);
   const brandKit = kitFromCampaign(campaign);
   const resubmit = canReplaceSubmission(submission?.status);
   const showForm = !submission || resubmit;
   const onboarded = isOnboardingComplete(profile);
-  const canSubmitNow = showForm && onboarded && openForApply;
+  const canSubmitNow = showForm && onboarded && openForApply && matchesAudience;
   const showSubmitCta = canSubmitNow && !composing;
   const onSubmitScreen = canSubmitNow && composing;
   const instantPayout = isPro(profile);
@@ -239,6 +254,16 @@ const CreatorCampaignDetail = () => {
 
   const statusBlock = () => {
     if (submission && !resubmit) return <SubmissionStatus submission={submission} />;
+    if (!matchesAudience) {
+      return (
+        <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[30px] p-10 text-center">
+          <h2 className="font-display text-2xl font-bold mb-2">Not the right fit</h2>
+          <p className="text-sm text-muted-foreground">
+            This campaign is only open to {audienceLabel ?? 'other creator types'}. Update what you do in your profile to see matching campaigns.
+          </p>
+        </div>
+      );
+    }
     if (!onboarded) return <OnboardingRequired action="submit to a campaign" />;
     if (!openForApply) {
       return (
@@ -398,6 +423,23 @@ const CreatorCampaignDetail = () => {
                     ))}
                   </div>
                 </div>
+                {audienceLabel && (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground mb-2">
+                      Who can apply
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {targetDisciplines.map((d) => (
+                        <span
+                          key={d}
+                          className="inline-flex items-center bg-white border border-[#f1f1f1] rounded-full px-3 py-1.5 text-sm font-semibold"
+                        >
+                          {DISCIPLINE_CHIP_LABELS[d] ?? d}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="divide-y divide-[#f1f1f1] rounded-[16px] bg-white border border-[#f1f1f1]">
                   {facts.map((fact) => (
                     <div key={fact.label} className="flex items-start justify-between gap-3 px-4 py-3">

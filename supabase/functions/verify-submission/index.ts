@@ -339,7 +339,7 @@ Deno.serve(async (req) => {
   const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select(
-      'id, role, full_name, first_name, last_name, tiktok_handle, instagram_handle, tiktok_connected_at, instagram_connected_at',
+      'id, role, full_name, first_name, last_name, tiktok_handle, instagram_handle, tiktok_connected_at, instagram_connected_at, disciplines',
     )
     .eq('id', authData.user.id)
     .maybeSingle()
@@ -350,12 +350,24 @@ Deno.serve(async (req) => {
 
   const { data: campaign, error: campaignError } = await admin
     .from('campaigns')
-    .select('id, status, deadline, started_at, created_at, platforms, brand_name')
+    .select('id, status, deadline, started_at, created_at, platforms, brand_name, target_disciplines')
     .eq('id', campaignId)
     .maybeSingle()
   if (campaignError || !campaign) return jsonResponseFor(req, { error: 'Campaign not found' }, 404)
   if (campaign.status !== 'open') {
     return jsonResponseFor(req, { error: 'This campaign is not open for submissions' }, 400)
+  }
+
+  const targetDisciplines =
+    Array.isArray(campaign.target_disciplines) && campaign.target_disciplines.length > 0
+      ? (campaign.target_disciplines as string[])
+      : ['creator', 'ugc', 'model']
+  const creatorDisciplines =
+    Array.isArray(profile.disciplines) && profile.disciplines.length > 0
+      ? (profile.disciplines as string[])
+      : ['creator']
+  if (!creatorDisciplines.some((discipline) => targetDisciplines.includes(discipline))) {
+    return jsonResponseFor(req, { error: 'This campaign is not open to your creator type' }, 403)
   }
 
   const platform = detectPlatform(body.platform, rawUrl)

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { ProfileRow } from '@/types/unignored';
-import { DISCIPLINE_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
+import { DISCIPLINE_CHIP_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { formatPercent } from '@/lib/metrics';
@@ -113,7 +113,7 @@ const CreatorCard = ({
         <div className="px-5 pb-5 flex flex-wrap gap-2">
           {disciplines.map((d) => (
             <span key={d} className="text-[11px] font-semibold bg-[#0A101D] text-white rounded-full px-3 py-1">
-              {DISCIPLINE_LABELS[d] ?? d}
+              {DISCIPLINE_CHIP_LABELS[d] ?? d}
             </span>
           ))}
           {platforms.map((p) => (

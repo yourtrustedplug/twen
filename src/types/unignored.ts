@@ -26,13 +26,28 @@ export interface ChecklistResult extends ChecklistItem {
 export const PLATFORMS = ['tiktok', 'instagram'] as const;
 export type PlatformId = (typeof PLATFORMS)[number];
 
-/** What a creator does. Multi-select, so one account can be a creator and a model. */
-export const DISCIPLINES = ['creator', 'model'] as const;
+/** What a creator does. Multi-select, so one account can be several types. */
+export const DISCIPLINES = ['creator', 'ugc', 'model'] as const;
 export type DisciplineId = (typeof DISCIPLINES)[number];
 
 export const DISCIPLINE_LABELS: Record<string, string> = {
   creator: 'Content creator',
+  ugc: 'UGC creator',
   model: 'Model',
+};
+
+/** Compact labels for cards and chips. */
+export const DISCIPLINE_CHIP_LABELS: Record<string, string> = {
+  creator: 'Creator',
+  ugc: 'UGC',
+  model: 'Model',
+};
+
+/** Plural labels for filters and campaign audiences. */
+export const DISCIPLINE_PLURAL_LABELS: Record<string, string> = {
+  creator: 'Content creators',
+  ugc: 'UGC creators',
+  model: 'Models',
 };
 
 export const parseDisciplines = (value: unknown): DisciplineId[] => {
@@ -105,6 +120,28 @@ export const parseChecklistResults = (value: unknown): ChecklistResult[] =>
 
 export const parseStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === 'string') : [];
+
+/** Campaign audience. Missing/empty means every type can apply (legacy campaigns). */
+export const parseTargetDisciplines = (value: unknown): DisciplineId[] => {
+  const picked = parseStringArray(value).filter((v): v is DisciplineId =>
+    (DISCIPLINES as readonly string[]).includes(v),
+  );
+  return picked.length > 0 ? picked : [...DISCIPLINES];
+};
+
+/** True when a creator's profile type overlaps the campaign audience. */
+export const creatorMatchesDisciplines = (creator: unknown, targets: unknown): boolean => {
+  const audience = parseTargetDisciplines(targets);
+  const mine = parseDisciplines(creator);
+  return mine.some((discipline) => audience.includes(discipline));
+};
+
+/** Human audience line, or null when a campaign is open to every type. */
+export const campaignAudienceLabel = (targets: unknown): string | null => {
+  const audience = parseTargetDisciplines(targets);
+  if (audience.length === DISCIPLINES.length) return null;
+  return audience.map((discipline) => DISCIPLINE_PLURAL_LABELS[discipline] ?? discipline).join(' · ');
+};
 
 /** Turns a newline / bullet list string into clean items. */
 export const parseListText = (value: string | null | undefined): string[] =>

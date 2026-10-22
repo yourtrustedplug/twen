@@ -4,7 +4,7 @@ import { absoluteUrl, breadcrumbJsonLd, ogImageType, resolvePageSeo } from '@/li
 describe('resolvePageSeo', () => {
   it('returns marketing meta + images for public routes', () => {
     const page = resolvePageSeo('/creators');
-    expect(page.title).toMatch(/Creators/i);
+    expect(page.title).toMatch(/UGC/i);
     expect(page.robots).toMatch(/index/);
     expect(page.image).toContain('/seo/hero-creators.jpg');
     expect(page.images?.length).toBeGreaterThan(0);

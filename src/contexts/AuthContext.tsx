@@ -24,6 +24,8 @@ export interface Profile {
   payout_number: string | null;
   id_verification_status: string;
   company_name: string | null;
+  /** What this creator does: creator, UGC creator, model (multi-select). */
+  disciplines?: string[] | null;
   bio?: string | null;
   city?: string | null;
   country?: string | null;

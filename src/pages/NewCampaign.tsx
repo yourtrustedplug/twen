@@ -27,6 +27,9 @@ import {
   NICHE_LABELS,
   CAMPAIGN_PLATFORMS,
   PLATFORM_LABELS,
+  DISCIPLINES,
+  DISCIPLINE_LABELS,
+  DISCIPLINE_PLURAL_LABELS,
   joinListText,
 } from '@/types/unignored';
 import type { Json } from '@/integrations/supabase/types';
@@ -41,6 +44,12 @@ const RATE_SUGGESTIONS = [
   { value: 3.0, label: 'Premium', hint: 'Attracts high performers' },
   { value: 5.0, label: 'Top', hint: 'Competitive for the best creators' },
 ];
+
+const DISCIPLINE_HINTS: Record<string, string> = {
+  creator: 'Posts Reels or TikToks on their own accounts',
+  ugc: 'Makes ad content for brand channels',
+  model: 'Available for photo or video shoots',
+};
 
 type Step = 1 | 2;
 
@@ -138,6 +147,7 @@ const NewCampaign = () => {
     topic: '',
     angle: '',
     niche: '',
+    disciplines: [...DISCIPLINES] as string[],
     platforms: [] as string[],
     mustInclude: [] as string[],
     avoid: [] as string[],
@@ -161,6 +171,14 @@ const NewCampaign = () => {
       platforms: f.platforms.includes(p) ? f.platforms.filter((x) => x !== p) : [...f.platforms, p],
     }));
 
+  const toggleDiscipline = (d: string) =>
+    setForm((f) => ({
+      ...f,
+      disciplines: f.disciplines.includes(d)
+        ? f.disciplines.filter((x) => x !== d)
+        : [...f.disciplines, d],
+    }));
+
   const budget = Number(form.budget) || 0;
   const rate = Number(form.rate) || 0;
   const estimatedViews = rate > 0 ? Math.floor((budget / rate) * 1000) : 0;
@@ -178,6 +196,7 @@ const NewCampaign = () => {
     if (!form.cover_image) return 'Upload a campaign image first.';
     if (!form.title.trim()) return 'Give the campaign a title.';
     if (!form.niche) return 'Pick a niche.';
+    if (form.disciplines.length === 0) return 'Pick who can apply.';
     if (form.platforms.length === 0) return 'Pick TikTok, Instagram Reels, or both.';
     if (!form.topic.trim()) return 'Describe what the video should cover.';
     if (!form.angle.trim()) return 'Describe how it should feel.';
@@ -275,6 +294,7 @@ const NewCampaign = () => {
       deadline: form.deadline,
       status: 'draft' as const,
       niche: form.niche,
+      target_disciplines: form.disciplines,
       platforms: form.platforms as unknown as Json,
       cover_image: form.cover_image,
       checklist: checklist as unknown as Json,
@@ -360,7 +380,7 @@ const NewCampaign = () => {
           <>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Create a campaign</h1>
             <p className="text-muted-foreground mb-10">
-              Start with the image creators will see. Then tell them what to make.
+              Start with the image creators and models will see. Then tell them what to make.
             </p>
 
             <div className="flex flex-col gap-8 bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-5 md:p-8">
@@ -418,6 +438,35 @@ const NewCampaign = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Label>Who can apply?</Label>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Only creators whose profile matches these types will see this campaign. Leave all selected to keep it open to everyone.
+                </p>
+                <div className="flex flex-col gap-2">
+                  {DISCIPLINES.map((d) => (
+                    <label
+                      key={d}
+                      className={cn(
+                        'flex items-start gap-3 rounded-2xl border px-4 py-3 cursor-pointer transition-colors',
+                        form.disciplines.includes(d) ? 'border-primary bg-primary/5' : 'border-[#e9e9e9] bg-white'
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.disciplines.includes(d)}
+                        onChange={() => toggleDiscipline(d)}
+                        className="mt-0.5 h-4 w-4 rounded border-input"
+                      />
+                      <span className="flex flex-col gap-0.5">
+                        <span className="text-sm font-semibold">{DISCIPLINE_LABELS[d]}</span>
+                        <span className="text-xs text-muted-foreground">{DISCIPLINE_HINTS[d]}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="flex flex-col gap-3">
@@ -556,7 +605,7 @@ const NewCampaign = () => {
           <>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Finances</h1>
             <p className="text-muted-foreground mb-10">
-              Set the budget and rate. Higher rates attract more creators.
+              Set the budget and rate. Higher rates attract more creators and models.
               Campaigns must run at least {MIN_CAMPAIGN_DAYS} days.
             </p>
 
@@ -630,6 +679,7 @@ const NewCampaign = () => {
               {[
                 ['Campaign', form.title],
                 ['Niche', NICHE_LABELS[form.niche] ?? form.niche],
+                ['Who can apply', form.disciplines.map((d) => DISCIPLINE_PLURAL_LABELS[d] ?? d).join(', ')],
                 ['Platforms', form.platforms.map((p) => PLATFORM_LABELS[p] ?? p).join(', ')],
                 ['Budget', formatMoney(budget)],
                 ['Rate', rate ? formatRate(rate) : '—'],

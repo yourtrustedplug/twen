@@ -73,6 +73,7 @@ export type Database = {
           spent_amount: number
           started_at: string | null
           status: string
+          target_disciplines: string[]
           title: string
           topic: string
           updated_at: string
@@ -108,6 +109,7 @@ export type Database = {
           spent_amount?: number
           started_at?: string | null
           status?: string
+          target_disciplines?: string[]
           title: string
           topic?: string
           updated_at?: string
@@ -143,6 +145,7 @@ export type Database = {
           spent_amount?: number
           started_at?: string | null
           status?: string
+          target_disciplines?: string[]
           title?: string
           topic?: string
           updated_at?: string

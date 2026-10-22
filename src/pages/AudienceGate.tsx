@@ -8,7 +8,7 @@ import creatorImage from '@/assets/gate/gate-creator.jpg';
 import brandImage from '@/assets/gate/gate-brand.jpg';
 
 const options: { audience: Audience; label: string; sub: string; image: string }[] = [
-  { audience: 'creator', label: 'Creator', sub: 'I make videos', image: creatorImage },
+  { audience: 'creator', label: 'Creator', sub: 'I create, make UGC or model', image: creatorImage },
   { audience: 'brand', label: 'Brand', sub: 'I want reach', image: brandImage },
 ];
 

@@ -7,7 +7,7 @@ import CreatorCard from '@/components/CreatorCard';
 import FilterSelect from '@/components/creator/FilterSelect';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import type { ProfileRow } from '@/types/unignored';
+import type { DisciplineId, ProfileRow } from '@/types/unignored';
 import { PLATFORMS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { allCountryNames } from '@/lib/geo';
 import { isPro } from '@/lib/plan';
@@ -56,7 +56,7 @@ const BrandCreatorMarketplace = () => {
     return creators.filter((c) => {
       const platforms = parseStringArray(c.platforms);
       const disciplines = parseDisciplines(c.disciplines);
-      if (discipline !== 'all' && !disciplines.includes(discipline as 'creator' | 'model')) return false;
+      if (discipline !== 'all' && !disciplines.includes(discipline as DisciplineId)) return false;
       if (platform !== 'all' && !platforms.includes(platform)) return false;
       if (country !== 'all' && (c.country ?? '') !== country) return false;
       if (!q) return true;
@@ -104,7 +104,7 @@ const BrandCreatorMarketplace = () => {
       <main className="max-w-[100rem] mx-auto px-5 md:px-10 py-10">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Find creators and models</h1>
         <p className="text-muted-foreground mb-8">
-          Creators and models for content, campaigns, and shoots. Message or hire.
+          Content creators, UGC creators and models for campaigns and shoots. Message or hire.
         </p>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -125,7 +125,8 @@ const BrandCreatorMarketplace = () => {
             />
             {[
               { value: 'all', label: 'All types' },
-              { value: 'creator', label: 'Creators' },
+              { value: 'creator', label: 'Content creators' },
+              { value: 'ugc', label: 'UGC creators' },
               { value: 'model', label: 'Models' },
             ].map((t) => (
               <button

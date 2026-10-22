@@ -8,7 +8,7 @@ import { campaignImage } from '@/lib/campaign-image';
 import { combineAccountStats, connectedAccountRows } from '@/lib/account-stats';
 import type { BookMeProfile, BookMeWork } from '@/lib/book-me';
 import { socialProfileHref } from '@/lib/book-me';
-import { DISCIPLINE_LABELS, parseDisciplines } from '@/types/unignored';
+import { DISCIPLINE_CHIP_LABELS, parseDisciplines } from '@/types/unignored';
 import { cn } from '@/lib/utils';
 
 const portfolioLabel = (url: string) => {
@@ -182,7 +182,7 @@ const BookMeCard = ({
                 compact ? 'text-[8px] px-2 py-0.5' : 'text-[10px] px-2.5 py-1',
               )}
             >
-              {DISCIPLINE_LABELS[d] ?? d}
+              {DISCIPLINE_CHIP_LABELS[d] ?? d}
             </span>
           ))}
         </div>

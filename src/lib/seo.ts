@@ -57,9 +57,9 @@ export const PAGE_SEO: Record<string, PageSeo> = {
   },
   '/creators': {
     path: '/creators',
-    title: 'Earn per view on Instagram & TikTok | Twen for Creators',
+    title: 'Get paid to create, make UGC or model | Twen',
     description:
-      'Post Reels and TikToks for funded brand campaigns. Get paid for verified views and withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa.',
+      'Pick funded brand campaigns as a content creator, UGC creator, or model. Earn on verified views or set a day rate, and withdraw to EcoCash, MoMo, Airtel Money, or M-Pesa.',
     robots: INDEX,
     image: `${SITE_URL}/seo/hero-creators.jpg`,
     images: [

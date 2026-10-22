@@ -3,7 +3,7 @@ import CampaignCover from '@/components/CampaignCover';
 import SignedImage from '@/components/SignedImage';
 import { PlatformMark, type MarkPlatform } from '@/components/creator/PlatformMark';
 import type { Campaign } from '@/types/unignored';
-import { NICHE_LABELS, PLATFORM_LABELS, parseStringArray } from '@/types/unignored';
+import { NICHE_LABELS, PLATFORM_LABELS, campaignAudienceLabel, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatRate, formatDueBy } from '@/lib/format';
 import { campaignLogoPath } from '@/lib/brand-kit';
 import { Heart } from 'lucide-react';
@@ -23,6 +23,7 @@ const CampaignPickCard = ({
 }) => {
   const remaining = Number(campaign.funded_amount) - Number(campaign.spent_amount);
   const platforms = parseStringArray(campaign.platforms).filter(isMarkPlatform);
+  const audience = campaignAudienceLabel(campaign.target_disciplines);
   const logo = campaignLogoPath(campaign);
 
   return (
@@ -71,6 +72,11 @@ const CampaignPickCard = ({
         </div>
       </div>
       <div className="p-6 flex flex-col gap-3">
+        {audience ? (
+          <p className="text-[11px] uppercase tracking-[1px] font-semibold text-muted-foreground">
+            For {audience}
+          </p>
+        ) : null}
         {platforms.length > 0 ? (
           <div className="flex items-center gap-2">
             {platforms.map((platform) => (

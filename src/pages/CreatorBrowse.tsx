@@ -5,7 +5,7 @@ import AppHeader from '@/components/AppHeader';
 import CreatorSubmissionsList from '@/components/creator/CreatorSubmissionsList';
 import CampaignPickCard from '@/components/creator/CampaignPickCard';
 import type { Campaign } from '@/types/unignored';
-import { NICHE_LABELS, NICHES, PLATFORM_LABELS, CAMPAIGN_PLATFORMS, parseStringArray } from '@/types/unignored';
+import { NICHE_LABELS, NICHES, PLATFORM_LABELS, CAMPAIGN_PLATFORMS, creatorMatchesDisciplines, parseStringArray } from '@/types/unignored';
 import FilterSelect from '@/components/creator/FilterSelect';
 import { persistWatchlistToggle, loadWatchlist } from '@/lib/watchlist';
 import { canApplyToCampaign } from '@/lib/metrics';
@@ -27,7 +27,7 @@ const COPY: Record<CreatorHomeTab, { title: string; subtitle: string }> = {
 };
 
 const CreatorBrowse = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +79,7 @@ const CreatorBrowse = () => {
   const filtered = useMemo(() => {
     const rows = campaigns.filter((c) => {
       if (!canApplyToCampaign(c.deadline)) return false;
+      if (profile && !creatorMatchesDisciplines(profile.disciplines, c.target_disciplines)) return false;
       if (niche !== 'all' && c.niche !== niche) return false;
       if (platform !== 'all') {
         const plats = parseStringArray(c.platforms);
@@ -89,7 +90,7 @@ const CreatorBrowse = () => {
       return hay.includes(q);
     });
     return sortCampaigns(rows, sort);
-  }, [campaigns, q, niche, platform, sort]);
+  }, [campaigns, q, niche, platform, sort, profile]);
 
   const onToggleSave = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -165,12 +166,12 @@ const CreatorBrowse = () => {
             ) : filtered.length === 0 ? (
               <div className="bg-[#fafafa] border border-[#f1f1f1] rounded-[24px] md:rounded-[30px] p-8 md:p-12 text-center">
                 <h2 className="font-display text-2xl font-bold mb-3">
-                  {campaigns.length === 0 ? 'No open campaigns right now' : 'No campaigns match those filters'}
+                  {campaigns.length === 0 ? 'No open campaigns right now' : 'No campaigns match your filters'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   {campaigns.length === 0
                     ? 'Check back soon — brands fund new campaigns regularly.'
-                    : 'Try another niche or platform, or clear the search.'}
+                    : 'Try clearing a filter, or update what you do in your profile so more campaigns match.'}
                 </p>
               </div>
             ) : (

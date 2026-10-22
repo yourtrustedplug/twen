@@ -8,7 +8,7 @@ import { MetricTile } from '@/components/MetricTile';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { ProfileRow, Submission } from '@/types/unignored';
-import { DISCIPLINE_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
+import { DISCIPLINE_CHIP_LABELS, PLATFORM_LABELS, parseDisciplines, parseStringArray } from '@/types/unignored';
 import { formatMoney, formatViews } from '@/lib/format';
 import { formatPlace } from '@/lib/geo';
 import { formatPercent, engagement } from '@/lib/metrics';
@@ -196,7 +196,7 @@ const BrandCreatorProfile = () => {
               <div className="flex flex-wrap gap-2 mb-6">
                 {disciplines.map((d) => (
                   <span key={d} className="text-xs font-semibold bg-[#0A101D] text-white rounded-full px-4 py-2">
-                    {DISCIPLINE_LABELS[d] ?? d}
+                    {DISCIPLINE_CHIP_LABELS[d] ?? d}
                   </span>
                 ))}
                 {platforms.map((p) => (

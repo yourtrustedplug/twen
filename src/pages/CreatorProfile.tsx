@@ -460,7 +460,7 @@ const CreatorProfile = () => {
   const save = async () => {
     if (!user) return;
     if (form.disciplines.length === 0) {
-      toast({ title: 'Pick at least one', description: 'Choose whether you work as a creator, a model, or both.', variant: 'destructive' });
+      toast({ title: 'Pick at least one', description: 'Choose whether you work as a creator, UGC creator, model, or a mix.', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -707,7 +707,7 @@ const CreatorProfile = () => {
                   })}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Pick both if you create content and model.
+                  Pick all that apply — content, UGC, or modeling.
                 </p>
               </div>
               {isModel && (
