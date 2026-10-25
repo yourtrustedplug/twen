@@ -130,7 +130,7 @@ const TestimonialSlider = ({ testimonials, direction = 'left' }: TestimonialSlid
   );
 };
 
-interface TestimonialsProps extends React.ComponentProps<'section'> {}
+type TestimonialsProps = React.ComponentProps<'section'>;
 
 const Testimonials = ({ className, ...props }: TestimonialsProps) => {
   return (

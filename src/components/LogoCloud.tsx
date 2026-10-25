@@ -14,7 +14,7 @@ const logos = [
   { src: sitemarkLogo, alt: "Sitemark logo" },
 ];
 
-interface LogoCloudProps extends React.ComponentProps<"section"> {}
+type LogoCloudProps = React.ComponentProps<"section">;
 
 export function LogoCloud({ className, ...props }: LogoCloudProps) {
   return (

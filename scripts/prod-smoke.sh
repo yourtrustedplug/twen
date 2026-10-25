@@ -33,6 +33,9 @@ test -f src/pages/AdminPanel.tsx && pass "AdminPanel" || fail "AdminPanel"
 
 # Edge functions present
 test -f supabase/functions/send-contact-email/index.ts && pass "send-contact-email" || fail "send-contact-email"
+test -f supabase/functions/log-client-error/index.ts && pass "log-client-error" || fail "log-client-error"
+test -f src/lib/error-reporting.ts && pass "client error reporting" || fail "client error reporting"
+rg -q "ip_hash" supabase/functions/send-contact-email/index.ts && pass "contact rate limiting" || fail "contact rate limiting"
 test -f supabase/functions/verify-views/index.ts && pass "verify-views" || fail "verify-views"
 test -f supabase/functions/create-campaign-checkout/index.ts && pass "create-campaign-checkout" || fail "create-campaign-checkout"
 test -f supabase/functions/nardopay-webhook/index.ts && pass "nardopay-webhook" || fail "nardopay-webhook"
@@ -59,6 +62,7 @@ rg -q "corsForRequest" supabase/functions/privy-exchange/index.ts \
   && rg -q "corsForRequest" supabase/functions/create-plan-checkout/index.ts \
   && rg -q "corsForRequest" supabase/functions/request-creator-payout/index.ts \
   && rg -q "corsForRequest" supabase/functions/send-contact-email/index.ts \
+  && rg -q "corsForRequest" supabase/functions/log-client-error/index.ts \
   && rg -q "corsForRequest" supabase/functions/connect-social/index.ts \
   && rg -q "corsForRequest" supabase/functions/social-oauth-callback/index.ts \
   && rg -q "corsForRequest" supabase/functions/verify-id/index.ts \
@@ -117,7 +121,7 @@ if [ -z "${INSTAGRAM_APP_ID:-}" ] || [ -z "${INSTAGRAM_APP_SECRET:-}" ]; then
     echo "BLOCK Instagram: set INSTAGRAM_APP_ID+SECRET (Connect) or INSTAGRAM_ACCESS_TOKEN fallback"
   fi
 fi
-echo "BLOCK Resend: verify Twen sending domain (API key OK; custom domain may still be pending)"
+echo "NOTE Resend: twen.app was verified via the Resend API on 2026-10-25; recheck after DNS changes"
 echo "BLOCK MoMo still ops-manual (NardoPay has no public disbursement API key)"
 if command -v dig >/dev/null 2>&1; then
   if dig +short A twen.app | grep -q . || dig +short AAAA twen.app | grep -q .; then
@@ -139,7 +143,7 @@ if [ -n "${VITE_SUPABASE_URL:-}" ] && [ -n "${VITE_SUPABASE_PUBLISHABLE_KEY:-}" 
   else
     echo "BLOCK remote REST key invalid/unauthorized (HTTP $code) — refresh publishable + secret in Dashboard → .env"
   fi
-  for fn in privy-exchange nardopay-webhook create-campaign-checkout create-plan-checkout request-creator-payout verify-views send-contact-email connect-social social-oauth-callback verify-id; do
+  for fn in privy-exchange nardopay-webhook create-campaign-checkout create-plan-checkout request-creator-payout verify-views send-contact-email log-client-error connect-social social-oauth-callback verify-id; do
     fcode=$(curl -s -o /dev/null -w "%{http_code}" -X OPTIONS "${VITE_SUPABASE_URL}/functions/v1/${fn}" || echo "000")
     if [ "$fcode" = "200" ] || [ "$fcode" = "204" ]; then
       pass "remote fn $fn ($fcode)"

@@ -32,6 +32,21 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 255
 }
 
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function clientIp(req: Request): string {
+  return (
+    req.headers.get('cf-connecting-ip') ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+  )
+}
+
 function adminClient() {
   const url = Deno.env.get('SUPABASE_URL')
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SECRET_KEY')
@@ -75,6 +90,33 @@ Deno.serve(async (req) => {
   }
 
   const admin = adminClient()
+  const ipHash = await sha256Hex(`contact:${clientIp(req)}`)
+
+  if (admin) {
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const [byIp, byEmail] = await Promise.all([
+      admin
+        .from('contact_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('ip_hash', ipHash)
+        .gte('created_at', since),
+      admin
+        .from('contact_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('email', email)
+        .gte('created_at', since),
+    ])
+
+    if ((byIp.count ?? 0) >= 5 || (byEmail.count ?? 0) >= 3) {
+      return jsonResponseFor(
+        req,
+        { error: 'Too many messages. Please try again in a few minutes.' },
+        429,
+        { 'Retry-After': '600' },
+      )
+    }
+  }
+
   let storedId: string | null = null
   if (admin) {
     const { data, error } = await admin
@@ -85,6 +127,7 @@ Deno.serve(async (req) => {
         phone,
         subject,
         message,
+        ip_hash: ipHash,
       })
       .select('id')
       .maybeSingle()

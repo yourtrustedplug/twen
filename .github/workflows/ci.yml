@@ -16,6 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npm run lint
       - run: npm test -- --run
       - run: npm run build
       - name: Auth / prod file checks
@@ -23,6 +24,8 @@ jobs:
           test -f src/providers/PrivyProvider.tsx
           test -f supabase/functions/privy-exchange/index.ts
           test -f supabase/functions/send-contact-email/index.ts
+          test -f supabase/functions/log-client-error/index.ts
+          test -f src/lib/error-reporting.ts
           test -f supabase/functions/create-campaign-checkout/index.ts
           test -f supabase/functions/nardopay-webhook/index.ts
           test -f supabase/functions/request-creator-payout/index.ts
@@ -35,5 +38,5 @@ jobs:
           test -f src/pages/AdminPanel.tsx
           test -f src/lib/edge-errors.ts
           ! git grep -n "signInAnonymously\|lovable.auth\|nardopay_webhook_secret" -- 'src/**/*.ts' 'src/**/*.tsx' 'supabase/functions/**/*.ts' || exit 1
-          git grep -n "corsForRequest" -- 'supabase/functions/privy-exchange/index.ts' 'supabase/functions/send-contact-email/index.ts' >/dev/null
+          git grep -n "corsForRequest" -- 'supabase/functions/privy-exchange/index.ts' 'supabase/functions/send-contact-email/index.ts' 'supabase/functions/log-client-error/index.ts' >/dev/null
           git grep -n "createOnLogin: 'off'" -- 'src/providers/PrivyProvider.tsx' >/dev/null

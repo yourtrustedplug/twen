@@ -1,8 +1,17 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProfilePlanPanel from './ProfilePlanPanel';
 
 describe('ProfilePlanPanel', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-01T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('shows Free as current and advertises Creator Pro on the plan tab', () => {
     render(
       <ProfilePlanPanel audience="creator" isPro={false} onUpgrade={vi.fn()} />,

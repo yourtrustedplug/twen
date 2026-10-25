@@ -75,12 +75,14 @@ export function jsonResponseFor(
   req: Request,
   body: unknown,
   status = 200,
+  extraHeaders: Record<string, string> = {},
 ): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...corsForRequest(req),
       'Content-Type': 'application/json',
+      ...extraHeaders,
     },
   })
 }

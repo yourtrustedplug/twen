@@ -14,7 +14,7 @@ import contactHeaderBg from '@/assets/contact/contact-header-bg.jpg';
 import contactImage01 from '@/assets/contact/contact-image-01.jpg';
 import contactImage02 from '@/assets/contact/contact-image-02.jpg';
 
-interface ContactHeaderProps extends React.ComponentProps<'section'> {}
+type ContactHeaderProps = React.ComponentProps<'section'>;
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),

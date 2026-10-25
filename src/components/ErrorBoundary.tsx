@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { reportClientError } from '@/lib/error-reporting';
 import SomethingWentWrong from '@/pages/SomethingWentWrong';
 
 interface Props {
@@ -26,6 +27,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Uncaught UI error', error, info.componentStack);
+    reportClientError({
+      message: error.message || 'Uncaught UI error',
+      stack: error.stack,
+      componentStack: info.componentStack,
+    });
   }
 
   render() {

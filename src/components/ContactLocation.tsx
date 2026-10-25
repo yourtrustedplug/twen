@@ -2,7 +2,7 @@ import { Mail, Phone, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import officeImage from '@/assets/about/about-image-01.jpg';
 
-interface ContactLocationProps extends React.ComponentProps<'section'> {}
+type ContactLocationProps = React.ComponentProps<'section'>;
 
 // Slide-up double text link component (matches footer animation)
 const SlideUpLink = ({ 
