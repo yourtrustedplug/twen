@@ -22,3 +22,5 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+For local test accounts and simulated payments, see [LOCAL_TESTING.md](./LOCAL_TESTING.md).

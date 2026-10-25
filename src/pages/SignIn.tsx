@@ -8,6 +8,7 @@ import { deliverPendingBookAndGo } from '@/lib/hire';
 import { BRAND_PLUS_UPGRADE_PATH, isPro } from '@/lib/plan';
 import { beginAuth, markAuthRedirect, mergePendingBook, parseRole, peekPendingBook, pendingBookFromSearch, setPendingBook } from '@/lib/pending-signup';
 import { getAppTenant, getHostname, goToAppPath, isLocalApex } from '@/lib/hosts';
+import { isLocalTestMode } from '@/lib/local-test';
 import { AuthSplash } from '@/components/AuthSplash';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/logos';
@@ -116,6 +117,14 @@ const SignIn = () => {
           >
             Continue
           </Button>
+          {isLocalTestMode() ? (
+            <Link
+              to="/local-test"
+              className="text-sm text-[#A7ADB8] underline underline-offset-4 hover:text-[#F5F5F5]"
+            >
+              Use local test accounts
+            </Link>
+          ) : null}
         </>
       ) : null}
     </div>

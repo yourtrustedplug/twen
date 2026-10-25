@@ -41,6 +41,7 @@ import { kitFromCampaign } from '@/lib/brand-kit';
 import { isValidPlatformUrl, platformUrlHint, type SocialPlatform } from '@/lib/platform-links';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import { isPro } from '@/lib/plan';
+import { isLocalTestMode, simulateCreatorSubmission } from '@/lib/local-test';
 import {
   allChecksDeclared,
   allowedSubmitPlatforms,
@@ -58,7 +59,11 @@ const CreatorCampaignDetail = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(
+    isLocalTestMode()
+      ? 'https://www.tiktok.com/@twen_test_creator/video/7000000000000000001'
+      : '',
+  );
   const [platform, setPlatform] = useState<string>('tiktok');
   const [submitting, setSubmitting] = useState(false);
   const [checklistResults, setChecklistResults] = useState<ChecklistResult[]>([]);
@@ -172,6 +177,28 @@ const CreatorCampaignDetail = () => {
         description: 'Declare every requirement before submitting.',
         variant: 'destructive',
       });
+      return;
+    }
+
+    if (isLocalTestMode()) {
+      setSubmitting(true);
+      try {
+        await simulateCreatorSubmission(campaign.id, plat, checklistResults);
+        toast({
+          title: 'Test submission created',
+          description: 'No TikTok/Meta request was made. A local admin can approve it now.',
+        });
+        setUrl('');
+        load();
+      } catch (e) {
+        toast({
+          title: 'Simulated submission failed',
+          description: e instanceof Error ? e.message : 'Local test submission failed',
+          variant: 'destructive',
+        });
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 

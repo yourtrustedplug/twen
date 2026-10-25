@@ -32,3 +32,10 @@ dist-ssr
 
 # Supabase CLI local cache
 supabase/.temp/
+supabase/.branches/
+
+# Local harness bootstrap copies (temporary; scripts remove them)
+supabase/migrations/*_local_*.sql
+
+# TypeScript incremental build state
+*.tsbuildinfo

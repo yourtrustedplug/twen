@@ -15,6 +15,16 @@ verify_jwt = false
 [functions.create-campaign-checkout]
 verify_jwt = true
 
+# Local harness only. Never add this function to scripts/deploy-functions.sh or
+# .github/workflows/deploy-functions.yml. It hard-fails unless LOCAL_TEST_MODE=true
+# and SUPABASE_URL is a localhost address.
+[functions.local-test-fund-campaign]
+verify_jwt = true
+
+# Local harness only. Same guard rules as local-test-fund-campaign.
+[functions.local-test-submit]
+verify_jwt = true
+
 [functions.create-plan-checkout]
 verify_jwt = true
 

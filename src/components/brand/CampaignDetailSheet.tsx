@@ -25,6 +25,7 @@ import { isPro } from '@/lib/plan';
 import { kitFromCampaign } from '@/lib/brand-kit';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
 import { campaignCheckoutUrlIfReusable } from '@/lib/nardopay-checkout';
+import { isLocalTestMode, simulateCampaignFunding } from '@/lib/local-test';
 import { usePlanCheckout } from '@/hooks/use-plan-checkout';
 import { Loader2, ShieldCheck, CalendarPlus, Check, X, MessageSquare, Wallet } from 'lucide-react';
 
@@ -81,6 +82,27 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
 
   const fund = async () => {
     if (!campaign) return;
+    if (isLocalTestMode()) {
+      setBusy(true);
+      try {
+        await simulateCampaignFunding(campaign.id);
+        toast({
+          title: 'Test payment simulated',
+          description: 'The campaign is funded and open in your local database.',
+        });
+        await load();
+        onUpdated?.();
+      } catch (e) {
+        toast({
+          title: 'Simulated payment failed',
+          description: e instanceof Error ? e.message : 'Local test funding failed',
+          variant: 'destructive',
+        });
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     const cached = campaignCheckoutUrlIfReusable(campaign);
     if (cached) {
       window.location.href = cached;
@@ -245,7 +267,9 @@ export function CampaignDetailSheet({ campaignId, seed, open, onOpenChange, onUp
                 {campaign.status === 'draft' && (
                   <Button variant="invofy" size="invofy" onClick={fund} disabled={busy}>
                     {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                    Fund {formatMoney(campaign.budget)} & publish
+                    {isLocalTestMode()
+                      ? `Simulate ${formatMoney(campaign.budget)} test payment`
+                      : `Fund ${formatMoney(campaign.budget)} & publish`}
                   </Button>
                 )}
                 {campaign.status === 'open' && (

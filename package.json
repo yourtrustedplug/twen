@@ -17,7 +17,15 @@
     "prod:secrets": "./scripts/gen-secrets.sh",
     "prod:push-secrets": "./scripts/push-secrets.sh",
     "prod:tiktok-oauth": "./scripts/tiktok-oauth-token.sh",
-    "prod:privy-domains": "./scripts/privy-set-domains.sh"
+    "prod:privy-domains": "./scripts/privy-set-domains.sh",
+    "local:start": "./scripts/local/start.sh",
+    "local:reset": "./scripts/local/reset.sh",
+    "local:stop": "./scripts/local/stop.sh",
+    "local:status": "./scripts/local/status.sh",
+    "local:functions": "./scripts/local/functions.sh",
+    "local:seed": "node scripts/local/seed.mjs",
+    "local:views": "node scripts/local/simulate-views.mjs",
+    "local:close": "node scripts/local/close-campaign.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

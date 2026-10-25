@@ -37,6 +37,8 @@ import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import SignIn from "./pages/SignIn";
+import LocalTestLogin from "./pages/LocalTestLogin";
+import { isLocalTestMode } from "@/lib/local-test";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
 import SocialCallback from "./pages/SocialCallback";
@@ -151,6 +153,9 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/signin" element={<SignIn />} />
+                {isLocalTestMode() ? (
+                  <Route path="/local-test" element={<LocalTestLogin />} />
+                ) : null}
                 <Route path="/signup" element={<SignupRedirect />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />

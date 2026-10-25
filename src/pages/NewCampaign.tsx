@@ -35,6 +35,7 @@ import {
 import type { Json } from '@/integrations/supabase/types';
 import { cn } from '@/lib/utils';
 import { edgeFunctionErrorMessage } from '@/lib/edge-errors';
+import { isLocalTestMode, simulateCampaignFunding } from '@/lib/local-test';
 import { isOnboardingComplete } from '@/lib/onboarding';
 import { kitFromProfile, socialsToUrls, toCampaignKit } from '@/lib/brand-kit';
 
@@ -325,6 +326,26 @@ const NewCampaign = () => {
         toast({ title: 'Could not update the campaign', description: updateError.message, variant: 'destructive' });
         return;
       }
+    }
+
+    if (isLocalTestMode()) {
+      try {
+        await simulateCampaignFunding(id);
+        setSaving(false);
+        toast({
+          title: 'Test payment simulated',
+          description: 'The campaign is now funded and open in your local database.',
+        });
+      } catch (e) {
+        setSaving(false);
+        toast({
+          title: 'Simulated payment failed',
+          description: e instanceof Error ? e.message : 'Local test funding failed',
+          variant: 'destructive',
+        });
+      }
+      navigate(brandAnalyticsPath(id));
+      return;
     }
 
     const { data: checkout, error: fundError } = await supabase.functions.invoke('create-campaign-checkout', {
@@ -705,7 +726,9 @@ const NewCampaign = () => {
               </Button>
               <Button variant="invofy" size="invofy" onClick={saveAndFund} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Fund {budget > 0 ? formatMoney(budget) : ''} & publish
+                {isLocalTestMode()
+                  ? `Simulate ${budget > 0 ? formatMoney(budget) : ''} test payment`
+                  : `Fund ${budget > 0 ? formatMoney(budget) : ''} & publish`}
               </Button>
             </div>
           </>
