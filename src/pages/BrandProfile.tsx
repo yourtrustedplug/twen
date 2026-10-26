@@ -379,7 +379,7 @@ const BrandProfile = () => {
         <div
           role="tablist"
           aria-label="Profile sections"
-          className="flex w-full overflow-x-auto scrollbar-none sm:inline-flex p-1 rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-8 md:mb-10"
+          className="flex flex-wrap gap-1 sm:gap-0 w-full overflow-x-auto scrollbar-none p-1 rounded-2xl sm:inline-flex sm:flex-nowrap sm:rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-8 md:mb-10"
         >
           {TABS.map((item) => {
             const selected = tab === item.id;
@@ -393,7 +393,7 @@ const BrandProfile = () => {
                 aria-selected={selected}
                 onClick={() => setTab(item.id)}
                 className={cn(
-                  'flex-1 sm:flex-none sm:min-w-[8.5rem] px-4 sm:px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition-colors duration-200',
+                  'whitespace-nowrap sm:flex-none md:min-w-[8.5rem] px-4 sm:px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition-colors duration-200',
                   selected
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground',

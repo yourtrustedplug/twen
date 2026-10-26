@@ -604,7 +604,7 @@ const CreatorProfile = () => {
         <div
           role="tablist"
           aria-label="Profile sections"
-          className="flex w-full overflow-x-auto scrollbar-none p-1 rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-5"
+          className="flex flex-wrap gap-1 sm:gap-0 w-full overflow-x-auto scrollbar-none p-1 rounded-2xl sm:flex-nowrap sm:rounded-full border border-[#e9e9e9] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] mb-5"
         >
           {TABS.map((item) => {
             const selected = tab === item.id;
@@ -618,7 +618,7 @@ const CreatorProfile = () => {
                 aria-selected={selected}
                 onClick={() => setTab(item.id)}
                 className={cn(
-                  'shrink-0 flex-1 sm:flex-none sm:min-w-[5.5rem] px-3 sm:px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200',
+                  'whitespace-nowrap sm:flex-none md:min-w-[5.5rem] px-3 sm:px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200',
                   selected
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground',

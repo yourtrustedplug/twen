@@ -42,7 +42,7 @@ const SlideUpLink = ({
   alignEnd?: boolean;
   onMouseEnter?: () => void;
 }) => {
-  const className = `no-underline group flex flex-col gap-[0.375rem] text-base max-xs:text-[0.925rem] ${
+  const className = `no-underline group flex flex-col gap-[0.375rem] text-base max-xs:text-[0.925rem] py-2.5 -my-2.5 ${
     alignEnd ? 'items-end' : 'items-start'
   }`;
   const body = (

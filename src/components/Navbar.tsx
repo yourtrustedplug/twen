@@ -63,6 +63,7 @@ interface NavbarProps {
 
 const Navbar = ({ compact = false }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navLinks = marketingNavLinks();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -74,9 +75,22 @@ const Navbar = ({ compact = false }: NavbarProps) => {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 bg-transparent pt-[max(0.5rem,env(safe-area-inset-top))]">
-      <div className="w-full h-full px-5 md:px-10">
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 bg-transparent pt-[max(0.5rem,env(safe-area-inset-top))] transition-colors duration-300 ${
+        !compact && scrolled
+          ? 'max-lg:bg-background/90 max-lg:backdrop-blur-xl max-lg:border-b max-lg:border-border/60 max-lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]'
+          : ''
+      }`}
+    >
+      <div className="relative z-20 w-full h-full px-5 md:px-10">
         <div
           className={
             compact

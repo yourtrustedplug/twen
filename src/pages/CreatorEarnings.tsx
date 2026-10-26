@@ -148,7 +148,7 @@ const CreatorEarnings = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <div>
+          <div className="min-w-0">
             <h2 className="font-display text-2xl font-bold mb-4">Payouts</h2>
             {payouts.length === 0 ? (
               <div className="bg-white border border-[#f1f1f1] rounded-[30px] p-6 text-muted-foreground text-sm">
@@ -177,7 +177,7 @@ const CreatorEarnings = () => {
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h2 className="font-display text-2xl font-bold mb-4">Wallet activity</h2>
             {transactions.length === 0 ? (
               <div className="bg-white border border-[#f1f1f1] rounded-[30px] p-6 text-muted-foreground text-sm">

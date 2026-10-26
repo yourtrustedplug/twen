@@ -120,7 +120,7 @@ const CreatorBrowse = () => {
                   className="w-full sm:w-44 bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
                 />
               </label>
-              <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              <div className="flex flex-wrap gap-2">
               <FilterSelect
                 value={niche}
                 onChange={(value) => setFilter('niche', value)}
